@@ -1,0 +1,31 @@
+Baseline: Revision 104.
+
+                                              user     system      total        real
+ActiveRecord:id                           0.090000   0.020000   0.110000 (  0.192854)
+DataMapper:id                             0.110000   0.000000   0.110000 (  0.105890)
+ActiveRecord:conditions                   0.100000   0.020000   0.120000 (  0.235058)
+DataMapper:conditions                     0.230000   0.030000   0.260000 (  0.376210)
+ActiveRecord:insert                       6.090000   0.360000   6.450000 (  7.080386)
+DataMapper:insert                         1.320000   0.160000   1.480000 (  1.845571)
+ActiveRecord:update                       0.520000   0.080000   0.600000 (  0.849492)
+DataMapper:update                         0.240000   0.030000   0.270000 (  0.394252)
+ActiveRecord:associations:lazy            3.860000   0.410000   4.270000 (  7.057705)
+ActiveRecord:associations:included        4.140000   0.030000   4.170000 (  4.757380)
+DataMapper:associations                   0.600000   0.030000   0.630000 (  0.742609)
+
+Revision 106: Merged DataMapper::Session and DataMapper::Loader since the separation of
+responsibilities wasn't all that clear, and the combination results in fewer
+objects being instantiated to execute a finder. No noticeable impact on performance.
+
+                                              user     system      total        real
+ActiveRecord:id                           0.100000   0.020000   0.120000 (  0.192765)
+DataMapper:id                             0.100000   0.000000   0.100000 (  0.101425)
+ActiveRecord:conditions                   0.100000   0.020000   0.120000 (  0.233634)
+DataMapper:conditions                     0.220000   0.030000   0.250000 (  0.376636)
+ActiveRecord:insert                       6.090000   0.370000   6.460000 (  7.129772)
+DataMapper:insert                         1.310000   0.160000   1.470000 (  1.847603)
+ActiveRecord:update                       0.520000   0.080000   0.600000 (  0.856744)
+DataMapper:update                         0.250000   0.030000   0.280000 (  0.396352)
+ActiveRecord:associations:lazy            3.830000   0.410000   4.240000 (  7.007074)
+ActiveRecord:associations:included        4.130000   0.030000   4.160000 (  4.729850)
+DataMapper:associations                   0.590000   0.030000   0.620000 (  0.737687)
