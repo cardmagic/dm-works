@@ -1,6 +1,6 @@
 # This line just let's us require anything in the +lib+ sub-folder
 # without specifying a full path.
-$LOAD_PATH.unshift(File.dirname(__FILE__) + '/lib')
+$LOAD_PATH.unshift(File.dirname(__FILE__))
 
 # Require the basics...
 require 'data_mapper/support/symbol'

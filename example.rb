@@ -1,3 +1,5 @@
+$LOAD_PATH.unshift('lib')
+
 require 'data_mapper'
 
 if ENV['ADAPTER'] == 'sqlite3'

@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/../data_mapper'
+require File.dirname(__FILE__) + '/../lib/data_mapper'
 require 'yaml'
 require 'pp'
 

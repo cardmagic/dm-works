@@ -86,6 +86,6 @@ module DataMapper
   end # module Support
 end # module DataMapper
 
-class Symbol
+class Symbol #:nodoc:
   include DataMapper::Support::Symbol
 end

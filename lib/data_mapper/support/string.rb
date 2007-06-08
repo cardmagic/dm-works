@@ -18,6 +18,6 @@ module DataMapper
   end # module Support
 end # module DataMapper
 
-class String
+class String #:nodoc:
   include DataMapper::Support::String
 end

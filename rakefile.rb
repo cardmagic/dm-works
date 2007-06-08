@@ -31,18 +31,18 @@ PACKAGE_FILES = FileList[
   'CHANGELOG',
   'MIT-LICENSE',
   '*.rb',
-  'lib/**/*',
-  'spec/**/*'
+  'lib/**/*.rb',
+  'spec/**/*.{rb,yaml}'
 ].to_a
 
 PROJECT = 'datamapper'
 
 desc "Generate Documentation"
-Rake::RDocTask.new do |rdoc|
+rd = Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_dir = 'doc'
   rdoc.title = "DataMapper -- An Object/Relational Mapper for Ruby"
   rdoc.options << '--line-numbers' << '--inline-source' << '--main' << 'README'
-  rdoc.rdoc_files.include(PACKAGE_FILES)
+  rdoc.rdoc_files.include(PACKAGE_FILES.reject { |path| path =~ /^(spec|\w+\.rb)/ })
 end
 
 gem_spec = Gem::Specification.new do |s| 
@@ -65,7 +65,7 @@ gem_spec = Gem::Specification.new do |s|
 
   s.has_rdoc = true 
   s.rdoc_options << '--line-numbers' << '--inline-source' << '--main' << 'README' 
-  s.extra_rdoc_files = rd.rdoc_files.reject { |fn| fn =~ /\.rb$/ }.to_a 
+  s.extra_rdoc_files = rd.rdoc_files.reject { |path| path =~ /\.rb$/ }.to_a 
 end
 
 Rake::GemPackageTask.new(gem_spec) do |p|
