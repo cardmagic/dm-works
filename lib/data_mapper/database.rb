@@ -1,5 +1,4 @@
 require 'logger'
-require 'data_mapper/identity_map'
 require 'data_mapper/session'
 require 'data_mapper/mappings/schema'
 
@@ -62,18 +61,6 @@ module DataMapper
     
     def syntax(token)
       @adapter.class::SYNTAX[token]
-    end
-    
-    def identity_map
-      @identity_map ||= IdentityMap.new
-    end
-    
-    # Resets the identity_map.
-    # NOTE: You really shouldn't ever need to call this in an application,
-    # but it can be necessary for testing.
-    def clear_identity_map!
-      log.debug("Cleared IdentityMap for #{name} database.")
-      @identity_map = nil
     end
     
     def [](klass_or_table_name)

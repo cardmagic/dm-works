@@ -1,4 +1,5 @@
 require 'data_mapper/loaded_set'
+require 'data_mapper/identity_map'
 
 module DataMapper
   
@@ -13,6 +14,10 @@ module DataMapper
     
     def initialize(database)
       @database = database
+    end
+    
+    def identity_map
+      @identity_map || ( @identity_map = IdentityMap.new )
     end
     
     def find(klass, type_or_id, options = {}, &b)
@@ -36,7 +41,7 @@ module DataMapper
     
     def first(options)
       if options.has_id? && !options.reload?
-        instance = @database.identity_map.get(options.klass, options.instance_id)
+        instance = identity_map.get(options.klass, options.instance_id)
         return instance unless instance.nil?
       end
       
@@ -73,7 +78,7 @@ module DataMapper
       mapping = @database[instance_class]
       
       instance_id = mapping.key.type_cast_value(hash['id'])      
-      instance = @database.identity_map.get(instance_class, instance_id)
+      instance = identity_map.get(instance_class, instance_id)
       
       if instance.nil? || options.reload?
         instance ||= instance_class.new        
@@ -93,7 +98,7 @@ module DataMapper
 
         instance.class.callbacks.execute(:after_materialize, instance)
         
-        @database.identity_map.set(instance)
+        identity_map.set(instance)
       end
       
       instance.instance_variable_set(:@loaded_set, set)
@@ -118,7 +123,7 @@ module DataMapper
         instance.instance_variable_set(:@new_record, false)
         instance.instance_variable_set(:@id, inserted_id || result.last_inserted_id)
         calculate_original_hashes(instance)
-        @database.identity_map.set(instance)
+        identity_map.set(instance)
         instance.class.callbacks.execute(:after_create, instance)
       end
       

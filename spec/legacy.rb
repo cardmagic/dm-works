@@ -5,8 +5,10 @@ context 'Legacy Database' do
   end
   
   specify('should allow custom foreign-key mappings') do
-    Fruit[:name => 'Watermelon'].devourer_of_souls.should == Animal[:name => 'Cup']
-    Animal[:name => 'Cup'].favourite_fruit.should == Fruit[:name => 'Watermelon']
+    database do
+      Fruit[:name => 'Watermelon'].devourer_of_souls.should == Animal[:name => 'Cup']
+      Animal[:name => 'Cup'].favourite_fruit.should == Fruit[:name => 'Watermelon']
+    end
   end
   
 end

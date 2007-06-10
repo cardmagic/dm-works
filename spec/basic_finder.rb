@@ -42,16 +42,18 @@ context 'Finder' do
   end
   
   specify 'should not find deleted objects' do
-    wally = Animal[:name => 'Whale']
-    wally.destroy!.should == true
+    database do
+      wally = Animal[:name => 'Whale']
+      wally.destroy!.should == true
     
-    wallys_evil_twin = Animal[:name => 'Whale']
-    wallys_evil_twin.should == nil
+      wallys_evil_twin = Animal[:name => 'Whale']
+      wallys_evil_twin.should == nil
     
-    wally.new_record?.should == true
-    wally.save
+      wally.new_record?.should == true
+      wally.save
     
-    Animal[:name => 'Whale'].should == wally
+      Animal[:name => 'Whale'].should == wally
+    end
   end
   
   specify 'lazy-loads should issue for whole sets' do

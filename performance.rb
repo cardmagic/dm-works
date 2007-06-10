@@ -14,6 +14,7 @@ class ARPerson < ActiveRecord::Base
   set_table_name 'people'
 end
 
+$LOAD_PATH.unshift('lib')
 require 'data_mapper'
 
 log_path = File.dirname(__FILE__) + '/development.log'
@@ -147,7 +148,9 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
   
   x.report('DataMapper:associations') do
     N.times do
-      Zoo.all.each { |zoo| zoo.exhibits.entries }
+      database do
+        Zoo.all.each { |zoo| zoo.exhibits.entries }
+      end
     end
   end
 end

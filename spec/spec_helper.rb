@@ -53,8 +53,6 @@ def fixtures(name)
   (entry.kind_of?(Array) ? entry : [entry]).each do |hash|
     klass::create(hash)
   end
-  
-  DataMapper::Database[:default].clear_identity_map!
 end
 
 # Pre-fill the database so non-destructive tests don't need to reload fixtures.
