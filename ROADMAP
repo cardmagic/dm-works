@@ -10,7 +10,7 @@ I also hope to have initial support for PostgreSQL.
 
 === 0.3.0
 The goal for this release is to fill in missing save-chaining,
-callbacks, validations, etc so that this is the first
+callbacks, validations, documentation, etc so that this is the first
 "production-ready" release.
 
 === 0.4.0
