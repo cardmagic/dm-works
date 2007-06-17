@@ -1,4 +1,4 @@
-require 'data_mapper/adapters/abstract_adapter'
+require 'data_mapper/adapters/sql_adapter'
 require 'data_mapper/support/connection_pool'
 
 require 'sqlite3'
@@ -6,11 +6,15 @@ require 'sqlite3'
 module DataMapper
   module Adapters
     
-    class Sqlite3Adapter < AbstractAdapter
+    class Sqlite3Adapter < SqlAdapter
       
       def initialize(configuration)
         super
-        @connections = Support::ConnectionPool.new { Queries::Connection.new(@configuration)  }
+        @connections = Support::ConnectionPool.new do
+          dbh = SQLite3::Database.new(configuration.database)
+          dbh.results_as_hash = true
+          dbh
+        end
       end
       
       def connection
@@ -40,120 +44,46 @@ module DataMapper
         :text => 'TEXT'.freeze,
         :class => 'TEXT'.freeze
       })
-      
-      module Coersion
 
-        def type_cast_boolean(value)
-          case value
-            when TrueClass, FalseClass then value
-            when "1", "true", "TRUE" then true
-            when "0", nil then false
-            else "Can't type-cast #{value.inspect} to a boolean"
-          end
+      TABLE_QUOTING_CHARACTER = '"'.freeze
+      COLUMN_QUOTING_CHARACTER = '"'.freeze
+      
+      def type_cast_boolean(value)
+        case value
+          when TrueClass, FalseClass then value
+          when "1", "true", "TRUE" then true
+          when "0", nil then false
+          else "Can't type-cast #{value.inspect} to a boolean"
         end
+      end
 
-        def type_cast_datetime(value)
-          case value
-            when DateTime then value
-            when Date then DateTime.new(value)
-            when String then DateTime::parse(value)
-            else "Can't type-cast #{value.inspect} to a datetime"
-          end
+      def type_cast_datetime(value)
+        case value
+          when DateTime then value
+          when Date then DateTime.new(value)
+          when String then DateTime::parse(value)
+          else "Can't type-cast #{value.inspect} to a datetime"
         end
-
-      end # module Coersion
-      
-      module Queries
+      end
+    
+      module Commands
         
-        class Connection
-      
-          def initialize(database)
-            @database = database
-            @dbh = SQLite3::Database.new(database.database)
-            database.log.debug("Initializing Connection for Database[#{database.name}]")
-            super(database.log)
-          end
-          
-          def execute(statement)
-            send_query(statement)
-            Result.new(@dbh.total_changes, @dbh.last_insert_row_id)
-          end
-      
-          def query(statement)
-            Reader.new(send_query(statement))
-          end
-      
-          def close
-            @dbh.close
-          end
-          
-          private
-          def send_query(statement)
-            sql = statement.respond_to?(:to_sql) ? statement.to_sql : statement
-            log.debug("Database[#{@database.name}] => #{sql}")
-            @dbh.query(sql)
-          end
-          
-        end # class Connection
-        
-        class Reader
-      
-          include Enumerable
-          
-          def initialize(results)
-            @results = results
-            @columns = {}
-            @results.columns.each_with_index do |name, index|
-              @columns[name] = index
-            end
-          end
-          
-          def eof?
-            @results.eof?
-          end
-          
-          def records_affected
-            @results.entries.size
-          end
-          
-          def next
-            @current_row = @results.next
-            self
-          end
-      
-          def each
-            until self.next.eof?
-              yield(self)
-            end
-          end
-      
-          def [](column)
-            index = @columns[column]
-            return nil if index.nil? || @current_row.nil?
-            @current_row[index]
-          end
-          
-          def each_pair            
-            @columns.each_pair do |column_name, index|
-              yield(column_name, @current_row.nil? ? nil : @current_row[index])
-            end
-          end
-          
-          def close
-            @results.close
-          end
-      
-        end # class Reader
-        
-        class TableExistsStatement
+        class TableExistsCommand
           def to_sql
-            "SELECT name FROM sqlite_master WHERE type = \"table\" AND name = #{@database.quote_value(@database[@klass].name)}"
+            "SELECT name FROM sqlite_master WHERE type = \"table\" AND name = #{table_name}"
           end
-        end # class TableExistsStatement
+          
+          def call
+            reader = @adapter.connection { |db| db.query(to_sql) }
+            result = reader.entries.size > 0
+            reader.close
+            result
+          end
+        end # class TableExistsCommand
          
-        class CreateTableStatement
-          def to_sql
-            table = @database[@klass]
+        class SaveCommand
+          def to_create_table_sql
+            table = @adapter[@instance]
 
             sql = "CREATE TABLE " << table.to_sql
 
@@ -165,7 +95,7 @@ module DataMapper
           end
 
           def column_long_form(column)
-            long_form = "#{column.to_sql} #{@database.adapter.class::TYPES[column.type] || column.type}"
+            long_form = "#{column.to_sql} #{@adapter.class::TYPES[column.type] || column.type}"
 
             long_form << " NOT NULL" unless column.nullable?
             long_form << " PRIMARY KEY" if column.key?
@@ -173,15 +103,75 @@ module DataMapper
 
             return long_form
           end
-        end # class CreateTableStatement
-        
-        class TruncateTableStatement
-          def to_sql
-            "DELETE FROM " << @database[@klass].to_sql
+          
+          def execute_insert(sql)
+            @adapter.connection do |db|
+              db.query(sql)
+              db.last_insert_row_id
+            end
           end
-        end # class TruncateTableStatement
+          
+          def execute_update(sql)
+            @adapter.connection do |db|
+              db.query(sql)
+              db.total_changes > 0
+            end
+          end
+          
+          def execute_create_table(sql)
+            @adapter.connection { |db| db.query(sql) }
+            true
+          end
+        end # class SaveCommand
         
-      end # module Queries
+        class DeleteCommand
+          def to_truncate_sql
+            "DELETE FROM " << @adapter[@klass_or_instance].to_sql
+          end
+          
+          def execute(sql)
+            @adapter.connection do |db|
+              db.query(sql)
+              db.total_changes > 0
+            end
+          end
+          
+          def execute_drop(sql)
+            @adapter.connection { |db| db.query(sql) }
+            true
+          end
+        end # class DeleteCommand
+         
+        class LoadCommand
+          def eof?(reader)
+            reader.eof?
+          end
+          
+          def close_reader(reader)
+            reader.close
+          end
+          
+          def execute(sql)
+            @adapter.connection { |db| db.query(to_sql) }
+          end
+          
+          def fetch_one(reader)
+            load(reader.next)
+          end
+          
+          def fetch_all(reader)
+            results = []
+            set = []
+            until reader.eof?
+              hash = reader.next
+              break if hash.nil?
+              results << load(hash, set)
+            end
+            results
+          end
+        end
+        
+      end # module Commands
         
     end # class Sqlite3Adapter
     

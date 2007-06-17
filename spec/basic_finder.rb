@@ -3,14 +3,14 @@ context 'Finder' do
   specify 'database-specific load should not fail' do
     
     DataMapper::database do |db|
-      froggy = db.find(Animal, :first, :conditions => ['name = ?', 'Frog'])
+      froggy = db.first(Animal, :conditions => ['name = ?', 'Frog'])
       froggy.name.should == 'Frog'
     end
 
   end
   
   specify 'current-database load should not fail' do
-    froggy = DataMapper::database.find(Animal, :first).name.should == 'Frog'
+    froggy = DataMapper::database.first(Animal).name.should == 'Frog'
   end
   
   specify 'load through ActiveRecord impersonation should not fail' do

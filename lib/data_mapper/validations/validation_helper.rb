@@ -11,7 +11,7 @@ end.each do |validator|
 end
 
 module DataMapper
-  module Extensions
+  module Validations
     
     module ValidationHelper
       

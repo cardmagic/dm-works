@@ -1,4 +1,4 @@
-require 'data_mapper/adapters/abstract_adapter'
+require 'data_mapper/adapters/sql_adapter'
 require 'data_mapper/support/connection_pool'
 
 begin
@@ -16,13 +16,18 @@ end
 module DataMapper
   module Adapters
     
-    class MysqlAdapter < AbstractAdapter
+    class MysqlAdapter < SqlAdapter
       
       def initialize(configuration)
         super
-        @connections = Support::ConnectionPool.new { Queries::Connection.new(@configuration)  }
+        # Initialize the connection pool.
+        @connections = Support::ConnectionPool.new do
+          Mysql.new(configuration.host, configuration.username, configuration.password, configuration.database)
+        end
       end
       
+      # Returns an available connection. Flushes the connection-pool if
+      # the connection returns an error.
       def connection
         raise ArgumentError.new('MysqlAdapter#connection requires a block-parameter') unless block_given?
         begin
@@ -44,127 +49,106 @@ module DataMapper
         end
       end
       
-      module Quoting
+      TABLE_QUOTING_CHARACTER = '`'.freeze
+      COLUMN_QUOTING_CHARACTER = '`'.freeze
 
-        def quote_table_name(name)
-          name.ensure_wrapped_with('`')
+      def type_cast_boolean(value)
+        case value
+          when TrueClass, FalseClass then value
+          when "1", "true", "TRUE" then true
+          when "0", nil then false
+          else "Can't type-cast #{value.inspect} to a boolean"
         end
+      end
 
-        def quote_column_name(name)
-          name.ensure_wrapped_with('`')
+      def type_cast_datetime(value)
+        case value
+          when DateTime then value
+          when Date then DateTime.new(value)
+          when String then DateTime::parse(value)
+          else "Can't type-cast #{value.inspect} to a datetime"
         end
-
-      end # module Quoting
-
-      module Coersion
-
-        def type_cast_boolean(value)
-          case value
-            when TrueClass, FalseClass then value
-            when "1", "true", "TRUE" then true
-            when "0", nil then false
-            else "Can't type-cast #{value.inspect} to a boolean"
-          end
-        end
-
-        def type_cast_datetime(value)
-          case value
-            when DateTime then value
-            when Date then DateTime.new(value)
-            when String then DateTime::parse(value)
-            else "Can't type-cast #{value.inspect} to a datetime"
-          end
-        end
-
-      end # module Coersion
+      end
       
-      module Queries
+      module Commands
         
-        class Connection
-      
-          def initialize(database)
-            @database = database
-            @dbh = Mysql.new(database.host, database.username, database.password, database.database)
-            database.log.debug("Initializing Connection for Database[#{database.name}]")
-            super(database.log)
+        class TableExistsCommand
+          def call
+            reader = @adapter.connection { |db| db.query(to_sql) }
+            result = reader.num_rows > 0
+            reader.free
+            result
           end
-          
-          def execute(statement)
-            send_query(statement)
-            Result.new(@dbh.affected_rows, @dbh.insert_id)
-          end
-      
-          def query(statement)
-            Reader.new(send_query(statement))
-          end
-      
-          def close
-            @dbh.close
-          end
-          
-          private
-          def send_query(statement)
-            sql = statement.respond_to?(:to_sql) ? statement.to_sql : statement
-            log.debug("Database[#{@database.name}] => #{sql}")
-            @dbh.query(sql)
-          end
-          
-        end # class Connection
+        end
         
-        class Reader
-      
-          include Enumerable
+        class DeleteCommand
           
-          def initialize(results)
-            @results = results
-            @columns = {}
-            results.fetch_fields.each_with_index do |field, index|
-              @columns[field.name] = index
-            end
-            @current_row_index = 0
-          end
-          
-          def eof?
-            records_affected <= @current_row_index
-          end
-          
-          def records_affected
-            @results.num_rows
-          end
-          
-          def next
-            @current_row_index += 1
-            @current_row = @results.fetch_row
-            self
-          end
-      
-          def each
-            @results.each do |row|
-              @current_row = row
-              yield self
-            end
-          end
-      
-          def [](column)
-            index = @columns[column]
-            return nil if index.nil?
-            @current_row[index]
-          end
-          
-          def each_pair
-            @columns.each_pair do |column_name, index|
-              yield(column_name, @current_row[index])
+          def execute(sql)
+            @adapter.connection do |db|
+              db.query(sql)
+              db.affected_rows > 0
             end
           end
           
-          def close
-            @results.free
+          def execute_drop(sql)
+            @adapter.connection { |db| db.query(sql) }
+            true
           end
+          
+        end
+        
+        class SaveCommand
+          
+          def execute_insert(sql)
+            @adapter.connection do |db|
+              db.query(sql)
+              db.insert_id
+            end
+          end
+          
+          def execute_update(sql)
+            @adapter.connection do |db|
+              db.query(sql)
+              db.affected_rows > 0
+            end
+          end
+          
+          def execute_create_table(sql)
+            @adapter.connection { |db| db.query(sql) }
+            true
+          end
+          
+        end
+        
+        class LoadCommand
+          def eof?(reader)
+            reader.num_rows == 0
+          end
+          
+          def close_reader(reader)
+            reader.free
+          end
+          
+          def execute(sql)
+            @adapter.connection { |db| db.query(to_sql) }
+          end
+          
+          def fetch_one(reader)
+            load(reader.fetch_hash)
+          end
+          
+          def fetch_all(reader)
+            results = []
+            set = []
+            reader.each_hash do |hash|
+              results << load(hash, set)
+            end
+            results
+          end
+        end
+        
+      end
       
-        end # class Reader
-        
-      end # module Queries
-        
     end # class MysqlAdapter
     
   end # module Adapters

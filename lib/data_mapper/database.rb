@@ -1,6 +1,5 @@
 require 'logger'
 require 'data_mapper/session'
-require 'data_mapper/mappings/schema'
 
 # Delegates to DataMapper::database.
 # Will not overwrite if a method of the same name is pre-defined.
@@ -18,9 +17,9 @@ module DataMapper
   #   a new Session.
   def self.database(name = :default)
     unless block_given?
-      Database.context.last || Session.new(Database[name])
+      Database.context.last || Session.new(Database[name].adapter)
     else
-      Database.context.push(Session.new(Database[name]))
+      Database.context.push(Session.new(Database[name].adapter))
       yield Database.context.last
       Database.context.pop
     end
@@ -51,27 +50,7 @@ module DataMapper
     
     def initialize(name)
       @name = name
-    end 
-    
-    # Shortcut to adapter.class::Queries::FooStatement.new
-    def method_missing(sym, *args)
-      return super if sym.to_s !~ /_statement$/
-      @adapter.class::Queries.const_get(Inflector.classify(sym.to_s)).new(self, *args)
     end
-    
-    def syntax(token)
-      @adapter.class::SYNTAX[token]
-    end
-    
-    def [](klass_or_table_name)
-      schema[klass_or_table_name]
-    end
-    
-    def schema
-      @schema ||= Mappings::Schema.new(self)
-    end
-    
-    class ConditionEscapeError < StandardError; end
     
     attr_reader :name
     
@@ -82,9 +61,6 @@ module DataMapper
       
       require "data_mapper/adapters/#{Inflector.underscore(value)}_adapter"
       adapter_class = Adapters::const_get(Inflector.classify(value) + "Adapter")
-      
-      (class << self; self end).send(:include, adapter_class::Quoting)
-      (class << self; self end).send(:include, adapter_class::Coersion)
       
       @adapter = adapter_class.new(self)
     end
@@ -116,19 +92,6 @@ module DataMapper
       @log_stream = value
     end
     
-    def connection
-      @adapter.connection do |db|
-        results = yield(db)
-      end
-    end
-    
-    def query(sql)
-      connection { |db| db.query(sql) }
-    end
-    
-    def execute(sql)
-      connection { |db| db.execute(sql) }
-    end
   end
   
 end

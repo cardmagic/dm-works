@@ -14,8 +14,7 @@ class ARPerson < ActiveRecord::Base
   set_table_name 'people'
 end
 
-$LOAD_PATH.unshift('lib')
-require 'data_mapper'
+require 'lib/data_mapper'
 
 log_path = File.dirname(__FILE__) + '/development.log'
 
@@ -26,8 +25,6 @@ DataMapper::Database.setup do
   adapter   'mysql'
   username 'root'
   database 'data_mapper_1'
-  log_stream 'development.log'
-  log_level Logger::DEBUG
 end
 
 class DMAnimal < DataMapper::Base

@@ -1,8 +1,8 @@
 require 'data_mapper/unit_of_work'
-require 'data_mapper/extensions/active_record_impersonation'
-require 'data_mapper/extensions/callback_helpers'
+require 'data_mapper/support/active_record_impersonation'
 require 'data_mapper/validations/validation_helper'
 require 'data_mapper/associations'
+require 'data_mapper/callbacks'
 
 module DataMapper
   
@@ -12,9 +12,8 @@ module DataMapper
     attr_accessor :loaded_set
     
     include UnitOfWork
-    include Extensions::ActiveRecordImpersonation
-    include Extensions::CallbackHelpers
-    include Extensions::ValidationHelper
+    include Support::ActiveRecordImpersonation
+    include Validations::ValidationHelper
     include Associations
     
     def self.inherited(klass)
@@ -93,7 +92,7 @@ module DataMapper
       value = instance_variable_get(column.instance_variable_name)
       return value unless value.nil?
       
-      session.find(self.class, :all, :select => [:id, name], :reload => true, :id => loaded_set.instances.map(&:id)).each do |instance|
+      session.all(self.class, :select => [:id, name], :reload => true, :id => loaded_set.map(&:id)).each do |instance|
         (class << self; self end).send(:attr_accessor, name)
       end
       
@@ -147,14 +146,32 @@ module DataMapper
     end
     
     def session
-      @session ||= database
+      @session || ( @session = database )
     end
     
     def key
       key_column = session.schema[self.class].key
       key_column.type_cast_value(instance_variable_get(key_column.instance_variable_name))
     end
-        
+    
+    # Callbacks associated with this class.
+    def self.callbacks
+      @callbacks || ( @callbacks = Callbacks.new )
+    end
+    
+    # Declare helpers for the standard callbacks
+    DataMapper::Callbacks::EVENTS.each do |name|
+      class_eval <<-EOS
+        def self.#{name}(string = nil, &block)
+          if string.nil?
+            callbacks.add(:#{name}, &block)
+          else
+            callbacks.add(:#{name}, string)
+          end
+        end
+      EOS
+    end
+    
   end
   
 end

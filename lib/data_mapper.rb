@@ -3,6 +3,7 @@
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 
 # Require the basics...
+require 'data_mapper/support/enumerable'
 require 'data_mapper/support/symbol'
 require 'data_mapper/support/string'
 require 'data_mapper/support/proc'

@@ -37,9 +37,7 @@ module DataMapper
         
         finder_options.merge!({ target.session.mappings[target.class].key.name.not => target.key }) unless target.new_record?
         
-        # HACK: gotta make sure we're using the same database that this instance was
-        # found with unless new_record?
-        target.session.find(target.class, :first, finder_options).nil?
+        target.session.first(target.class, finder_options).nil?
       end
       
     end

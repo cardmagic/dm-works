@@ -60,10 +60,10 @@ module DataMapper
           setter_method = "#{@association_name}=".to_sym
           instance_variable_name = "@#{foreign_key}".to_sym
           
-          set = @instance.loaded_set.instances.group_by { |instance| instance.instance_variable_get(instance_variable_name) }
+          set = @instance.loaded_set.group_by { |instance| instance.instance_variable_get(instance_variable_name) }
           
           # Fetch the foreign objects for all instances in the current object's loaded-set.
-          @instance.session.find(@associated_class, :all, :id => set.keys).each do |owner|
+          @instance.session.all(@associated_class, :id => set.keys).each do |owner|
             set[owner.key].each do |instance|
               instance.send(setter_method, owner)
             end

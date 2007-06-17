@@ -18,7 +18,7 @@ describe DataMapper::Associations::HasManyAssociation do
   it 'should lazily-load the association when Enumerable methods are called' do
     database do |db|
       @san_diego.exhibits.size.should == 2
-      @san_diego.exhibits.should include(@san_diego.session.find(Exhibit, :first, :name => 'Monkey Mayhem'))
+      @san_diego.exhibits.should include(@san_diego.session.first(Exhibit, :name => 'Monkey Mayhem'))
     end
   end
   

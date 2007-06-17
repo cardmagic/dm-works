@@ -1,4 +1,3 @@
-require 'data_mapper/loaded_set'
 require 'data_mapper/identity_map'
 
 module DataMapper
@@ -12,193 +11,80 @@ module DataMapper
     class MaterializationError < StandardError
     end
     
-    def initialize(database)
-      @database = database
+    def initialize(adapter)
+      @adapter = adapter
     end
     
     def identity_map
       @identity_map || ( @identity_map = IdentityMap.new )
     end
     
-    def find(klass, type_or_id, options = {}, &b)
-      options.merge! b.to_hash if block_given?
+    def first(klass, *args, &b)
+      id = nil
+      options = nil
       
-      results = case type_or_id
-        when :first then
-          first(@database.select_statement(options.merge(:class => klass, :limit => 1)))
-        when :all then
-          all(@database.select_statement(options.merge(:class => klass)))
+      if args.empty? # No id, no options
+        options = { :limit => 1 }
+      elsif args.size == 2 && args.last.kind_of?(Hash) # id AND options
+        options = args.last.merge(:id => args.first)
+      elsif args.size == 1 # id OR options
+        if args.first.kind_of?(Hash)
+          options = args.first.merge(:limit => 1) # no id, add limit
         else
-          first(@database.select_statement(options.merge(:class => klass, :id => type_or_id)))
-      end
-      
-      case results
-        when Array then results.each { |instance| instance.session = self }
-        when Base then results.session = self
-      end
-      return results
-    end
-    
-    def first(options)
-      if options.has_id? && !options.reload?
-        instance = identity_map.get(options.klass, options.instance_id)
-        return instance unless instance.nil?
-      end
-      
-      reader = @database.query(options)
-      instance = reader.eof? ? nil : load(options, reader.next)
-      reader.close
-      return instance
-    rescue DatabaseError => de
-      de.options = options
-      raise de
-    end
-    
-    def all(options)
-      set = LoadedSet.new(@database)
-      reader = @database.query(options)
-      instances = reader.map do |hash|
-        load(options, hash, set)
-      end
-      reader.close
-      return instances
-    rescue => error
-      @database.log.error(error)
-      raise error
-    end
-    
-    def load(options, hash, set = LoadedSet.new(@database))
-            
-      instance_class = unless hash['type'].nil?
-        Kernel::const_get(hash['type'])
-      else
-        options.klass
-      end
-      
-      mapping = @database[instance_class]
-      
-      instance_id = mapping.key.type_cast_value(hash['id'])      
-      instance = identity_map.get(instance_class, instance_id)
-      
-      if instance.nil? || options.reload?
-        instance ||= instance_class.new        
-        instance.class.callbacks.execute(:before_materialize, instance)
-        
-        instance.instance_variable_set(:@new_record, false)
-        hash.each_pair do |name_as_string,raw_value|
-          name = name_as_string.to_sym
-          if column = mapping.find_by_column_name(name)
-            value = column.type_cast_value(raw_value)
-            instance.instance_variable_set(column.instance_variable_name, value)
-          else
-            instance.instance_variable_set("@#{name}", value)
-          end
-          instance.original_hashes[name] = value.hash
+          options = { :id => args.first } # no options, set id
         end
-
-        instance.class.callbacks.execute(:after_materialize, instance)
-        
-        identity_map.set(instance)
+      else
+        raise ArgumentError.new('Session#first takes a class, and optional type_or_id and/or options arguments')
       end
       
-      instance.instance_variable_set(:@loaded_set, set)
-      set.instances << instance
-      return instance
+      options.merge!(b.to_hash) if block_given?
+      
+      @adapter.load(self, klass, options)
+    end
+    
+    def all(klass, options = {})
+      @adapter.load(self, klass, options)
     end
     
     def save(instance)
-      return false unless instance.dirty?
-      instance.class.callbacks.execute(:before_save, instance)
-      result = instance.new_record? ? insert(instance) : update(instance)
-      instance.session = self
-      instance.class.callbacks.execute(:after_save, instance)
-      result.success?
-    end
-    
-    def insert(instance, inserted_id = nil)
-      instance.class.callbacks.execute(:before_create, instance)
-      result = @database.execute(@database.insert_statement(instance))
-      
-      if result.success?
-        instance.instance_variable_set(:@new_record, false)
-        instance.instance_variable_set(:@id, inserted_id || result.last_inserted_id)
-        calculate_original_hashes(instance)
-        identity_map.set(instance)
-        instance.class.callbacks.execute(:after_create, instance)
-      end
-      
-      return result
-    rescue => error
-      @database.log.error(error)
-      raise error
-    end
-    
-    def update(instance)
-      instance.class.callbacks.execute(:before_update, instance)
-      result = @database.execute(@database.update_statement(instance))
-      calculate_original_hashes(instance)
-      instance.class.callbacks.execute(:after_update, instance)
-      return result
-    rescue => error
-      @database.log.error(error)
-      raise error
+      @adapter.save(self, instance)
     end
     
     def destroy(instance)
-      instance.class.callbacks.execute(:before_destroy, instance)
-      result = @database.execute(@database.delete_statement(instance))
-      if result.success?
-        instance.instance_variable_set(:@new_record, true)
-        instance.original_hashes.clear
-        instance.class.callbacks.execute(:after_destroy, instance)
-      end
-      return result.success?
-    rescue => error
-      @database.log.error(error)
-      raise error
+      @adapter.delete(instance, :session => self)
     end
     
     def delete_all(klass)
-      @database.execute(@database.delete_statement(klass))
+      @adapter.delete(klass, :session => self)
     end
     
     def truncate(klass)
-      @database.connection do |db|
-        db.execute(@database.truncate_table_statement(klass))
-      end
+      @adapter.delete(klass, :truncate => true, :session => self)
     end
     
     def create_table(klass)
-      @database.connection do |db|
-        db.execute(@database.create_table_statement(klass))
-      end unless table_exists?(klass)
+      @adapter[klass].create!
     end
     
     def drop_table(klass)
-      @database.connection do |db|
-        db.execute(@database.drop_table_statement(klass))
-      end if table_exists?(klass)
+      @adapter[klass].drop!
     end
     
     def table_exists?(klass)
-      reader = @database.connection do |db|
-        db.query(@database.table_exists_statement(klass))
-      end
-      result = !reader.eof?
-      reader.close
-      result
+      @adapter[klass].exists?
     end
     
+    # Currently broken...
     def query(*args)
       sql = args.shift
       
       unless args.empty?
         sql.gsub!(/\?/) do |x|
-          @database.quote_value(args.shift)
+          @adapter.quote_value(args.shift)
         end
       end
 
-      reader = @database.connection do |db|
+      reader = @adapter.connection do |db|
         db.query(sql)
       end
       
@@ -214,27 +100,12 @@ module DataMapper
     end
     
     def schema
-      @database.schema
+      @adapter.schema
     end
     
     def log
-      @database.log
+      @adapter.log
     end
-    
-    private
-    
-    # Make sure this uses the factory changes later...
-    def type_cast_value(klass, name, raw_value)
-      @database[klass][name].type_cast_value(raw_value)
-    end
-    
-    # Calculates the original hashes for each value
-    # in an instance's set of attributes, and adds
-    # them to the original_hashes hash.
-    def calculate_original_hashes(instance)
-      instance.attributes.each_pair do |name, value|
-        instance.original_hashes[name] = value.hash
-      end
-    end
+
   end
 end

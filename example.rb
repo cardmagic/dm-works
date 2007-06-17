@@ -1,6 +1,4 @@
-$LOAD_PATH.unshift('lib')
-
-require 'data_mapper'
+require 'lib/data_mapper'
 
 if ENV['ADAPTER'] == 'sqlite3'
   DataMapper::Database.setup do
@@ -23,3 +21,5 @@ end
 Dir[File.dirname(__FILE__) + '/spec/models/*.rb'].each do |path|
   load path
 end
+
+# p Zoo.all

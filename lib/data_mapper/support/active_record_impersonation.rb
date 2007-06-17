@@ -1,5 +1,5 @@
 module DataMapper
-  module Extensions
+  module Support
     
     module ActiveRecordImpersonation
       
@@ -12,7 +12,7 @@ module DataMapper
       end
       
       def reload!
-        session.find(self.class, id, :select => session.mappings[self.class].columns.map(&:name), :reload => true)
+        session.first(self.class, key, :select => session.mappings[self.class].columns.map(&:name), :reload => true)
       end
       
       def reload
@@ -26,11 +26,11 @@ module DataMapper
       module ClassMethods
         
         def all(options = {}, &b)
-          find(:all, options, &b)
+          database.all(self, options, &b)
         end
         
-        def first(options = {}, &b)
-          find(:first, options, &b)
+        def first(*args, &b)
+          database.first(self, *args, &b)
         end
         
         def delete_all
@@ -41,8 +41,12 @@ module DataMapper
           database.truncate(self)
         end
         
-        def find(*args, &b)
-          DataMapper::database.find(self, *args, &b)
+        def find(type_or_id, options = {}, &b)
+          case type_or_id
+            when :first then first(options, &b)
+            when :all then all(options, &b)
+            else first(type_or_id, options, &b)
+          end
         end
         
         def find_by_sql(*args)
@@ -50,11 +54,7 @@ module DataMapper
         end
         
         def [](id_or_hash)
-          if id_or_hash.kind_of?(Hash)
-            find(:first, id_or_hash)
-          else
-            find(id_or_hash)
-          end
+          first(id_or_hash)
         end
         
         def create(attributes)

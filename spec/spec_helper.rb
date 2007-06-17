@@ -48,6 +48,7 @@ def fixtures(name)
   entry = YAML::load_file(File.dirname(__FILE__) + "/fixtures/#{name}.yaml")
   klass = Kernel::const_get(Inflector.classify(Inflector.singularize(name)))
   
+  database.schema[klass].create!
   klass.truncate!
   
   (entry.kind_of?(Array) ? entry : [entry]).each do |hash|

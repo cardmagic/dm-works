@@ -17,5 +17,13 @@ module DataMapper
       @cache[instance.class][instance.key] = instance
     end
     
+    def delete(instance)
+      # @cache[instance.class].delete(instance.key)
+    end
+    
+    def clear!(klass)
+      @cache.delete(klass)
+    end
+    
   end
 end

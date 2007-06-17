@@ -11,7 +11,7 @@ context 'An Exhibit' do
   
   specify 'belongs to a zoo' do
     database do |db|
-      @aviary.zoo.should == @aviary.session.find(Zoo, :first, :name => 'San Diego')
+      @aviary.zoo.should == @aviary.session.first(Zoo, :name => 'San Diego')
     end
   end
   

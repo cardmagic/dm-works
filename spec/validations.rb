@@ -3,7 +3,7 @@ context 'Validations' do
   setup do
     class Cow
       
-      include DataMapper::Extensions::ValidationHelper
+      include DataMapper::Validations::ValidationHelper
       
       attr_accessor :name, :age
     end

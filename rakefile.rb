@@ -24,7 +24,7 @@ task :profile do
   load 'profile_data_mapper.rb'
 end
 
-PACKAGE_VERSION = '0.1.0'
+PACKAGE_VERSION = '0.1.1'
 
 PACKAGE_FILES = FileList[
   'README',

@@ -18,4 +18,23 @@ Now that the feature-set should be 90% competitive with ActiveRecord,
 this release will focus on profiling and performance enhancements,
 which there should be a lot of opportunity for.
 
+=== 0.5.0
+Native Migration support should be added as well as removing any other
+functional dependencies on ActiveRecord for support.
+
+=== 0.6.0
+Plain-Old-Ruby-Object support. Mapping and management of classes
+should be completely divorced from the class definitions outside of
+helpers for convenience (ActiveRecordImpersonation). A DSL for
+mapping should be created for convenience.
+
+=== 0.7.0
+The "polymorphic" release?
+
+=== 0.8.0
+The "acts_as" release?
+
+=== 0.9.0
+HQL support?
+
 ...

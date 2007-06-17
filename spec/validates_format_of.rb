@@ -3,7 +3,7 @@ context 'An Employee' do
   setup do
     class Employee
 
-      include DataMapper::Extensions::ValidationHelper
+      include DataMapper::Validations::ValidationHelper
       
       attr_accessor :email
     end
