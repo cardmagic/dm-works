@@ -10,9 +10,3 @@ def profile(&b)
     printer.print(file, 0)
   end
 end
-
-profile do
-  1000.times do
-    Zoo[:name => 'Galveston']
-  end
-end

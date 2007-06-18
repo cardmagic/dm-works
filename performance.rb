@@ -73,6 +73,14 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
     N.times { DMAnimal[1] }
   end
   
+  x.report('ActiveRecord:all') do
+    N.times { ARAnimal.find(:all) }
+  end
+  
+  x.report('DataMapper:all') do
+    N.times { DMAnimal.all }
+  end
+  
   x.report('ActiveRecord:conditions') do
     N.times { ARZoo.find(:first, :conditions => ['name = ?', 'Galveston']) }
   end

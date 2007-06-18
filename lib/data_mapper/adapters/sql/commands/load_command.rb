@@ -103,7 +103,7 @@ module DataMapper
               end
             end
             
-            reader = @adapter.connection { |db| db.query(to_sql) }
+            reader = execute(to_sql)
             
             results = if eof?(reader)
               nil
@@ -146,7 +146,9 @@ module DataMapper
                 end
                 instance.original_hashes[name] = value.hash
               end
-
+              
+              instance.instance_variable_set(:@__key, instance_id)
+              
               instance.class.callbacks.execute(:after_materialize, instance)
 
               @session.identity_map.set(instance)

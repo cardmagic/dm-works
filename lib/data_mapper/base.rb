@@ -150,8 +150,10 @@ module DataMapper
     end
     
     def key
-      key_column = session.schema[self.class].key
-      key_column.type_cast_value(instance_variable_get(key_column.instance_variable_name))
+      @__key || @__key = begin
+        key_column = session.schema[self.class].key
+        key_column.type_cast_value(instance_variable_get(key_column.instance_variable_name))
+      end
     end
     
     # Callbacks associated with this class.

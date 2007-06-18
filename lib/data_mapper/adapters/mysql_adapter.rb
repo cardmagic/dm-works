@@ -74,7 +74,9 @@ module DataMapper
         
         class TableExistsCommand
           def call
-            reader = @adapter.connection { |db| db.query(to_sql) }
+            sql = to_sql
+            @adapter.log.debug(sql)
+            reader = @adapter.connection { |db| db.query(sql) }
             result = reader.num_rows > 0
             reader.free
             result
@@ -85,12 +87,14 @@ module DataMapper
           
           def execute(sql)
             @adapter.connection do |db|
+              @adapter.log.debug(sql)
               db.query(sql)
               db.affected_rows > 0
             end
           end
           
           def execute_drop(sql)
+            @adapter.log.debug(sql)
             @adapter.connection { |db| db.query(sql) }
             true
           end
@@ -101,6 +105,7 @@ module DataMapper
           
           def execute_insert(sql)
             @adapter.connection do |db|
+              @adapter.log.debug(sql)
               db.query(sql)
               db.insert_id
             end
@@ -108,12 +113,14 @@ module DataMapper
           
           def execute_update(sql)
             @adapter.connection do |db|
+              @adapter.log.debug(sql)
               db.query(sql)
               db.affected_rows > 0
             end
           end
           
           def execute_create_table(sql)
+            @adapter.log.debug(sql)
             @adapter.connection { |db| db.query(sql) }
             true
           end
@@ -130,6 +137,7 @@ module DataMapper
           end
           
           def execute(sql)
+            @adapter.log.debug(sql)
             @adapter.connection { |db| db.query(to_sql) }
           end
           

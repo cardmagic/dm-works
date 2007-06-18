@@ -20,8 +20,9 @@ module DataMapper
       Database.context.last || Session.new(Database[name].adapter)
     else
       Database.context.push(Session.new(Database[name].adapter))
-      yield Database.context.last
+      result = yield(Database.context.last)
       Database.context.pop
+      result
     end
   end
   
