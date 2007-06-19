@@ -169,6 +169,27 @@ module DataMapper
             end
             results
           end
+          
+          def load_structs(reader)
+            struct = nil
+            columns = nil
+            results = []
+            
+            until reader.eof?
+              hash = reader.next
+              break if hash.nil?
+
+              if struct.nil?
+                columns = hash.keys.select { |c| c.is_a?(String) }
+                struct = Struct.new(*columns.map { |c| c.to_sym })
+              end
+              
+              results << struct.new(*columns.map { |c| hash[c] })
+            end
+            
+            reader.close
+            results
+          end
         end
         
       end # module Commands

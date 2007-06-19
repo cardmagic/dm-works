@@ -83,20 +83,8 @@ module DataMapper
           @adapter.quote_value(args.shift)
         end
       end
-
-      reader = @adapter.connection do |db|
-        db.query(sql)
-      end
       
-      columns = reader.columns.keys
-      klass = Struct.new(*columns.map { |c| c.to_sym })
-      
-      rows = reader.map do |row|
-        klass.new(*columns.map { |c| row[c] })
-      end
-      
-      reader.close
-      return rows
+      @adapter.load(self, Struct, :sql => sql)
     end
     
     def schema

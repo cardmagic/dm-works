@@ -67,6 +67,8 @@ module DataMapper
           end
 
           def to_sql
+            return @options[:sql] if @options.has_key?(:sql)
+            
             sql = 'SELECT ' << select.join(', ') << ' FROM ' << table
         
             where = []
@@ -89,6 +91,10 @@ module DataMapper
           end
           
           def call
+            
+            if @klass == Struct
+              return load_structs(execute(to_sql))
+            end
             
             if instance_id && !reload?
               if instance_id.kind_of?(Array)
@@ -180,6 +186,10 @@ module DataMapper
         end
         
         def fetch_all(reader)
+          raise NotImplementedError.new
+        end
+        
+        def load_structs(reader)
           raise NotImplementedError.new
         end
     

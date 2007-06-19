@@ -153,6 +153,25 @@ module DataMapper
             end
             results
           end
+          
+          def load_structs(reader)
+            struct = nil
+            columns = nil
+            results = []
+            
+            reader.each_hash do |hash|
+              if struct.nil?
+                columns = hash.keys
+                struct = Struct.new(*columns.map { |c| c.to_sym })
+              end
+              
+              results << struct.new(*columns.map { |c| hash[c] })
+            end
+            
+            reader.free
+            results
+            
+          end
         end
         
       end
