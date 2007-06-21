@@ -15,6 +15,14 @@ when 'sqlite3' then
     log_stream 'spec.log'
     log_level Logger::DEBUG
   end
+when 'postgresql' then
+  DataMapper::Database.setup do
+    adapter  'postgresql'
+    database 'data_mapper_1.db'
+    username 'postgres'
+    log_stream 'example.log'
+    log_level Logger::DEBUG
+  end
 else
   DataMapper::Database.setup do
     adapter 'mysql'

@@ -7,6 +7,14 @@ if ENV['ADAPTER'] == 'sqlite3'
     log_stream 'example.log'
     log_level Logger::DEBUG
   end
+elsif ENV['ADAPTER'] == 'postgresql'
+  DataMapper::Database.setup do
+    adapter  'postgresql'
+    database 'data_mapper_1.db'
+    username 'postgres'
+    log_stream 'example.log'
+    log_level Logger::DEBUG
+  end
 else
   DataMapper::Database.setup do
     adapter  'mysql'
