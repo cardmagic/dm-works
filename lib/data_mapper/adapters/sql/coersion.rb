@@ -42,7 +42,7 @@ module DataMapper
         
         def type_cast_integer(raw_value)
           return nil if raw_value.blank?
-          Integer(raw_value)
+          raw_value.to_i # Integer(raw_value) would be "safer", but not as fast.
         rescue ArgumentError
           nil
         end

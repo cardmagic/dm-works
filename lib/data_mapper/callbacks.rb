@@ -12,7 +12,10 @@ module DataMapper
       ]
       
     def initialize
-      @callbacks = Hash.new { |h,k| h[k.to_sym] = [] }
+      @callbacks = Hash.new do |h,k|
+        raise 'Callback names must be Symbols' unless k.kind_of?(Symbol)
+        h[k] = []
+      end
     end
     
     alias ruby_method_missing method_missing

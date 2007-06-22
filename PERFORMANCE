@@ -138,3 +138,21 @@ DataMapper:update                         0.310000   0.040000   0.350000 (  0.58
 ActiveRecord:associations:lazy            4.300000   0.450000   4.750000 (  8.165738)
 ActiveRecord:associations:included        4.540000   0.040000   4.580000 (  5.266950)
 DataMapper:associations                   5.190000   0.080000   5.270000 (  5.854497)
+
+
+DataMapper::Adapters::Sql::Coersion#type_cast_integer modified to use String#to_i instead of Integer():
+                                              user     system      total        real
+ActiveRecord:id                           0.110000   0.020000   0.130000 (  0.221287)
+DataMapper:id                             0.180000   0.020000   0.200000 (  0.300231)
+ActiveRecord:all                          0.220000   0.020000   0.240000 (  0.380518)
+DataMapper:all                            0.640000   0.020000   0.660000 (  0.796262)
+ActiveRecord:conditions                   0.100000   0.020000   0.120000 (  0.254120)
+DataMapper:conditions:short               0.180000   0.020000   0.200000 (  0.345947)
+DataMapper:conditions:long                0.180000   0.020000   0.200000 (  0.337786)
+ActiveRecord:insert                       5.940000   0.390000   6.330000 (  7.172553)
+DataMapper:insert                         0.920000   0.100000   1.020000 (  1.468706)
+ActiveRecord:update                       0.530000   0.080000   0.610000 (  0.926679)
+DataMapper:update                         0.310000   0.040000   0.350000 (  0.583789)
+ActiveRecord:associations:lazy            4.230000   0.460000   4.690000 (  8.100321)
+ActiveRecord:associations:included        4.480000   0.030000   4.510000 (  5.209363)
+DataMapper:associations                   5.180000   0.080000   5.260000 (  5.834756)
