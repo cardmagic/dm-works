@@ -129,6 +129,9 @@ module DataMapper
             load(reader.fetch_hash)
           end
           
+          # This changed a lot for performance reasons in revision 139.
+          # Obviously this is temporary since it doesn't scale to the other
+          # adapters at all.          
           def fetch_all(reader)
             set = []
             
