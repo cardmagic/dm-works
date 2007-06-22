@@ -18,9 +18,9 @@ when 'sqlite3' then
 when 'postgresql' then
   DataMapper::Database.setup do
     adapter  'postgresql'
-    database 'data_mapper_1.db'
+    database 'data_mapper_1'
     username 'postgres'
-    log_stream 'example.log'
+    log_stream 'spec.log'
     log_level Logger::DEBUG
   end
 else

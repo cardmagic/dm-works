@@ -10,7 +10,7 @@ if ENV['ADAPTER'] == 'sqlite3'
 elsif ENV['ADAPTER'] == 'postgresql'
   DataMapper::Database.setup do
     adapter  'postgresql'
-    database 'data_mapper_1.db'
+    database 'data_mapper_1'
     username 'postgres'
     log_stream 'example.log'
     log_level Logger::DEBUG
