@@ -26,12 +26,11 @@ module DataMapper
         end
       end
       
-      # Returns an available connection. Flushes the connection-pool if
+      # Yields an available connection. Flushes the connection-pool if
       # the connection returns an error.
       def connection
-        raise ArgumentError.new('MysqlAdapter#connection requires a block-parameter') unless block_given?
         begin
-          @connections.hold { |connection| yield connection }
+          @connections.hold { |dbh| yield(dbh) }
         rescue Mysql::Error => me
           
           @configuration.log.fatal(me)
@@ -51,24 +50,9 @@ module DataMapper
       
       TABLE_QUOTING_CHARACTER = '`'.freeze
       COLUMN_QUOTING_CHARACTER = '`'.freeze
-
-      def type_cast_boolean(value)
-        case value
-          when TrueClass, FalseClass then value
-          when "1", "true", "TRUE" then true
-          when "0", nil then false
-          else "Can't type-cast #{value.inspect} to a boolean"
-        end
-      end
-
-      def type_cast_datetime(value)
-        case value
-          when DateTime then value
-          when Date then DateTime.new(value)
-          when String then DateTime::parse(value)
-          else "Can't type-cast #{value.inspect} to a datetime"
-        end
-      end
+      
+      TRUE_ALIASES.unshift('1'.freeze)
+      FALSE_ALIASES.unshift('0'.freeze)
       
       module Commands
         
@@ -146,12 +130,70 @@ module DataMapper
           end
           
           def fetch_all(reader)
-            results = []
             set = []
-            reader.each_hash do |hash|
-              results << load(hash, set)
+            
+            fields = reader.fetch_fields
+            
+            instance_class = if type_override = fields.find { |field| field.name == 'type' }
+              type_name_field_index = fields.index(type_override)
+              type_name = reader.fetch_row[type_name_field_index]                            
+              Kernel::const_get(type_name)
+            else
+              klass
             end
-            results
+            
+            table = @adapter[instance_class]
+            
+            columns = []
+            key_ordinal = nil
+            
+            fields.each_with_index do |field, i|
+              column = table.find_by_column_name(field.name.to_sym)
+              key_ordinal = i if field.name.to_s == 'id'
+              columns << [ column, column.instance_variable_name, column.name ]
+            end
+            
+            instance_id = nil
+            instance = nil
+            column = nil
+            instance_variable_name = nil
+            
+            reader.each do |row|
+            
+              unless key_ordinal.nil?
+                instance_id = table.key.type_cast_value(row[key_ordinal])
+                instance = @session.identity_map.get(instance_class, instance_id)
+              else
+                instance_id = nil
+                instance = nil
+              end
+
+              if instance.nil? || reload?
+                instance = instance_class.new if instance.nil?
+                
+                instance.class.callbacks.execute(:before_materialize, instance)
+
+                instance.instance_variable_set(:@new_record, false)
+                
+                columns.each_with_index do |info, i|
+                  value = info[0].type_cast_value(row[i])
+                  instance.instance_variable_set(info[1], value)
+                  instance.original_hashes[info[2]] = value.hash
+                end
+              
+                instance.instance_variable_set(:@__key, instance_id)
+              
+                instance.class.callbacks.execute(:after_materialize, instance)
+                @session.identity_map.set(instance)
+              end
+
+              instance.instance_variable_set(:@loaded_set, set)
+              instance.session = @session
+              set << instance
+            
+            end # reader.each
+            
+            set.dup
           end
           
           def load_structs(reader)

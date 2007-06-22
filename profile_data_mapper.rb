@@ -1,3 +1,7 @@
+#!/opt/local/bin/ruby
+
+ENV['LOGGER'] = 'false'
+
 require 'example'
 require 'ruby-prof'
 
@@ -8,5 +12,11 @@ def profile(&b)
   printer = RubyProf::GraphHtmlPrinter.new(result)
   File::open('profile_results.html', 'w+') do |file|
     printer.print(file, 0)
+  end
+end
+
+profile do
+  1000.times do
+    Zoo.all
   end
 end

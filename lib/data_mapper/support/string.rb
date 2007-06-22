@@ -2,6 +2,11 @@ module DataMapper
   module Support
     module String
       
+      # I set the constant on the String itself to avoid inheritance chain lookups.
+      def self.included(base)
+        base.const_set('EMPTY', ''.freeze)
+      end
+      
       def ensure_starts_with(part)
         [0,1] == part ? self : (part + self)
       end

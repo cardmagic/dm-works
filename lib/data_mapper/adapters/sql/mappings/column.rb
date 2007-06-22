@@ -12,6 +12,12 @@ module DataMapper
           def initialize(adapter, name, type, options = {})
             @adapter = adapter
             @name, @type, @options = name.to_sym, type, options
+            
+            (class << self; self end).class_eval <<-EOS
+              def type_cast_value(value)
+                @adapter.type_cast_#{type}(value)
+              end
+            EOS
           end
     
           def lazy=(value)
@@ -43,10 +49,6 @@ module DataMapper
       
           def to_s
             @name.to_s
-          end
-      
-          def type_cast_value(value)
-            @adapter.type_cast_value(type, value)
           end
       
           def column_name

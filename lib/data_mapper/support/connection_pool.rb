@@ -1,4 +1,5 @@
-require 'thread'
+# See 'fastthread' dependency in data_mapper.rb
+# require 'thread' 
 
 module DataMapper
   module Support

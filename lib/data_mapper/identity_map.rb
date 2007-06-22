@@ -4,7 +4,9 @@ module DataMapper
   class IdentityMap
     
     def initialize
-      @cache = Hash.new { |h,k| h[k] = Support::WeakHash.new }
+      # WeakHash is much more expensive, and not necessary if the IdentityMap is tied to Session instead of Database.
+      # @cache = Hash.new { |h,k| h[k] = Support::WeakHash.new }
+      @cache = Hash.new { |h,k| h[k] = Hash.new }
     end
 
     def get(klass, key)
@@ -12,9 +14,10 @@ module DataMapper
     end
 
     def set(instance)
-      raise "Can't store an instance with a nil key in the IdentityMap" if instance.key == nil
+      instance_key = instance.key
+      raise "Can't store an instance with a nil key in the IdentityMap" if instance_key.nil?
         
-      @cache[instance.class][instance.key] = instance
+      @cache[instance.class][instance_key] = instance
     end
     
     def delete(instance)

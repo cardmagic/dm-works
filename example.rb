@@ -1,29 +1,27 @@
 require 'lib/data_mapper'
 
-if ENV['ADAPTER'] == 'sqlite3'
-  DataMapper::Database.setup do
-    adapter  'sqlite3'
-    database 'data_mapper_1.db'
+ENV['ADAPTER'] ||= 'mysql'
+
+DataMapper::Database.setup do
+  adapter  ENV['ADAPTER']
+  
+  unless ENV['LOGGER'] == 'false'
     log_stream 'example.log'
     log_level Logger::DEBUG
   end
-elsif ENV['ADAPTER'] == 'postgresql'
-  DataMapper::Database.setup do
-    adapter  'postgresql'
-    database 'data_mapper_1'
-    username 'postgres'
-    log_stream 'example.log'
-    log_level Logger::DEBUG
+  
+  database_name = 'data_mapper_1'
+  
+  case ENV['ADAPTER']
+    when 'postgresql' then
+      username 'postgres'
+    when 'mysql' then
+      username 'root'
+    when 'sqlite3' then
+      database_name << '.db'
   end
-else
-  DataMapper::Database.setup do
-    adapter  'mysql'
-    host     'localhost'
-    username 'root'
-    database 'data_mapper_1'
-    log_stream 'example.log'
-    log_level Logger::DEBUG
-  end
+  
+  database database_name
 end
 
 Dir[File.dirname(__FILE__) + '/spec/models/*.rb'].each do |path|
