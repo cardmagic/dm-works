@@ -102,23 +102,12 @@ module DataMapper
             normalized_conditions
             @has_id
           end
-      
+          
           def normalized_conditions
         
             if @normalized_conditions.nil?
               @normalized_conditions = []
-          
-              table = @adapter[@loader.klass]
-              invalid_keys = nil
-          
-              implicits = @loader.options.reject do |k,v|            
-                standard_key = DataMapper::Session::FIND_OPTIONS.include?(k)
-                (invalid_keys ||= []) << k if !standard_key && table[k.to_sym].nil?
-                standard_key
-              end
-          
-              raise "Invalid options: #{invalid_keys.inspect}" unless invalid_keys.nil?
-          
+
               normalize(implicits, @normalized_conditions)
           
               if @loader.options.has_key?(:conditions)
@@ -129,9 +118,36 @@ module DataMapper
         
             return @normalized_conditions          
           end
+          
+          def table
+            @table || (@table = @adapter[@loader.klass])
+          end
+          
+          def implicits
+            @implicits || @implicits = begin
+              
+              invalid_keys = false
+              
+              implicit_conditions = @loader.options.reject do |k,v|            
+                standard_key = @adapter.class::FIND_OPTIONS.include?(k)
+                invalid_keys = true if !standard_key && table[k.to_sym].nil?
+                standard_key
+              end
+              
+              if invalid_keys
+                invalid_keys = implicit_conditions.select do |k,v|
+                  table[k.to_sym].nil?
+                end
+                
+                raise "Invalid options: #{invalid_keys.inspect}" unless invalid_keys.nil?
+              else
+                implicit_conditions
+              end
+            end
+          end
       
           def empty?
-            normalized_conditions.empty?
+            !@loader.options.has_key?(:conditions) && implicits.empty? 
           end
       
           def to_a

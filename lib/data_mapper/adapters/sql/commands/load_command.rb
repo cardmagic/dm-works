@@ -1,4 +1,5 @@
 require File.dirname(__FILE__) + '/conditions'
+require 'inline'
 
 module DataMapper
   module Adapters
@@ -58,18 +59,18 @@ module DataMapper
             end
           end
       
-          def table
+          def table_name
             @table_name || @table_name = if @options.has_key?(:table)
               @adapter.quote_table_name(@options[:table])
             else
               @adapter[klass].to_sql
             end
           end
-
+          
           def to_sql
             return @options[:sql] if @options.has_key?(:sql)
             
-            sql = 'SELECT ' << select.join(', ') << ' FROM ' << table
+            sql = 'SELECT ' << select.join(', ') << ' FROM ' << table_name
         
             where = []
         
@@ -167,7 +168,7 @@ module DataMapper
           end
       
         end
-        
+          
         protected
         def count_rows(reader)
           raise NotImplementedError.new

@@ -43,7 +43,11 @@ module DataMapper
     # standard sub-modules (Quoting, Coersion and Queries) in your own Adapter.
     # You can extend and overwrite these copies without affecting the originals.
     class SqlAdapter < AbstractAdapter
-  
+      
+      FIND_OPTIONS = [
+        :select, :limit, :class, :include, :reload, :conditions, :order
+      ]
+         
       def connection(&block)
         raise NotImplementedError.new
       end
@@ -93,6 +97,8 @@ module DataMapper
         end  
         
         base.const_set('TYPES', TYPES.dup)
+        base.const_set('FIND_OPTIONS', FIND_OPTIONS.dup)
+        
         super
       end
       

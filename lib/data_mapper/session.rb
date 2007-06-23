@@ -3,10 +3,6 @@ require 'data_mapper/identity_map'
 module DataMapper
   
   class Session
-    
-    FIND_OPTIONS = [
-        :select, :limit, :class, :include, :reload, :conditions, :order
-      ]
       
     class MaterializationError < StandardError
     end
