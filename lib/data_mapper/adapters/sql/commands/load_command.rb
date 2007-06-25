@@ -166,35 +166,72 @@ module DataMapper
             set << instance
             return instance
           end
-      
-        end
           
-        protected
-        def count_rows(reader)
-          raise NotImplementedError.new
-        end
-        
-        def close_reader(reader)
-          raise NotImplementedError.new
-        end
-        
-        def execute(sql)
-          raise NotImplementedError.new
-        end
-        
-        def fetch_one(reader)
-          raise NotImplementedError.new
-        end
-        
-        def fetch_all(reader)
-          raise NotImplementedError.new
-        end
-        
-        def load_structs(reader)
-          raise NotImplementedError.new
-        end
-    
-      end
-    end
-  end
-end
+          def create_instance(instance_class, instance_id)
+            instance = @session.identity_map.get(instance_class, instance_id)
+            
+            if instance.nil? || reload?
+              instance = instance_class.new()
+              instance.instance_variable_set(:@__key, instance_id)
+              instance.instance_variable_set(:@new_record, false)
+              @session.identity_map.set(instance)
+            end
+            
+            instance.session = @session
+            
+            return instance
+          end
+          
+          def load_instance(instance, columns, values, set = [])
+            
+            instance.class.callbacks.execute(:before_materialize, instance)
+            
+            hashes = {}
+            
+            columns.each_pair do |column, i|
+              hashes[column.name] = instance.instance_variable_set(
+                column.instance_variable_name,
+                column.type_cast_value(values[i])
+              ).hash
+            end
+            
+            instance.instance_variable_set(:@original_hashes, hashes)
+            
+            instance.instance_variable_set(:@loaded_set, set)
+            set << instance
+            
+            instance.class.callbacks.execute(:after_materialize, instance)
+            
+            return instance
+          end
+
+          protected
+          def count_rows(reader)
+            raise NotImplementedError.new
+          end
+
+          def close_reader(reader)
+            raise NotImplementedError.new
+          end
+
+          def execute(sql)
+            raise NotImplementedError.new
+          end
+
+          def fetch_one(reader)
+            raise NotImplementedError.new
+          end
+
+          def fetch_all(reader)
+            raise NotImplementedError.new
+          end
+
+          def load_structs(reader)
+            raise NotImplementedError.new
+          end
+          
+        end # class LoadCommand
+      end # module Commands
+    end # module Sql
+  end # module Adapters
+end # module DataMapper

@@ -128,73 +128,43 @@ module DataMapper
           def fetch_one(reader)
             load(reader.fetch_hash)
           end
-          
-          # This changed a lot for performance reasons in revision 139.
-          # Obviously this is temporary since it doesn't scale to the other
-          # adapters at all.          
+             
           def fetch_all(reader)
-            set = []
+            
+            # instance_class = if type_override = fields.find { |field| field.name == 'type' }
+            #   type_name_field_index = fields.index(type_override)
+            #   type_name = reader.fetch_row[type_name_field_index]                            
+            #   Kernel::const_get(type_name)
+            # else
+            #   klass
+            # end
             
             fields = reader.fetch_fields
             
-            instance_class = if type_override = fields.find { |field| field.name == 'type' }
-              type_name_field_index = fields.index(type_override)
-              type_name = reader.fetch_row[type_name_field_index]                            
-              Kernel::const_get(type_name)
-            else
-              klass
-            end
+            table = @adapter[klass]
             
-            table = @adapter[instance_class]
-            
-            columns = []
+            set = []
+            columns = {}
             key_ordinal = nil
+            key_column = table.key
             
             fields.each_with_index do |field, i|
               column = table.find_by_column_name(field.name.to_sym)
               key_ordinal = i if field.name.to_s == 'id'
-              columns << [ column, column.instance_variable_name, column.name ]
+              columns[column] = i
             end
             
-            instance_id = nil
-            instance = nil
-            column = nil
-            instance_variable_name = nil
-            
             reader.each do |row|
-            
-              unless key_ordinal.nil?
-                instance_id = table.key.type_cast_value(row[key_ordinal])
-                instance = @session.identity_map.get(instance_class, instance_id)
-              else
-                instance_id = nil
-                instance = nil
-              end
-
-              if instance.nil? || reload?
-                instance = instance_class.new if instance.nil?
-                
-                instance.class.callbacks.execute(:before_materialize, instance)
-
-                instance.instance_variable_set(:@new_record, false)
-                
-                columns.each_with_index do |info, i|
-                  value = info[0].type_cast_value(row[i])
-                  instance.instance_variable_set(info[1], value)
-                  instance.original_hashes[info[2]] = value.hash
-                end
-              
-                instance.instance_variable_set(:@__key, instance_id)
-              
-                instance.class.callbacks.execute(:after_materialize, instance)
-                @session.identity_map.set(instance)
-              end
-
-              instance.instance_variable_set(:@loaded_set, set)
-              instance.session = @session
-              set << instance
-            
-            end # reader.each
+              load_instance(
+                create_instance(
+                  klass,
+                  key_column.type_cast_value(row[key_ordinal])
+                ),
+                columns,
+                row,
+                set
+              )
+            end
             
             set.dup
           end
