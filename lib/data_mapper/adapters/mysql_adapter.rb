@@ -130,43 +130,7 @@ module DataMapper
           end
              
           def fetch_all(reader)
-            
-            # instance_class = if type_override = fields.find { |field| field.name == 'type' }
-            #   type_name_field_index = fields.index(type_override)
-            #   type_name = reader.fetch_row[type_name_field_index]                            
-            #   Kernel::const_get(type_name)
-            # else
-            #   klass
-            # end
-            
-            fields = reader.fetch_fields
-            
-            table = @adapter[klass]
-            
-            set = []
-            columns = {}
-            key_ordinal = nil
-            key_column = table.key
-            
-            fields.each_with_index do |field, i|
-              column = table.find_by_column_name(field.name.to_sym)
-              key_ordinal = i if field.name.to_s == 'id'
-              columns[column] = i
-            end
-            
-            reader.each do |row|
-              load_instance(
-                create_instance(
-                  klass,
-                  key_column.type_cast_value(row[key_ordinal])
-                ),
-                columns,
-                row,
-                set
-              )
-            end
-            
-            set.dup
+            load_instances(reader.fetch_fields.map { |field| field.name }, reader)
           end
           
           def load_structs(reader)

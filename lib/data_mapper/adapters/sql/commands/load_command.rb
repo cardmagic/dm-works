@@ -167,6 +167,77 @@ module DataMapper
             return instance
           end
           
+          def load_instances(fields, rows)            
+            table = @adapter[klass]
+            
+            set = []
+            columns = {}
+            key_ordinal = nil
+            key_column = table.key
+            type_ordinal = nil
+            type_column = nil
+            
+            fields.each_with_index do |field, i|
+              column = table.find_by_column_name(field.to_sym)
+              key_ordinal = i if column.key?
+              type_ordinal, type_column = i, column if column.name == :type
+              columns[column] = i
+            end
+            
+            if type_ordinal
+              
+              tables = Hash.new() do |h,k|
+                
+                table_for_row = @adapter[k.blank? ? klass : type_column.type_cast_value(k)]
+                key_ordinal_for_row = nil
+                columns_for_row = {}
+                
+                fields.each_with_index do |field, i|
+                  column = table_for_row.find_by_column_name(field.to_sym)
+                  key_ordinal_for_row = i if column.key?
+                  columns_for_row[column] = i
+                end
+                
+                h[k] = [ table_for_row.klass, table_for_row.key, key_ordinal_for_row, columns_for_row ]
+              end
+              
+              rows.each do |row|
+                klass_for_row, key_column_for_row, key_ordinal_for_row, columns_for_row = *tables[row[type_ordinal]]
+                
+                load_instance(
+                  create_instance(
+                    klass_for_row,
+                    key_column_for_row.type_cast_value(row[key_ordinal_for_row])
+                  ),
+                  columns_for_row,
+                  row,
+                  set
+                )
+              end
+            else
+              rows.each do |row|
+                load_instance(
+                  create_instance(
+                    klass,
+                    key_column.type_cast_value(row[key_ordinal])
+                  ),
+                  columns,
+                  row,
+                  set
+                )
+              end
+            end
+            
+            set.dup
+          end
+          
+          # Create an instance for the specified Class and id in
+          # preparation for loading. This method first checks to
+          # see if the instance is in the IdentityMap.
+          # If not, then a new class is created, it's marked as
+          # not-new, the key is set and it's added to the IdentityMap.
+          # Afterwards the instance's Session is updated to the current
+          # session, and the instance returned.
           def create_instance(instance_class, instance_id)
             instance = @session.identity_map.get(instance_class, instance_id)
             

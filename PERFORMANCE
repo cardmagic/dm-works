@@ -1,3 +1,6 @@
+Most tests are run on a 2.16Ghz Core2Duo iMac.
+Asterisk (*) indicates test run on 2.0Ghz Core2Duo MacBook.
+
 Baseline: Revision 104.
 
                                               user     system      total        real
@@ -194,7 +197,7 @@ ActiveRecord:associations:included        4.650000   0.030000   4.680000 (  5.36
 DataMapper:associations                   5.090000   0.080000   5.170000 (  5.742339)
 
 
-MysqlAdapter::Commands::LoadCommand#fetch_all (original):
+* MysqlAdapter::Commands::LoadCommand#fetch_all (original):
                                               user     system      total        real
 ActiveRecord:id                           0.120000   0.030000   0.150000 (  0.258177)
 DataMapper:id                             0.210000   0.030000   0.240000 (  0.356305)
@@ -212,7 +215,7 @@ ActiveRecord:associations:included        4.920000   0.090000   5.010000 (  5.72
 DataMapper:associations                   6.720000   0.220000   6.940000 (  7.578226)
 
 
-MysqlAdapter::Commands::LoadCommand#fetch_all (optimized):
+* MysqlAdapter::Commands::LoadCommand#fetch_all (optimized):
                                               user     system      total        real
 ActiveRecord:id                           0.120000   0.030000   0.150000 (  0.260296)
 DataMapper:id                             0.220000   0.030000   0.250000 (  0.363559)
@@ -228,3 +231,21 @@ DataMapper:update                         0.350000   0.050000   0.400000 (  0.67
 ActiveRecord:associations:lazy            4.810000   0.770000   5.580000 (  9.459126)
 ActiveRecord:associations:included        4.950000   0.090000   5.040000 (  5.758935)
 DataMapper:associations                   6.320000   0.220000   6.540000 (  7.172041)
+
+Repeat on iMac:
+                                              user     system      total        real
+ActiveRecord:id                           0.100000   0.020000   0.120000 (  0.219094)
+DataMapper:id                             0.190000   0.020000   0.210000 (  0.303379)
+ActiveRecord:all                          0.220000   0.020000   0.240000 (  0.380277)
+DataMapper:all                            0.630000   0.020000   0.650000 (  0.796209)
+ActiveRecord:conditions                   0.100000   0.020000   0.120000 (  0.258002)
+DataMapper:conditions:short               0.180000   0.020000   0.200000 (  0.348820)
+DataMapper:conditions:long                0.170000   0.020000   0.190000 (  0.337768)
+ActiveRecord:insert                       5.930000   0.390000   6.320000 (  7.180595)
+DataMapper:insert                         0.930000   0.090000   1.020000 (  1.480698)
+ActiveRecord:update                       0.530000   0.090000   0.620000 (  0.931558)
+DataMapper:update                         0.310000   0.040000   0.350000 (  0.583486)
+ActiveRecord:associations:lazy            4.190000   0.450000   4.640000 (  8.058710)
+ActiveRecord:associations:included        4.530000   0.030000   4.560000 (  5.260562)
+DataMapper:associations                   5.820000   0.070000   5.890000 (  6.480988)
+

@@ -197,13 +197,7 @@ module DataMapper
           end
           
           def fetch_all(pg_result)
-            results = []
-            set = []
-            columns = columns(pg_result)
-            pg_result.each do |row|
-              results << load(process_row(columns, row), set)
-            end
-            results
+            load_instances(pg_result.fields, pg_result)
           end
           
           def load_structs(pg_result)

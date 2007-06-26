@@ -1,8 +1,8 @@
 require 'active_record'
 
-ActiveRecord::Base.establish_connection :adapter => 'mysql',
+ActiveRecord::Base.establish_connection :adapter => 'postgresql',
   :host     => 'localhost',
-  :username => 'root',
+  :username => 'postgres',
   :password => '',
   :database => 'data_mapper_1'
       
@@ -22,8 +22,8 @@ require 'fileutils'
 FileUtils::rm log_path if File.exists?(log_path)
 
 DataMapper::Database.setup do
-  adapter   'mysql'
-  username 'root'
+  adapter   'postgresql'
+  username 'postgres'
   database 'data_mapper_1'
 end
 
@@ -123,7 +123,7 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
   
   x.report('ActiveRecord:update') do
     N.times do
-      bob = ARAnimal.find(:first, :conditions => ["name = ?", 'elephant'])
+      bob = ARAnimal.find(:first, :conditions => ["name = ?", 'Elephant'])
       bob.notes = 'Updated by ActiveRecord'
       bob.save
     end
@@ -131,7 +131,7 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
   
   x.report('DataMapper:update') do
     N.times do
-      bob = DMAnimal.first(:name => 'elephant')
+      bob = DMAnimal.first(:name => 'Elephant')
       bob.notes = 'Updated by DataMapper'
       bob.save
     end

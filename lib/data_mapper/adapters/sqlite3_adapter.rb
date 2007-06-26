@@ -160,14 +160,19 @@ module DataMapper
           end
           
           def fetch_all(reader)
-            results = []
-            set = []
+            fields = nil
+            rows = []
+            
             until reader.eof?
               hash = reader.next
               break if hash.nil?
-              results << load(hash, set)
+              
+              fields = hash.keys.select { |field| field.is_a?(String) } unless fields
+              
+              rows << fields.map { |name| hash[name] }
             end
-            results
+            
+            load_instances(fields, rows)
           end
           
           def load_structs(reader)
