@@ -200,22 +200,14 @@ module DataMapper
             load_instances(pg_result.fields, pg_result)
           end
           
-          def load_structs(pg_result)
-            struct = nil
-            columns = columns(pg_result)
-            results = []
+          def fetch_structs(pg_result)
+            fields = pg_result.fields
             
-            pg_result.result.each do |row|
-              if struct.nil?
-                struct = Struct.new(*columns.keys.map { |c| c.to_sym })
-              end
-              hash = process_row(columns, row)
-              results << struct.new(*columns.keys.map { |c| hash[c] })
+            columns = fields.inject({}) do |h,field|
+              h[field] = fields.index(field); h
             end
             
-            pg_result.clear
-            results
-            
+            load_structs(columns, pg_result)
           end
 
           private

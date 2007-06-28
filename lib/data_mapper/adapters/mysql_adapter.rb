@@ -126,31 +126,23 @@ module DataMapper
           end
           
           def fetch_one(reader)
-            load(reader.fetch_hash)
+            fetch_all(reader).first
           end
              
           def fetch_all(reader)
             load_instances(reader.fetch_fields.map { |field| field.name }, reader)
           end
           
-          def load_structs(reader)
-            struct = nil
-            columns = nil
-            results = []
+          def fetch_structs(reader)
+            fields = reader.fetch_fields
             
-            reader.each_hash do |hash|
-              if struct.nil?
-                columns = hash.keys
-                struct = Struct.new(*columns.map { |c| c.to_sym })
-              end
-              
-              results << struct.new(*columns.map { |c| hash[c] })
+            columns = fields.inject({}) do |h,field|
+              h[field.name] = fields.index(field); h
             end
             
-            reader.free
-            results
-            
+            load_structs(columns, reader)
           end
+          
         end
         
       end

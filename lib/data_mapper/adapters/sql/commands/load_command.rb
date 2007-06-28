@@ -94,7 +94,10 @@ module DataMapper
           def call
             
             if @klass == Struct
-              return load_structs(execute(to_sql))
+              reader = execute(to_sql)
+              results = fetch_structs(reader)
+              close_reader(reader)
+              return results              
             end
             
             if instance_id && !reload?
@@ -102,16 +105,16 @@ module DataMapper
                 instances = instance_id.map do |id|
                   @session.identity_map.get(klass, id)
                 end.compact
-                
+              
                 return instances if instances.size == instance_id.size
               else
                 instance = @session.identity_map.get(klass, instance_id)
                 return instance unless instance.nil?
               end
             end
-            
+          
             reader = execute(to_sql)
-            
+          
             results = if eof?(reader)
               nil
             elsif limit == 1 || ( instance_id && !instance_id.kind_of?(Array) )
@@ -275,6 +278,21 @@ module DataMapper
             
             return instance
           end
+          
+          def load_structs(columns, reader)
+            results = []
+            
+            ordered_columns = columns.keys
+            struct = Struct.new(*ordered_columns.map { |c| c.to_sym })
+            
+            reader.each do |row|
+              results << struct.new(*ordered_columns.map do |column|
+                row[columns[column]]
+              end)
+            end
+            
+            results
+          end
 
           protected
           def count_rows(reader)
@@ -297,7 +315,7 @@ module DataMapper
             raise NotImplementedError.new
           end
 
-          def load_structs(reader)
+          def fetch_structs(reader)
             raise NotImplementedError.new
           end
           

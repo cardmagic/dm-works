@@ -175,25 +175,24 @@ module DataMapper
             load_instances(fields, rows)
           end
           
-          def load_structs(reader)
-            struct = nil
-            columns = nil
-            results = []
+          def fetch_structs(reader)
+            fields = nil
+            rows = []
             
             until reader.eof?
               hash = reader.next
               break if hash.nil?
-
-              if struct.nil?
-                columns = hash.keys.select { |c| c.is_a?(String) }
-                struct = Struct.new(*columns.map { |c| c.to_sym })
-              end
               
-              results << struct.new(*columns.map { |c| hash[c] })
+              fields = hash.keys.select { |field| field.is_a?(String) } unless fields
+              
+              rows << fields.map { |name| hash[name] }
             end
             
-            reader.close
-            results
+            fields = fields.inject({}) do |h,f|
+              h[f] = fields.index(f); h
+            end
+            
+            load_structs(fields, rows)
           end
         end
         
