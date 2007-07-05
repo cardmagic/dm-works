@@ -20,3 +20,21 @@ profile do
     Zoo.all
   end
 end
+
+# require 'benchmark'
+# 
+# N = 100_000
+# 
+# Benchmark::bmbm do |x|
+#   x.report do
+#     N.times do
+#       Inflector.underscore('DataMapper')
+#     end    
+#   end
+# 
+#   x.report do
+#     N.times do
+#       String::memoized_underscore('DataMapper')
+#     end
+#   end
+# end

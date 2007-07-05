@@ -56,6 +56,10 @@ module DataMapper
         raise NotImplementedError.new
       end
       
+      def query(sql)
+        raise NotImplementedError.new
+      end
+      
       def schema
         @schema || ( @schema = Mappings::Schema.new(self) )
       end
@@ -78,6 +82,36 @@ module DataMapper
       
       def [](klass_or_table_name)
         schema[klass_or_table_name]
+      end
+      
+      # Escape a string of SQL with a set of arguments.
+      # The first argument is assumed to be the SQL to escape,
+      # the remaining arguments (if any) are assumed to be
+      # values to escape and interpolate.
+      #
+      # ==== Examples
+      #   escape_sql("SELECT * FROM zoos")
+      #   # => "SELECT * FROM zoos"
+      # 
+      #   escape_sql("SELECT * FROM zoos WHERE name = ?", "Dallas")
+      #   # => "SELECT * FROM zoos WHERE name = `Dallas`"
+      #
+      #   escape_sql("SELECT * FROM zoos WHERE name = ? AND acreage > ?", "Dallas", 40)
+      #   # => "SELECT * FROM zoos WHERE name = `Dallas` AND acreage > 40"
+      # 
+      # ==== Warning
+      # This method is meant mostly for adapters that don't support
+      # bind-parameters.
+      def escape_sql(*args)
+        sql = args.shift
+      
+        unless args.empty?
+          sql.gsub!(/\?/) do |x|
+            quote_value(args.shift)
+          end
+        end
+        
+        sql
       end
       
       # This callback copies and sub-classes modules and classes

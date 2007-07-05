@@ -51,6 +51,20 @@ module DataMapper
         end
       end
       
+      def query(*args)
+        pg_result = connection { |db| db.exec(escape_sql(*args)) }
+        
+        struct = Struct.new(*pg_result.fields.map { |field| Inflector.underscore(field).to_sym })
+        results = []
+        
+        pg_result.each do |row|
+          results << struct.new(*row)
+        end
+        
+        pg_result.clear
+        return results
+      end
+      
       TABLE_QUOTING_CHARACTER = '"'.freeze
       COLUMN_QUOTING_CHARACTER = '"'.freeze
 
@@ -198,16 +212,6 @@ module DataMapper
           
           def fetch_all(pg_result)
             load_instances(pg_result.fields, pg_result)
-          end
-          
-          def fetch_structs(pg_result)
-            fields = pg_result.fields
-            
-            columns = fields.inject({}) do |h,field|
-              h[field] = fields.index(field); h
-            end
-            
-            load_structs(columns, pg_result)
           end
 
           private

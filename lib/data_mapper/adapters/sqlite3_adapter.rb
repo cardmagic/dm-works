@@ -38,6 +38,30 @@ module DataMapper
         end
       end
       
+      def query(*args)
+        reader = connection { |db| db.query(escape_sql(*args)) }
+        
+        fields = nil
+        rows = []
+        
+        until reader.eof?
+          hash = reader.next
+          break if hash.nil?
+          
+          fields = hash.keys.select { |field| field.is_a?(String) } unless fields
+          
+          rows << fields.map { |field| hash[field] }
+        end
+        
+        reader.close
+        
+        struct = Struct.new(*fields.map { |field| Inflector.underscore(field).to_sym })
+        
+        rows.map do |row|
+          struct.new(*row)
+        end
+      end
+      
       TYPES.merge!({
         :integer => 'INTEGER'.freeze,
         :string => 'TEXT'.freeze,
@@ -197,7 +221,7 @@ module DataMapper
         end
         
       end # module Commands
-        
+      
     end # class Sqlite3Adapter
     
   end # module Adapters

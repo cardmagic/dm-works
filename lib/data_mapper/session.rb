@@ -70,17 +70,8 @@ module DataMapper
       @adapter[klass].exists?
     end
     
-    # Currently broken...
-    def query(*args)
-      sql = args.shift
-      
-      unless args.empty?
-        sql.gsub!(/\?/) do |x|
-          @adapter.quote_value(args.shift)
-        end
-      end
-      
-      @adapter.load(self, Struct, :sql => sql)
+    def query(*args)      
+      @adapter.query(*args)
     end
     
     def schema

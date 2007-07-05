@@ -48,6 +48,30 @@ module DataMapper
         end
       end
       
+      def execute(*args)
+        connection do |db|
+          reader = db.query(escape_sql(*args))
+          result = yield(reader, reader.fetch_fields.map { |field| field.name })
+          reader.free
+          result
+        end
+      end
+      
+      def query(*args)
+        
+        execute(*args) do |reader, fields|
+          struct = Struct.new(*fields.map { |field| String::memoized_underscore(field).to_sym })
+          
+          results = []
+          
+          reader.each do |row|
+            results << struct.new(*row)
+          end
+          results
+          
+        end
+      end
+      
       TABLE_QUOTING_CHARACTER = '`'.freeze
       COLUMN_QUOTING_CHARACTER = '`'.freeze
       
@@ -131,16 +155,6 @@ module DataMapper
              
           def fetch_all(reader)
             load_instances(reader.fetch_fields.map { |field| field.name }, reader)
-          end
-          
-          def fetch_structs(reader)
-            fields = reader.fetch_fields
-            
-            columns = fields.inject({}) do |h,field|
-              h[field.name] = fields.index(field); h
-            end
-            
-            load_structs(columns, reader)
           end
           
         end

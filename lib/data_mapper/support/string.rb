@@ -25,4 +25,15 @@ end # module DataMapper
 
 class String #:nodoc:
   include DataMapper::Support::String
+  
+  def self.fragile_underscore(camel_cased_word)
+    camel_cased_word.gsub(/([a-z\d])([A-Z])/,'\1_\2').downcase
+  end
+  
+  @underscore_cache = Hash.new { |h,k| h[k.freeze] = fragile_underscore(k) }
+  
+  def self.memoized_underscore(camel_cased_word)
+    @underscore_cache[camel_cased_word]
+  end
+  
 end

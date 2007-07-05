@@ -60,7 +60,7 @@ module DataMapper
       
       raise ArgumentError.new('The adapter is readonly after being set') unless @adapter.nil?
       
-      require "data_mapper/adapters/#{Inflector.underscore(value)}_adapter"
+      require "data_mapper/adapters/#{String::memoized_underscore(value)}_adapter"
       adapter_class = Adapters::const_get(Inflector.classify(value) + "Adapter")
       
       @adapter = adapter_class.new(self)
