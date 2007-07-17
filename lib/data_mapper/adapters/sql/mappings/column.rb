@@ -9,8 +9,9 @@ module DataMapper
     
           attr_accessor :name, :type, :options
     
-          def initialize(adapter, name, type, options = {})
+          def initialize(adapter, table, name, type, options = {})
             @adapter = adapter
+            @table = table
             @name, @type, @options = name.to_sym, type, options
             
             (class << self; self end).class_eval <<-EOS
@@ -55,8 +56,14 @@ module DataMapper
             @column_name || (@column_name = (@options.has_key?(:column) ? @options[:column].to_s : name.to_s.gsub(/\?$/, '')).freeze)
           end
       
-          def to_sql
-            @to_sql || (@to_sql = @adapter.quote_column_name(column_name).freeze)
+          def to_sql(include_table_name = false)
+            if include_table_name
+              @to_sql_with_table_name || @to_sql_with_table_name = begin
+                (@table.to_sql + '.' + @adapter.quote_column_name(column_name)).freeze
+              end
+            else
+              @to_sql || (@to_sql = @adapter.quote_column_name(column_name).freeze)
+            end
           end
       
           def size

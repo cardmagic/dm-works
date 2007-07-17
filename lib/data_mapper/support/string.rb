@@ -19,6 +19,10 @@ module DataMapper
         ensure_starts_with(a).ensure_ends_with(b || a)
       end
       
+      def compress_lines
+        gsub(/\s+/, ' ').strip
+      end
+      
     end # module String
   end # module Support
 end # module DataMapper

@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 require 'lib/data_mapper'
 
 ENV['ADAPTER'] ||= 'mysql'

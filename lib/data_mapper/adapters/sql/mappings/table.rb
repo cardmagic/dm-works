@@ -7,6 +7,23 @@ module DataMapper
     
         class Table
       
+          class Association
+            def initialize(association_name, constant_name)
+              @association_name, @constant_name = association_name, constant_name
+            end
+            
+            def name
+              @association_name
+            end
+            
+            def constant
+              @constant || @constant = begin
+                Object.const_get(@constant_name)
+              end
+            end
+            
+          end
+            
           attr_reader :klass
       
           def initialize(adapter, setup_klass)
@@ -16,8 +33,17 @@ module DataMapper
             @columns = []
             @columns_hash = Hash.new { |h,k| h[k] = @columns.find { |c| c.name == k } }
             @columns_by_column_name = Hash.new { |h,k| h[k.to_s] = @columns.find { |c| c.column_name == k.to_s } }
+            @has_many = []
           end
       
+          def has_many(association_name, options)
+            @has_many << [ Association.new(association_name, Inflector.classify(Inflector.singularize(association_name.to_s))) ]
+          end
+          
+          def has_many_associations
+            @has_many
+          end
+          
           def columns
             key if @key.nil?
             @columns
@@ -39,9 +65,9 @@ module DataMapper
             if @key.nil?
               key_column = @columns.find { |c| c.key? }
               @key = if key_column.nil?
-                add_column(:id, :integer, :key => true)
+                column = add_column(:id, :integer, :key => true)
                 @klass.send(:attr_reader, :id) unless @klass.methods.include?(:id)
-                @columns.last
+                column
               else
                 key_column
               end
@@ -55,8 +81,8 @@ module DataMapper
         
             if column.nil?
               reset_derived_columns!
-              column = Column.new(@adapter, column_name, type, options)
-              @columns << column
+              column = Column.new(@adapter, self, column_name, type, options)
+              @columns.send(column_name == :id ? :unshift : :push, column)
             end
         
             return column

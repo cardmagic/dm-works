@@ -1,5 +1,4 @@
 require File.dirname(__FILE__) + '/conditions'
-require 'inline'
 
 module DataMapper
   module Adapters

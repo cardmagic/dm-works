@@ -7,6 +7,8 @@ module DataMapper
     class MaterializationError < StandardError
     end
     
+    attr_reader :adapter
+    
     def initialize(adapter)
       @adapter = adapter
     end
