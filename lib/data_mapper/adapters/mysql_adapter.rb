@@ -20,31 +20,56 @@ module DataMapper
       
       def initialize(configuration)
         super
-        # Initialize the connection pool.
-        @connections = Support::ConnectionPool.new do
+        
+        create_connection = lambda do
           Mysql.new(configuration.host, configuration.username, configuration.password, configuration.database)
+        end
+        
+        # Initialize the connection pool.
+        if single_threaded?
+          @connection_factory = create_connection
+          @active_connection = create_connection[]
+        else
+          @connections = Support::ConnectionPool.new(&create_connection)
         end
       end
       
       # Yields an available connection. Flushes the connection-pool if
       # the connection returns an error.
       def connection
-        begin
-          @connections.hold { |dbh| yield(dbh) }
-        rescue Mysql::Error => me
-          
-          @configuration.log.fatal(me)
-          
-          @connections.available_connections.each do |sock|
+        
+        if single_threaded?
+          begin
+            yield(@active_connection)
+          rescue Mysql::Error => me
+            @configuration.log.fatal(me)
+            
             begin
-              sock.close
+              @active_connection.close
             rescue => se
               @configuration.log.error(se)
             end
+            
+            @active_connection = @connection_factory[]
           end
+        else
+          begin
+            @connections.hold { |dbh| yield(dbh) }
+          rescue Mysql::Error => me
           
-          @connections.available_connections.clear
-          raise me
+            @configuration.log.fatal(me)
+          
+            @connections.available_connections.each do |sock|
+              begin
+                sock.close
+              rescue => se
+                @configuration.log.error(se)
+              end
+            end
+          
+            @connections.available_connections.clear
+            raise me
+          end
         end
       end
       

@@ -48,7 +48,16 @@ module DataMapper
       FIND_OPTIONS = [
         :select, :limit, :class, :include, :reload, :conditions, :order
       ]
-         
+      
+      def initialize(configuration)
+        super
+        @single_threaded = configuration.single_threaded
+      end
+      
+      def single_threaded?
+        @single_threaded
+      end
+           
       def connection(&block)
         raise NotImplementedError.new
       end

@@ -1,8 +1,8 @@
 require 'active_record'
 
-ActiveRecord::Base.establish_connection :adapter => 'postgresql',
+ActiveRecord::Base.establish_connection :adapter => 'mysql',
   :host     => 'localhost',
-  :username => 'postgres',
+  :username => 'root',
   :password => '',
   :database => 'data_mapper_1'
       
@@ -22,9 +22,9 @@ require 'fileutils'
 FileUtils::rm log_path if File.exists?(log_path)
 
 DataMapper::Database.setup do
-  adapter   'postgresql'
-  username 'postgres'
+  adapter   'mysql'
   database 'data_mapper_1'
+  username 'root'
 end
 
 class DMAnimal < DataMapper::Base

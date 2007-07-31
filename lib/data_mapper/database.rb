@@ -70,6 +70,7 @@ module DataMapper
     def database(value = nil); value.nil? ? @database : @database = value end
     def username(value = nil); value.nil? ? @username : @username = value end
     def password(value = nil); value.nil? ? (@password || '') : @password = value end
+    def single_threaded(value = nil); value.nil? ? (@single_threaded || TRUE) : @single_threaded = value end
     
     def log(value = nil)
       @log = value unless value.nil?
