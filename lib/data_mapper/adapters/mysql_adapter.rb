@@ -40,6 +40,9 @@ module DataMapper
         
         if single_threaded?
           begin
+            # BUG: Single_threaded mode totally breaks shit right now. No real idea why just from
+            # eyeballing this. Probably should move this into the SqlAdapter anyways and just
+            # force derived adapters to implement a #create_connection() and #close_connection(conn) methods.
             yield(@active_connection)
           rescue Mysql::Error => me
             @configuration.log.fatal(me)

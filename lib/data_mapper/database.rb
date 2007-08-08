@@ -70,7 +70,9 @@ module DataMapper
     def database(value = nil); value.nil? ? @database : @database = value end
     def username(value = nil); value.nil? ? @username : @username = value end
     def password(value = nil); value.nil? ? (@password || '') : @password = value end
-    def single_threaded(value = nil); value.nil? ? (@single_threaded || TRUE) : @single_threaded = value end
+    
+    # single_threaded mode is disabled by default currently since it's buggy.
+    def single_threaded(value = nil); value.nil? ? (@single_threaded.nil? ? @single_threaded = false : @single_threaded) : @single_threaded = value end
     
     def log(value = nil)
       @log = value unless value.nil?

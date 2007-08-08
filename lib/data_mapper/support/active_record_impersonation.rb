@@ -25,6 +25,10 @@ module DataMapper
       
       module ClassMethods
         
+        def find_or_create(search_attributes, create_attributes = nil)
+          first(search_attributes) || create(search_attributes.merge(create_attributes))
+        end
+        
         def all(options = {}, &b)
           database.all(self, options, &b)
         end
