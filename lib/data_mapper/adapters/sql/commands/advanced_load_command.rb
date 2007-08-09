@@ -18,6 +18,7 @@ module DataMapper
             @instance_id = @options[:id]
             @conditions = @options[:conditions]
             @join_fetch = false
+            @joins = []
           end
           
           # If +true+ then force the command to reload any objects
@@ -48,10 +49,10 @@ module DataMapper
             
             if @join_fetch
               @joins.each do |entry|
-                primary_table, association_table = entry
+                primary_table, association_table, association = entry
                 sql << ' JOIN ' << association_table.to_sql << ' ON '
                 sql << association_table.to_sql << '.'
-                sql << @adapter.quote_column_name(primary_table.default_foreign_key)
+                sql << @adapter.quote_column_name(association.foreign_key)
                 sql << ' = ' << primary_table.key.to_sql(true)
               end
             end
@@ -95,12 +96,11 @@ module DataMapper
                   # Return if the include is a column in the primary_class_table.
                   return @columns if primary_class_table[@include]
                   
-                  primary_class_table.has_many_associations.each do |entry|
-                    association = entry.first
+                  primary_class_table.associations.each do |association|
                     next unless association.name == @include
                     association_table = @adapter[association.constant]
                     @columns += association_table.columns
-                    @joins = [ [ primary_class_table, association_table ] ]
+                    @joins << [ primary_class_table, association_table, association ]
                   end
                   
                   @join_fetch = true

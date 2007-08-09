@@ -34,15 +34,20 @@ module DataMapper
             @columns_hash = Hash.new { |h,k| h[k] = @columns.find { |c| c.name == k } }
             @columns_by_column_name = Hash.new { |h,k| h[k.to_s] = @columns.find { |c| c.column_name == k.to_s } }
             @has_many = []
-          end
-      
-          def has_many(association_name, options)
-            @has_many << [ Association.new(association_name, Inflector.classify(Inflector.singularize(association_name.to_s))) ]
+            @associations = []
           end
           
-          def has_many_associations
-            @has_many
+          def associations
+            @associations
           end
+      
+          # def has_many(association_name, options)
+          #   @associtaions << Association.new(association_name, Inflector.classify(Inflector.singularize(association_name.to_s)))
+          # end
+          
+          # def has_many_associations
+          #   @has_many
+          # end
           
           def columns
             key if @key.nil?

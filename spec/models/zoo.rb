@@ -3,4 +3,5 @@ class Zoo < DataMapper::Base
   property :notes, :text
   
   has_many :exhibits
+  advanced_has_many :exhibits2, :class_name => 'Exhibit', :foreign_key => 'cow_id'
 end

@@ -33,11 +33,11 @@ describe DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand do
   end
   
   it "should join associations in the statement" do
-    loader_for(Zoo, :include => :exhibits).to_sql.should == <<-EOS.compress_lines
+    loader_for(Zoo, :include => :exhibits2).to_sql.should == <<-EOS.compress_lines
       SELECT `zoos`.`id`, `zoos`.`name`,
         `exhibits`.`id`, `exhibits`.`name`, `exhibits`.`zoo_id`
       FROM `zoos`
-      JOIN `exhibits` ON `exhibits`.`zoo_id` = `zoos`.`id`
+      JOIN `exhibits` ON `exhibits`.`cow_id` = `zoos`.`id`
     EOS
   end
   

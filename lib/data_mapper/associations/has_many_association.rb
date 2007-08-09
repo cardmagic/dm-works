@@ -22,9 +22,7 @@ module DataMapper
       end
       
       def self.setup(klass, association_name, options)
-        
-        database.schema[klass].has_many(association_name, options)
-        
+
         # Define the association instance method (i.e. Project#tasks)
         klass.class_eval <<-EOS
           def #{association_name}

@@ -19,6 +19,13 @@ module DataMapper
         ensure_starts_with(a).ensure_ends_with(b || a)
       end
       
+      # Matches any whitespace (including newline) and replaces with a single space
+      # EXAMPLE:
+      #   <<QUERY.compress_lines
+      #     SELECT name
+      #     FROM users
+      #   QUERY
+      #   => "SELECT name FROM users"
       def compress_lines
         gsub(/\s+/, ' ').strip
       end
