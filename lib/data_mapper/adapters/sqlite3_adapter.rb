@@ -55,10 +55,10 @@ module DataMapper
         
         reader.close
         
-        struct = Struct.new(*fields.map { |field| Inflector.underscore(field).to_sym })
+        struct = Support::Struct::define(fields)
         
         rows.map do |row|
-          struct.new(*row)
+          struct.new(row)
         end
       end
       

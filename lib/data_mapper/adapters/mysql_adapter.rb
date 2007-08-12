@@ -88,12 +88,12 @@ module DataMapper
       def query(*args)
         
         execute(*args) do |reader, fields|
-          struct = Struct.new(*fields.map { |field| String::memoized_underscore(field).to_sym })
+          struct = Support::Struct::define(fields)
           
           results = []
           
           reader.each do |row|
-            results << struct.new(*row)
+            results << struct.new(row)
           end
           results
           

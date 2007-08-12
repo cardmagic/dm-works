@@ -158,4 +158,16 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
       end
     end
   end
+  
+  x.report('ActiveRecord:find_by_sql') do
+    N.times do
+      ARZoo.find_by_sql("SELECT * FROM zoos")
+    end
+  end
+  
+  x.report('DataMapper:find_by_sql') do
+    N.times do
+      database.query("SELECT * FROM zoos")
+    end
+  end
 end

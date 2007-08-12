@@ -27,3 +27,6 @@
 * Added Session#query support back in
 * Removed Connection/Reader/Result classes
 * Set DataMapper::Base#key on load to avoid double-hit against Schema
+* Added DataMapper::Support::Struct for increased Session#query performance
+* Added AdvancedHasManyAssociation (preview status)
+* Added benchmarks comparing ActiveRecord::Base::find_by_sql with Session#query

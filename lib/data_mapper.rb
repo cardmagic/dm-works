@@ -11,6 +11,7 @@ require 'data_mapper/support/symbol'
 require 'data_mapper/support/string'
 require 'data_mapper/support/proc'
 require 'data_mapper/support/inflector'
+require 'data_mapper/support/struct'
 require 'data_mapper/database'
 require 'data_mapper/base'
 
