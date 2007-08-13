@@ -83,19 +83,6 @@ module DataMapper
         @foreign_key || (@foreign_key = (@options[:foreign_key] || @instance.session.schema[@instance.class].default_foreign_key))
       end
 
-    end
-    
-    module HasMany
-      def self.included(base)
-        base.extend(ClassMethods)
-      end
-      
-      module ClassMethods
-        def has_many(association_name, options = {})
-          HasManyAssociation.setup(self, association_name, options)
-        end
-      end
-    end
-    
+    end    
   end
 end

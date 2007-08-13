@@ -7,23 +7,6 @@ module DataMapper
     
         class Table
       
-          class Association
-            def initialize(association_name, constant_name)
-              @association_name, @constant_name = association_name, constant_name
-            end
-            
-            def name
-              @association_name
-            end
-            
-            def constant
-              @constant || @constant = begin
-                Object.const_get(@constant_name)
-              end
-            end
-            
-          end
-            
           attr_reader :klass
       
           def initialize(adapter, setup_klass)
@@ -33,21 +16,16 @@ module DataMapper
             @columns = []
             @columns_hash = Hash.new { |h,k| h[k] = @columns.find { |c| c.name == k } }
             @columns_by_column_name = Hash.new { |h,k| h[k.to_s] = @columns.find { |c| c.column_name == k.to_s } }
-            @has_many = []
             @associations = []
+          end
+          
+          def association(name)
+            @associations.find { |assoc| assoc.name == name }
           end
           
           def associations
             @associations
           end
-      
-          # def has_many(association_name, options)
-          #   @associtaions << Association.new(association_name, Inflector.classify(Inflector.singularize(association_name.to_s)))
-          # end
-          
-          # def has_many_associations
-          #   @has_many
-          # end
           
           def columns
             key if @key.nil?

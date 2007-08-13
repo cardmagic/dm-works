@@ -30,3 +30,6 @@
 * Added DataMapper::Support::Struct for increased Session#query performance
 * Added AdvancedHasManyAssociation (preview status)
 * Added benchmarks comparing ActiveRecord::Base::find_by_sql with Session#query
+
+-- 0.2.0
+* AdvancedHasManyAssociation now functional for fetches

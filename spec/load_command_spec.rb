@@ -37,7 +37,7 @@ describe DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand do
       SELECT `zoos`.`id`, `zoos`.`name`,
         `exhibits`.`id`, `exhibits`.`name`, `exhibits`.`zoo_id`
       FROM `zoos`
-      JOIN `exhibits` ON `exhibits`.`cow_id` = `zoos`.`id`
+      JOIN `exhibits` ON `exhibits`.`zoo_id` = `zoos`.`id`
     EOS
   end
   

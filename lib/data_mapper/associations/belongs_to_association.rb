@@ -95,17 +95,5 @@ module DataMapper
             
     end
     
-    module BelongsTo
-      def self.included(base)
-        base.extend(ClassMethods)
-      end
-      
-      module ClassMethods
-        def belongs_to(association_name, options = {})
-          BelongsToAssociation.setup(self, association_name, options)
-        end
-      end
-    end
-    
   end
 end

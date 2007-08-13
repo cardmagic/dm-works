@@ -91,17 +91,5 @@ module DataMapper
             
     end
     
-    module HasOne
-      def self.included(base)
-        base.extend(ClassMethods)
-      end
-      
-      module ClassMethods
-        def has_one(association_name, options = {})
-          HasOneAssociation.setup(self, association_name, options)
-        end
-      end
-    end
-    
   end
 end
