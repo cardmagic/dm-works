@@ -14,13 +14,9 @@ module DataMapper
         EOS
       end
       
-      class Set
+      class Set < HasNAssociation::Reference
         
         include Enumerable
-        
-        def initialize(instance, association_name)
-          @instance, @association_name = instance, association_name
-        end
         
         def each
           entries.each { |item| yield item }
@@ -37,10 +33,6 @@ module DataMapper
 
         def empty?
           entries.empty?
-        end
-        
-        def association
-          @association || (@association = @instance.session.schema[@instance.class].association(@association_name))
         end
         
         def entries

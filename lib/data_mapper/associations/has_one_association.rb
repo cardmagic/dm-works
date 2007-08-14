@@ -1,95 +1,77 @@
+require 'data_mapper/associations/has_n_association'
+
 module DataMapper
   module Associations
     
-    class HasOneAssociation
+    class HasOneAssociation < HasNAssociation
       
-      def initialize(instance, association_name, options)
-        @instance = instance
-        @association_name = association_name
-        @options = options
-        
-        @associated_class = if options.has_key?(:class) || options.has_key?(:class_name)
-          associated_class_name = (options[:class] || options[:class_name])
-          if associated_class_name.kind_of?(String)
-            Kernel.const_get(Inflector.classify(associated_class_name))
-          else
-            associated_class_name
-          end
-        else            
-          Kernel.const_get(Inflector.classify(association_name))
-        end
-      end
-      
-      def self.setup(klass, association_name, options)
-        
-        # Define the association instance method (i.e. Exhibit#zoo)
+      # Define the association instance method (i.e. Project#tasks)
+      def define_accessor(klass)        
         klass.class_eval <<-EOS
-          def create_#{association_name}(options = {})
-            #{association_name}_association.create(options)
+          def create_#{@association_name}(options)
+            #{@association_name}_association.create(options)
           end
           
-          def build_#{association_name}(options = {})
-            #{association_name}_association.build(options)
+          def build_#{@association_name}(options)
+            #{@association_name}_association.build(options)
           end
 
-          def #{association_name}
-            # Let the HasOneAssociation do the finding, just to keep things neat around here...
-            #{association_name}_association.find
+          def #{@association_name}
+            #{@association_name}_association.instance
           end
           
-          def #{association_name}=(value)
-            #{association_name}_association.set(value)
+          def #{@association_name}=(value)
+            #{@association_name}_association.set(value)
           end
           
           private
-            def #{association_name}_association
-              @#{association_name} || (@#{association_name} = HasOneAssociation.new(self, "#{association_name}", #{options.inspect}))
+            def #{@association_name}_association
+              @#{@association_name}_association || (@#{@association_name}_association = HasOneAssociation::Instance.new(self, #{@association_name.inspect}))
             end
         EOS
-        
       end
       
-      def find
-        return @result unless @result.nil?
-        
-        unless @instance.loaded_set.nil?
+      class Instance < HasNAssociation::Reference
+      
+        def instance
+          @associated || @associated = begin                    
+            if @instance.loaded_set.nil?
+              nil
+            else
+              # Temp variable for the instance variable name.
+              setter_method = "#{@association_name}=".to_sym
+              instance_variable_name = "@#{association.foreign_key}".to_sym
           
-          # Temp variable for the instance variable name.
-          setter_method = "#{@association_name}=".to_sym
-          instance_variable_name = "@#{foreign_key}".to_sym
+              set = @instance.loaded_set.group_by { |instance| instance.key }
           
-          set = @instance.loaded_set.group_by { |instance| instance.key }
-          
-          # Fetch the foreign objects for all instances in the current object's loaded-set.
-          @instance.session.all(@associated_class, foreign_key => set.keys).each do |association|
-            set[association.instance_variable_get(instance_variable_name)].first.send(setter_method, association)
+              # Fetch the foreign objects for all instances in the current object's loaded-set.
+              @instance.session.all(association.constant, association.foreign_key => set.keys).each do |assoc|
+                set[assoc.instance_variable_get(instance_variable_name)].first.send(setter_method, assoc)
+              end
+              
+              @associated
+            end
+            
           end
         end
-        
-        return @result
-      end
 
-      def create(options = {})
-        associated = @associated_class.new(options)
-        if associated.save
-          @instance.send("#{@associated_class.foreign_key}=", associated.id)
-          @result = associated
+        def create(options)
+          @associated = association.constant.new(options)
+          if @associated.save
+            @associated.send("#{@associated_class.foreign_key}=", @instance.key)
+          end
         end
-      end
       
-      def build(options = {})
-        @result = @associated_class.new(options)
-      end
+        def build(options)
+          @associated = association.constant.new(options)
+        end
       
-      def set(val)
-        @result = val
-      end
-      
-      def foreign_key
-        @foreign_key ||= (@options[:foreign_key] || @instance.session.mappings[@instance.class].default_foreign_key)
-      end
+        def set(val)
+          @associated = val
+        end
             
-    end
-    
-  end
-end
+      end # class Instance
+      
+    end # class HasOneAssociation
+  end # module Associations
+end # module DataMapper

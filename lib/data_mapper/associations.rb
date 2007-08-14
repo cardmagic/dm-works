@@ -25,7 +25,7 @@ module DataMapper
       end
       
       def has_one(association_name, options = {})
-        HasOneAssociation.setup(self, association_name, options)
+        database.schema[self].associations << HasOneAssociation.new(self, association_name, options)
       end
       
     end

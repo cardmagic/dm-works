@@ -32,6 +32,17 @@ module DataMapper
         @foreign_key || (@foreign_key = (@options[:foreign_key] || @table.default_foreign_key))
       end
       
+      class Reference
+        
+        def initialize(instance, association_name)
+          @instance, @association_name = instance, association_name
+        end
+        
+        def association
+          @association || (@association = @instance.session.schema[@instance.class].association(@association_name))
+        end
+        
+      end
     end
     
   end
