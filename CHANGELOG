@@ -33,3 +33,6 @@
 
 -- 0.2.0
 * AdvancedHasManyAssociation now functional for fetches
+* AdvancedHasManyAssociation renamed to HasNAssociation
+* HasManyAssociation refactored to use HasNAssociation superclass
+* Slight spec tweaks to accomodate the updates

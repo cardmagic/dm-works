@@ -11,7 +11,7 @@ describe DataMapper::Associations::HasManyAssociation do
     
   it 'should expose a proxy for the accessor' do
     [@miami, Zoo.new].each do |z|
-      z.exhibits.class.should == DataMapper::Associations::HasManyAssociation
+      z.exhibits.class.should == DataMapper::Associations::HasManyAssociation::Set
     end
   end
   
