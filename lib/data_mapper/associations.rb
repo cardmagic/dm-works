@@ -21,7 +21,7 @@ module DataMapper
       end
       
       def has_and_belongs_to_many(association_name, options = {})
-        HasAndBelongsToManyAssociation.setup(self, association_name, options)
+        database.schema[self].associations << HasAndBelongsToManyAssociation.new(self, association_name, options)
       end
       
       def has_one(association_name, options = {})
