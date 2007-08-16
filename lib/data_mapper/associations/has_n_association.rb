@@ -3,8 +3,11 @@ module DataMapper
     
     class HasNAssociation
       
+      attr_reader :adapter, :table
+      
       def initialize(klass, association_name, options)
-        @table = database.schema[klass]
+        @adapter = database.adapter
+        @table = adapter[klass]
         @association_name = association_name.to_sym
         @options = options
         
@@ -29,7 +32,17 @@ module DataMapper
       end
       
       def foreign_key
-        @foreign_key || (@foreign_key = (@options[:foreign_key] || @table.default_foreign_key))
+        @foreign_key || @foreign_key = begin
+          association_table[@options[:foreign_key] || table.default_foreign_key]          
+        end
+      end
+      
+      def association_table
+        @association_table || (@association_table = adapter[constant])
+      end
+      
+      def to_sql
+        "JOIN #{association_table.to_sql} ON #{foreign_key.to_sql(true)} = #{table.key.to_sql(true)}"
       end
       
       class Reference

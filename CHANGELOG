@@ -39,3 +39,6 @@
 * HasOneAssociation refactored to use HasNAssociation superclass
 * Added HasAndBelongsToManyAssociation, using HasNAssociation as a basis; Need to add corresponding SQL generation code in AdvancedLoadCommand
 * Added spec for habtm query generation
+* HasNAssociation#foreign_key returns a DataMapper::Adapters::Sql::Mappings::Column instance instead of a raw String now
+* Added table, association, association_table and to_sql methods to HasNAssociation
+* Added associations_spec.rb

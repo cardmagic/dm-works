@@ -48,12 +48,8 @@ module DataMapper
             sql << ' FROM ' << from_table_name            
             
             if @join_fetch
-              @joins.each do |entry|
-                primary_table, association_table, association = entry
-                sql << ' JOIN ' << association_table.to_sql << ' ON '
-                sql << association_table.to_sql << '.'
-                sql << @adapter.quote_column_name(association.foreign_key)
-                sql << ' = ' << primary_table.key.to_sql(true)
+              @joins.each do |association|
+                sql << ' ' << association.to_sql
               end
             end
             
@@ -100,7 +96,7 @@ module DataMapper
                     next unless association.name == @include
                     association_table = @adapter[association.constant]
                     @columns += association_table.columns
-                    @joins << [ primary_class_table, association_table, association ]
+                    @joins << association
                   end
                   
                   @join_fetch = true
