@@ -38,3 +38,4 @@
 * Slight spec tweaks to accomodate the updates
 * HasOneAssociation refactored to use HasNAssociation superclass
 * Added HasAndBelongsToManyAssociation, using HasNAssociation as a basis; Need to add corresponding SQL generation code in AdvancedLoadCommand
+* Added spec for habtm query generation
