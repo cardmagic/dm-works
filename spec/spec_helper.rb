@@ -52,10 +52,11 @@ at_exit do
 end if ENV['DROP'] == '1'
 
 # Define a fixtures helper method to load up our test data.
-def fixtures(name)
+def fixtures(name, force = false)
   entry = YAML::load_file(File.dirname(__FILE__) + "/fixtures/#{name}.yaml")
   klass = Kernel::const_get(Inflector.classify(Inflector.singularize(name)))
   
+  database.schema[klass].drop! if force
   database.schema[klass].create!
   klass.truncate!
   
@@ -66,5 +67,5 @@ end
 
 # Pre-fill the database so non-destructive tests don't need to reload fixtures.
 Dir[File.dirname(__FILE__) + "/fixtures/*.yaml"].each do |path|
-  fixtures(File::basename(path).sub(/\.yaml$/, ''))
+  fixtures(File::basename(path).sub(/\.yaml$/, ''), true)
 end

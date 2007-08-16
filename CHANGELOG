@@ -42,3 +42,5 @@
 * HasNAssociation#foreign_key returns a DataMapper::Adapters::Sql::Mappings::Column instance instead of a raw String now
 * Added table, association, association_table and to_sql methods to HasNAssociation
 * Added associations_spec.rb
+* Added a forced table-recreation to spec_helper.rb so the tests could run with a clean version of the database, including any new columns added to the models
+* Added HasAndBelongsToManyAssociation#to_sql (all current specs pass now!)

@@ -3,8 +3,11 @@ module DataMapper
     
     class HasAndBelongsToManyAssociation
       
+      attr_reader :adapter, :table
+      
       def initialize(klass, association_name, options)
-        @table = database.schema[klass]
+        @adapter = database.adapter
+        @table = adapter[klass]
         @association_name = association_name.to_sym
         @options = options
         
@@ -16,28 +19,57 @@ module DataMapper
       end
 
       def constant
-        @associated_class || @associated_class = if @options.has_key?(:class) || @options.has_key?(:class_name)
-          associated_class_name = (@options[:class] || @options[:class_name])
-          if associated_class_name.kind_of?(String)
-            Kernel.const_get(Inflector.classify(associated_class_name))
+        @associated_class || @associated_class = begin
+        
+          if @options.has_key?(:class) || @options.has_key?(:class_name)
+            associated_class_name = (@options[:class] || @options[:class_name])
+            if associated_class_name.kind_of?(String)
+              Kernel.const_get(Inflector.classify(associated_class_name))
+            else
+              associated_class_name
+            end
           else
-            associated_class_name
+            Kernel.const_get(Inflector.classify(@association_name))
           end
-        else            
-          Kernel.const_get(Inflector.classify(@association_name))
+          
         end
       end
       
-      def foreign_key
-        @foreign_key || (@foreign_key = (@options[:foreign_key] || @table.default_foreign_key))
+      def quoted_left_foreign_key
+        @left_foreign_key || @left_foreign_key = begin
+          adapter.quote_table_name(@options[:left_foreign_key] || table.default_foreign_key)
+        end
+      end
+      
+      def quoted_right_foreign_key
+        @right_foreign_key || @right_foreign_key = begin
+          adapter.quote_table_name(@options[:right_foreign_key] || association_table.default_foreign_key)
+        end
+      end
+      
+      def association_table
+        @association_table || (@association_table = adapter[constant])
       end
       
       def join_table_name
         @join_table_name || @join_table_name = begin
           @options[:join_table] || begin
-            [ @table.name.to_s, database.schema[constant].name.to_s ].sort.join('_')
+            [ table.name.to_s, database.schema[constant].name.to_s ].sort.join('_')
           end
         end
+      end
+      
+      def quoted_join_table_name
+        adapter.quote_table_name(join_table_name)
+      end
+      
+      def to_sql
+        <<-EOS.compress_lines
+          JOIN #{quoted_join_table_name} ON
+            #{quoted_join_table_name}.#{quoted_left_foreign_key} = #{table.key.to_sql(true)}
+          JOIN #{association_table.to_sql} ON
+            #{association_table.key.to_sql(true)} = #{quoted_join_table_name}.#{quoted_right_foreign_key}
+        EOS
       end
       
       # Define the association instance method (i.e. Project#tasks)
