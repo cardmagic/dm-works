@@ -31,7 +31,9 @@ module DataMapper
       end
       
       def valid?(context = :general)
-        self.class.validations.execute(context, self)
+        self.class.callbacks.execute(:before_validate, self) &
+          self.class.validations.execute(context, self) &
+          self.class.callbacks.execute(:after_validate, self)
       end
       
       module ClassMethods

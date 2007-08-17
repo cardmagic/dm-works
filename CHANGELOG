@@ -44,3 +44,6 @@
 * Added associations_spec.rb
 * Added a forced table-recreation to spec_helper.rb so the tests could run with a clean version of the database, including any new columns added to the models
 * Added HasAndBelongsToManyAssociation#to_sql (all current specs pass now!)
+* Minor tweaks to Callbacks
+* Added CallbacksHelper to declare class-method ::callbacks on DataMapper::Base
+* Implemented before_validate and after_validate hooks in ValidationHelper

@@ -3,4 +3,6 @@ class Zoo < DataMapper::Base
   property :notes, :text
   
   has_many :exhibits
+  
+  validates_presence_of :name
 end

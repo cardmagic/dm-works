@@ -1,5 +1,18 @@
 module DataMapper
   
+  module CallbacksHelper
+    
+    def self.included(base)
+      base.extend(ClassMethods)
+    end
+    
+    module ClassMethods
+      def callbacks
+        @callbacks || ( @callbacks = DataMapper::Callbacks.new )
+      end
+    end
+  end
+  
   class Callbacks
   
     EVENTS = [
@@ -31,7 +44,7 @@ module DataMapper
     end
     
     def execute(name, instance)
-      @callbacks[name].each do |callback|
+      @callbacks[name].all? do |callback|
         if callback.kind_of?(String)
           instance.instance_eval(callback)
         else

@@ -12,6 +12,7 @@ module DataMapper
     attr_accessor :loaded_set
     
     include UnitOfWork
+    include CallbacksHelper
     include Support::ActiveRecordImpersonation
     include Validations::ValidationHelper
     include Associations
@@ -155,12 +156,7 @@ module DataMapper
         key_column.type_cast_value(instance_variable_get(key_column.instance_variable_name))
       end
     end
-    
-    # Callbacks associated with this class.
-    def self.callbacks
-      @callbacks || ( @callbacks = Callbacks.new )
-    end
-    
+        
     # Declare helpers for the standard callbacks
     DataMapper::Callbacks::EVENTS.each do |name|
       class_eval <<-EOS
