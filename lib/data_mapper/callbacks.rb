@@ -4,6 +4,19 @@ module DataMapper
     
     def self.included(base)
       base.extend(ClassMethods)
+      
+      # Declare helpers for the standard callbacks
+      Callbacks::EVENTS.each do |name|
+        base.class_eval <<-EOS
+          def self.#{name}(string = nil, &block)
+            if string.nil?
+              callbacks.add(:#{name}, block)
+            else
+              callbacks.add(:#{name}, string)
+            end
+          end
+        EOS
+      end
     end
     
     module ClassMethods
@@ -21,7 +34,7 @@ module DataMapper
       :before_create, :after_create,
       :before_update, :after_update,
       :before_destroy, :after_destroy,
-      :before_validate, :after_validate
+      :before_validation, :after_validation
       ]
       
     def initialize
@@ -31,37 +44,20 @@ module DataMapper
       end
     end
     
-    alias ruby_method_missing method_missing
-    def method_missing(sym, *args)
-      if EVENTS.include?(sym)
-        self.class.send(:define_method, sym) { @callbacks[sym] }
-        return send(sym)
-      elsif sym.to_s =~ /^execute_(\w+)/ && EVENTS.include?($1.to_sym)
-        # BUG?: Isn't $1.to_sym going to be the callback name? That doesn't seem to make
-        # any sense since #execute requires the second parameter to be an instance...
-        return execute(args.first, $1.to_sym)
-      end
-      
-      super
-    end
-    
-    def execute(name, instance)
+    def execute(name, *args)
       @callbacks[name].all? do |callback|
         if callback.kind_of?(String)
-          instance.instance_eval(callback)
+          args.first.instance_eval(callback)
         else
-          # I should not be instance_eval'ing the block.
-          # You loose the original scope like that. I should just
-          # pass in the instance instead.
-          instance.instance_eval(&callback)
+          callback[*args]
         end
       end
     end
     
-    def add(name, string = nil, &block)
-      callback = send(name)
-      raise ArgumentError.new("You didn't specify a callback in either string or block form.") if string.nil? && block.nil?
-      callback << (string.nil? ? block : string)
+    def add(name, block)
+      callback = @callbacks[name]
+      raise ArgumentError.new("You didn't specify a callback in either string or block form.") if block.nil?
+      callback << block
     end
   end
   

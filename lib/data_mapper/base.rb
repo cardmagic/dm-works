@@ -156,19 +156,6 @@ module DataMapper
         key_column.type_cast_value(instance_variable_get(key_column.instance_variable_name))
       end
     end
-        
-    # Declare helpers for the standard callbacks
-    DataMapper::Callbacks::EVENTS.each do |name|
-      class_eval <<-EOS
-        def self.#{name}(string = nil, &block)
-          if string.nil?
-            callbacks.add(:#{name}, &block)
-          else
-            callbacks.add(:#{name}, string)
-          end
-        end
-      EOS
-    end
     
   end
   
