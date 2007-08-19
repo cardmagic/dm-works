@@ -35,6 +35,11 @@ module DataMapper
       end
     end
     
+    # Allows you to override the table name for a model.
+    # EXAMPLE:
+    #   class WorkItem
+    #     set_table_name 't_work_item_list'
+    #   end
     def self.set_table_name(value)
       database.schema[self].name = value
     end
@@ -50,13 +55,28 @@ module DataMapper
       end
     end
     
+    # Adds property accessors for a field that you'd like to be able to modify.  The DataMapper doesn't
+    # use the table schema to infer accessors, you must explicity call #property to add field accessors
+    # to your model.
+    # EXAMPLE:
+    #   class CellProvider
+    #     property :name, :string
+    #     property :rating, :integer
+    #   end
+    #
+    #   att = CellProvider.new(:name => 'AT&T')
+    #   att.rating = 3
+    #   puts att.name, att.rating
+    #
+    #   => AT&T
+    #   => 3
     def self.property(name, type, options = {})
       mapping = database.schema[self].add_column(name, type, options)
       property_getter(name, mapping)
       property_setter(name, mapping)
       return name
     end
-    
+
     def self.property_getter(name, mapping)
       if mapping.lazy?
         class_eval <<-EOS

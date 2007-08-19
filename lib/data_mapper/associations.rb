@@ -1,3 +1,4 @@
+require 'data_mapper/associations/reference'
 require 'data_mapper/associations/has_many_association'
 require 'data_mapper/associations/belongs_to_association'
 require 'data_mapper/associations/has_one_association'
@@ -17,7 +18,7 @@ module DataMapper
       end
       
       def belongs_to(association_name, options = {})
-        BelongsToAssociation.setup(self, association_name, options)
+        database.schema[self].associations << BelongsToAssociation.new(self, association_name, options)
       end
       
       def has_and_belongs_to_many(association_name, options = {})

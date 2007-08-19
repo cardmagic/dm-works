@@ -31,7 +31,7 @@ module DataMapper
         EOS
       end
       
-      class Instance < HasNAssociation::Reference
+      class Instance < Associations::Reference
       
         def instance
           @associated || @associated = begin                    

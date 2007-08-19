@@ -14,7 +14,7 @@ module DataMapper
         EOS
       end
       
-      class Set < HasNAssociation::Reference
+      class Set < Associations::Reference
         
         include Enumerable
         

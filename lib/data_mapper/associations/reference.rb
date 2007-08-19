@@ -31,7 +31,7 @@ module DataMapper
       # +association_name+ is the Symbol used to look up the Association
       # instance within the DataMapper::Adapters::Sql::Mappings::Table 
       def initialize(instance, association_name)
-        @instance, @association_name = instance, association_name
+        @instance, @association_name = instance, association_name.to_sym
       end
   
       # #association provides lazily initialized access to the declared

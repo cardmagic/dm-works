@@ -33,7 +33,7 @@ module DataMapper
       
       def foreign_key
         @foreign_key || @foreign_key = begin
-          association_table[@options[:foreign_key] || table.default_foreign_key]          
+          association_table[@options[:foreign_key] || table.default_foreign_key]
         end
       end
       
@@ -42,20 +42,11 @@ module DataMapper
       end
       
       def to_sql
+        p "Assocation table", association_table, "Foreign Key", foreign_key, "Table", table
+        
         "JOIN #{association_table.to_sql} ON #{foreign_key.to_sql(true)} = #{table.key.to_sql(true)}"
       end
       
-      class Reference
-        
-        def initialize(instance, association_name)
-          @instance, @association_name = instance, association_name
-        end
-        
-        def association
-          @association || (@association = @instance.session.schema[@instance.class].association(@association_name))
-        end
-        
-      end
     end
     
   end
