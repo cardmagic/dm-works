@@ -47,3 +47,4 @@
 * Minor tweaks to Callbacks
 * Added CallbacksHelper to declare class-method ::callbacks on DataMapper::Base
 * Implemented before_validate and after_validate hooks in ValidationHelper
+* Minor documentation additions in callbacks.rb

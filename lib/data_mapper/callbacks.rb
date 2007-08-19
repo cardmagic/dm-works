@@ -37,6 +37,8 @@ module DataMapper
         self.class.send(:define_method, sym) { @callbacks[sym] }
         return send(sym)
       elsif sym.to_s =~ /^execute_(\w+)/ && EVENTS.include?($1.to_sym)
+        # BUG?: Isn't $1.to_sym going to be the callback name? That doesn't seem to make
+        # any sense since #execute requires the second parameter to be an instance...
         return execute(args.first, $1.to_sym)
       end
       
@@ -48,6 +50,9 @@ module DataMapper
         if callback.kind_of?(String)
           instance.instance_eval(callback)
         else
+          # I should not be instance_eval'ing the block.
+          # You loose the original scope like that. I should just
+          # pass in the instance instead.
           instance.instance_eval(&callback)
         end
       end
