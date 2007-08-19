@@ -42,8 +42,6 @@ module DataMapper
       end
       
       def to_sql
-        p "Assocation table", association_table, "Foreign Key", foreign_key, "Table", table
-        
         "JOIN #{association_table.to_sql} ON #{foreign_key.to_sql(true)} = #{table.key.to_sql(true)}"
       end
       

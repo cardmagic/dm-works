@@ -9,7 +9,7 @@ module DataMapper
       def define_accessor(klass)
         klass.class_eval <<-EOS
           def #{@association_name}
-            @#{@association_name} || (@#{@association_name} = HasManyAssociation::Set.new(self, #{@association_name.inspect}))
+            @#{@association_name} || (@#{@association_name} = DataMapper::Associations::HasManyAssociation::Set.new(self, #{@association_name.inspect}))
           end
         EOS
       end

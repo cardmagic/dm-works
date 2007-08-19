@@ -26,7 +26,7 @@ module DataMapper
           
           private
             def #{@association_name}_association
-              @#{@association_name}_association || (@#{@association_name}_association = HasOneAssociation::Instance.new(self, #{@association_name.inspect}))
+              @#{@association_name}_association || (@#{@association_name}_association = DataMapper::Associations::HasOneAssociation::Instance.new(self, #{@association_name.inspect}))
             end
         EOS
       end

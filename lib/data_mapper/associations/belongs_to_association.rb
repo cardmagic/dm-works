@@ -6,7 +6,7 @@ module DataMapper
     class BelongsToAssociation < HasNAssociation
 
       def define_accessor(klass)
-        klass.property((@options[:foreign_key] || name).to_sym, :integer)
+        klass.property((@options[:foreign_key] || "#{name}_id").to_sym, :integer)
         
         klass.class_eval <<-EOS
           
@@ -28,9 +28,15 @@ module DataMapper
           
           private
             def #{@association_name}_association
-              @#{@association_name} || (@#{@association_name} = BelongsToAssociation::Instance.new(self, #{@association_name.inspect}))
+              @#{@association_name} || (@#{@association_name} = DataMapper::Associations::BelongsToAssociation::Instance.new(self, #{@association_name.inspect}))
             end
         EOS
+      end
+      
+      def foreign_key
+        @foreign_key || @foreign_key = begin
+          table[@options[:foreign_key] || "#{name}_id".to_sym]
+        end
       end
 
       class Instance < Associations::Reference
