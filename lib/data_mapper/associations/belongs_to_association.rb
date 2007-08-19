@@ -41,28 +41,28 @@ module DataMapper
 
       class Instance < Associations::Reference
          
-           def instance
-             @associated || @associated = begin                    
-               if @instance.loaded_set.nil?
-                 nil
-               else
-      
-                 # Temp variable for the instance variable name.
-                 setter_method = "#{@association_name}=".to_sym
-                 instance_variable_name = "@#{association.foreign_key.to_sym}".to_sym
-             
-                 set = @instance.loaded_set.group_by { |instance| instance.key }
-             
-                 # Fetch the foreign objects for all instances in the current object's loaded-set.
-                 @instance.session.all(association.constant, association.foreign_key.to_sym => set.keys).each do |assoc|
-                   set[assoc.instance_variable_get(instance_variable_name)].first.send(setter_method, assoc)
-                 end
-                 
-                 @associated
-               end
-               
-             end
-           end
+        def instance
+          @associated || @associated = begin                    
+            if @instance.loaded_set.nil?
+              nil
+            else
+              
+              # Temp variable for the instance variable name.
+              setter_method = "#{@association_name}=".to_sym
+              fk = association.foreign_key.to_sym
+              
+              set = @instance.loaded_set.group_by { |instance| instance.send(fk) }
+
+              @instance.session.all(association.constant, association.association_table.key.to_sym => set.keys).each do |assoc|
+                set[assoc.key].each do |primary_instance|
+                  primary_instance.send(setter_method, assoc)
+                end
+              end
+
+              @associated
+            end
+          end
+        end
       
         def create(options)
           @associated = association.constant.create(options)
