@@ -2,7 +2,7 @@ describe DataMapper::Callbacks do
   
   it "should allow for a callback to be set, then called" do
     
-    class Tenor
+    example = Class.new do
       include DataMapper::CallbacksHelper
       
       attr_accessor :name
@@ -14,15 +14,32 @@ describe DataMapper::Callbacks do
       before_save 'name = "bob"'
       before_validation { |instance| instance.name = 'Barry White Returns!' }
 
-    end unless defined?(Tenor)
+    end.new('Barry White')
     
-    barry = Tenor.new('Barry White')
+    example.class::callbacks.execute(:before_save, example)
+    example.name.should == 'Barry White'
     
-    Tenor::callbacks.execute(:before_save, barry)
-    barry.name.should == 'Barry White'
+    example.class::callbacks.execute(:before_validation, example)
+    example.name.should == 'Barry White Returns!'
+  end
+  
+  it "should allow method delegation by passing symbols to the callback definitions" do
     
-    Tenor::callbacks.execute(:before_validation, barry)
-    barry.name.should == 'Barry White Returns!'
+    example = Class.new do
+      include DataMapper::CallbacksHelper
+      
+      attr_accessor :name
+      
+      before_save :test
+      
+      def test
+        @name = 'Walter'
+      end
+    end.new
+    
+    example.class::callbacks.execute(:before_save, example)
+    example.name.should == 'Walter'
+    
   end
   
 end
