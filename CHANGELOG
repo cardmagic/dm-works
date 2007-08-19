@@ -50,7 +50,6 @@
 * Minor documentation additions in callbacks.rb
 * Added callbacks_spec
 * Moved class-method declarations for built-in callbacks to the callbacks helper instead of DataMapper::Base
-* Renambed :before/after_validate callback to :before/after_validation to match ActiveRecord
 * Renamed :before/after_validate callback to :before/after_validation to match ActiveRecord
 * Callbacks#add now accepts a Symbol which maps a callback to a method call on the targetted instance, also added a spec to verify this behavior
 * Documented callbacks.rb
