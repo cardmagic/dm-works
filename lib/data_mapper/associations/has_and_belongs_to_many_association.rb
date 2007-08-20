@@ -34,54 +34,46 @@ module DataMapper
           
         end
       end
-      
-      def left_foreign_key
-        @left_foreign_key || @left_foreign_key = begin
-          @options[:left_foreign_key] || table.default_foreign_key
-        end
-      end
-      
-      def right_foreign_key
-        @right_foreign_key || @right_foreign_key = begin
-          @options[:right_foreign_key] || association_table.default_foreign_key
-        end
-      end
-      
+            
       def association_columns
-        association_table.columns.reject { |column| column.lazy? }
+        association_table.columns.reject { |column| column.lazy? } + [ left_foreign_key, right_foreign_key ]
       end
       
       def association_table
         @association_table || (@association_table = adapter[constant])
       end
       
-      def join_table_name
-        @join_table_name || @join_table_name = begin
-          @options[:join_table] || begin
+      def join_table
+        @join_table || @join_table = begin 
+          join_table_name = @options[:join_table] || 
             [ table.name.to_s, database.schema[constant].name.to_s ].sort.join('_')
-          end
+            
+          adapter[join_table_name]
+        end        
+      end
+      
+      def left_foreign_key
+        @left_foreign_key || @left_foreign_key = begin
+          join_table.add_column(
+            (@options[:left_foreign_key] || table.default_foreign_key),
+            :integer, {})
         end
       end
-      
-      def quoted_left_foreign_key
-        adapter.quote_table_name(left_foreign_key)
-      end
-      
-      def quoted_right_foreign_key
-        adapter.quote_table_name(right_foreign_key)
-      end
-      
-      
-      def quoted_join_table_name
-        adapter.quote_table_name(join_table_name)
+
+      def right_foreign_key
+        @right_foreign_key || @right_foreign_key = begin
+          join_table.add_column(
+            (@options[:right_foreign_key] || association_table.default_foreign_key),
+            :integer, {})
+        end
       end
       
       def to_sql
         <<-EOS.compress_lines
-          JOIN #{quoted_join_table_name} ON
-            #{quoted_join_table_name}.#{quoted_left_foreign_key} = #{table.key.to_sql(true)}
+          JOIN #{join_table.to_sql} ON
+            #{left_foreign_key.to_sql(true)} = #{table.key.to_sql(true)}
           JOIN #{association_table.to_sql} ON
-            #{association_table.key.to_sql(true)} = #{quoted_join_table_name}.#{quoted_right_foreign_key}
+            #{association_table.key.to_sql(true)} = #{right_foreign_key.to_sql(true)}
         EOS
       end
       
@@ -151,6 +143,7 @@ module DataMapper
           @entries.inspect
         end
       end
+    
     end # class HasAndBelongsToManyAssociation
     
   end # module Associations

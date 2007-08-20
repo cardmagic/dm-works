@@ -60,3 +60,5 @@
 * Fixed extra spec loading
 * Added *Association#columns
 * Some refactoring in AdvancedLoadCommand regarding :include options
+* Added support for class-less Mappings::Table instances, with just a string name
+* HasAndBelongsToManyAssociation#join_table #left_foreign_key and #right_foreign_key reference actual Table or Column objects now

@@ -46,7 +46,8 @@ describe DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand do
   it "should join has and belongs to many associtions in the statement" do
     loader_for(Animal, :include => :exhibits).to_sql.should == <<-EOS.compress_lines
       SELECT `animals`.`id`, `animals`.`name`,
-        `exhibits`.`id`, `exhibits`.`name`, `exhibits`.`zoo_id`
+        `exhibits`.`id`, `exhibits`.`name`, `exhibits`.`zoo_id`,
+        `animals_exhibits`.`animal_id`, `animals_exhibits`.`exhibit_id`
       FROM `animals`
       JOIN `animals_exhibits` ON `animals_exhibits`.`animal_id` = `animals`.`id`
       JOIN `exhibits` ON `exhibits`.`id` = `animals_exhibits`.`exhibit_id`

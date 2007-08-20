@@ -8,12 +8,15 @@ module DataMapper
     
         class Table
       
-          attr_reader :klass
+          attr_reader :klass, :name
       
-          def initialize(adapter, setup_klass)
-            raise "\"setup_klass\" must not be nil!" if setup_klass.nil?
+          def initialize(adapter, klass_or_name)
+            raise "\"klass_or_name\" must not be nil!" if klass_or_name.nil?
+            
+            @klass = klass_or_name.kind_of?(String) ? nil : klass_or_name
+            @klass_or_name = klass_or_name
+            
             @adapter = adapter
-            @klass = setup_klass
             @columns = []
             @columns_hash = Hash.new { |h,k| h[k] = @columns.find { |c| c.name == k } }
             @columns_by_column_name = Hash.new { |h,k| h[k.to_s] = @columns.find { |c| c.column_name == k.to_s } }
@@ -78,13 +81,18 @@ module DataMapper
           end
       
           def name
-            @name || begin
-              @name = if @klass.superclass != DataMapper::Base && @klass.superclass != Object
-                @adapter[@klass.superclass].name
+            @name || @name = if @klass_or_name.kind_of?(String)
+              @klass_or_name
+            elsif @klass_or_name.kind_of?(Class)
+              if @klass_or_name.superclass != DataMapper::Base \
+                && @klass_or_name.ancestors.include?(DataMapper::Base)
+                @adapter[@klass_or_name.superclass].name
               else
-                Inflector.tableize(@klass.name)
-              end.freeze
-            end
+                Inflector.tableize(@klass_or_name.name)
+              end
+            else
+              raise '+klass_or_name+ must be a Class or a string containing the name of a table'
+            end.freeze
           end
       
           def name=(value)
