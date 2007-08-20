@@ -90,7 +90,7 @@ module DataMapper
         end
         
         def association
-          @association || (@association = @instance.session.schema[@instance.class].association(@association_name))
+          @association || (@association = @instance.session.schema[@instance.class].associations[@association_name])
         end
         
         def each

@@ -1,4 +1,5 @@
 require File.dirname(__FILE__) + '/column'
+require File.dirname(__FILE__) + '/associations_set'
 
 module DataMapper
   module Adapters
@@ -16,11 +17,7 @@ module DataMapper
             @columns = []
             @columns_hash = Hash.new { |h,k| h[k] = @columns.find { |c| c.name == k } }
             @columns_by_column_name = Hash.new { |h,k| h[k.to_s] = @columns.find { |c| c.column_name == k.to_s } }
-            @associations = []
-          end
-          
-          def association(name)
-            @associations.find { |assoc| assoc.name == name }
+            @associations = AssociationsSet.new
           end
           
           def associations

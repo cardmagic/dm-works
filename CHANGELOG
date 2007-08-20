@@ -56,3 +56,5 @@
 * Added DataMapper::Associations::Reference class
 * Documented DataMapper::Associations::Reference class
 * Upgraded BelongsToAssociation to new style
+* Added AssociationsSet to handle simple "last-in" for association bindings
+* Fixed extra spec loading
