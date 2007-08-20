@@ -35,16 +35,20 @@ module DataMapper
         end
       end
       
-      def quoted_left_foreign_key
+      def left_foreign_key
         @left_foreign_key || @left_foreign_key = begin
-          adapter.quote_table_name(@options[:left_foreign_key] || table.default_foreign_key)
+          @options[:left_foreign_key] || table.default_foreign_key
         end
       end
       
-      def quoted_right_foreign_key
+      def right_foreign_key
         @right_foreign_key || @right_foreign_key = begin
-          adapter.quote_table_name(@options[:right_foreign_key] || association_table.default_foreign_key)
+          @options[:right_foreign_key] || association_table.default_foreign_key
         end
+      end
+      
+      def association_columns
+        association_table.columns.reject { |column| column.lazy? }
       end
       
       def association_table
@@ -58,6 +62,15 @@ module DataMapper
           end
         end
       end
+      
+      def quoted_left_foreign_key
+        adapter.quote_table_name(left_foreign_key)
+      end
+      
+      def quoted_right_foreign_key
+        adapter.quote_table_name(right_foreign_key)
+      end
+      
       
       def quoted_join_table_name
         adapter.quote_table_name(join_table_name)

@@ -58,3 +58,5 @@
 * Upgraded BelongsToAssociation to new style
 * Added AssociationsSet to handle simple "last-in" for association bindings
 * Fixed extra spec loading
+* Added *Association#columns
+* Some refactoring in AdvancedLoadCommand regarding :include options

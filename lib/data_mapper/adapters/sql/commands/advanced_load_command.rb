@@ -14,11 +14,8 @@ module DataMapper
             @limit = @options[:limit]
             @offset = @options[:offset]
             @reload = @options[:reload]
-            @include = @options[:include]
             @instance_id = @options[:id]
             @conditions = @options[:conditions]
-            @join_fetch = false
-            @joins = []
           end
           
           # If +true+ then force the command to reload any objects
@@ -47,10 +44,8 @@ module DataMapper
             sql = 'SELECT ' << columns_for_select.join(', ')
             sql << ' FROM ' << from_table_name            
             
-            if @join_fetch
-              @joins.each do |association|
-                sql << ' ' << association.to_sql
-              end
+            included_associations.each do |association|
+              sql << ' ' << association.to_sql
             end
             
             return sql
@@ -61,7 +56,8 @@ module DataMapper
             # Return the Sql-escaped columns names to be selected in the results.
             def columns_for_select
               @columns_for_select || @columns_for_select = begin
-                columns.map { |column| column.to_sql(@join_fetch) }
+                qualify_columns = !included_associations.empty?
+                columns.map { |column| column.to_sql(qualify_columns) }
               end
             end
             
@@ -69,54 +65,65 @@ module DataMapper
             # be selected in the results.
             def columns
               @columns || begin
-                @columns = if @options.has_key?(:select)
-                  primary_class_table.columns.select do |column|
-                    @options[:select].include?(column.name)
-                  end
-                else
-                  primary_class_table.columns.select do |column|
-                    include_column?(column.name) || !column.lazy?
-                  end
-                end
+                @columns = primary_class_columns
+                @columns += included_columns
                 
-                # Return if there is no +:include+ option to evaluate.
-                return @columns if @include.nil?
-                
-                if @include.kind_of?(Array)
-                  # Return if all +:include+ parameters are columns in
-                  # the primary_class_table.
-                  return @columns if @include.all? do |name|
-                    !primary_class_table[name].nil?
-                  end
-                elsif @include.kind_of?(Symbol)
-                  # Return if the include is a column in the primary_class_table.
-                  return @columns if primary_class_table[@include]
-                  
-                  primary_class_table.associations.each do |association|
-                    next unless association.name == @include
-                    association_table = @adapter[association.constant]
-                    @columns += association_table.columns
-                    @joins << association
-                  end
-                  
-                  @join_fetch = true
-                else
-                  raise ':include option must be a Symbol or Array of Symbols'
+                included_associations.each do |assoc|
+                  @columns += assoc.association_columns
                 end
                 
                 @columns
               end
             end
             
+            # Returns the default columns for the primary_class_table,
+            # or maps symbols specified in a +:select+ option to columns
+            # in the primary_class_table.
+            def primary_class_columns
+              @primary_class_columns || @primary_class_columns = begin
+                if @options.has_key?(:select)
+                  case x = @options[:select]
+                  when Array then x
+                  when Symbol then [x]
+                  else raise ':select option must be a Symbol, or an Array of Symbols'
+                  end.map { |name| primary_class_table[name] }
+                else
+                  primary_class_table.columns.reject { |column| column.lazy? }
+                end
+              end
+            end
+            
+            def included_associations
+              @included_associations || @included_associations = begin
+                associations = primary_class_table.associations
+                include_options.map do |name|
+                  associations[name]
+                end.compact
+              end
+            end
+            
+            def included_columns
+              @included_columns || @included_columns = begin
+                include_options.map do |name|
+                  primary_class_table[name]
+                end.compact
+              end
+            end
+            
+            def include_options
+              @include_options || @include_options = begin
+                case x = @options[:include]
+                when Array then x
+                when Symbol then [x]
+                else []
+                end
+              end
+            end
+            
             # Determine if a Column should be included based on the
             # value of the +:include+ option.
             def include_column?(name)
-              case @include
-                when nil then false
-                when Symbol then @include == name
-                when Array then @include.includes?(name)
-                else raise ':include option must be a Symbol or Array of Symbols'
-              end
+              !primary_class_table[name].lazy? || include_options.includes?(name)
             end
 
             # Return the Sql-escaped table name of the +primary_class+.

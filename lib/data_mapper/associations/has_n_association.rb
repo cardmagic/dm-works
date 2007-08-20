@@ -45,6 +45,9 @@ module DataMapper
         "JOIN #{association_table.to_sql} ON #{foreign_key.to_sql(true)} = #{table.key.to_sql(true)}"
       end
       
+      def association_columns
+        association_table.columns.reject { |column| column.lazy? }
+      end
     end
     
   end
