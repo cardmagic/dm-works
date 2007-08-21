@@ -1,3 +1,5 @@
+require 'data_mapper/adapters/sql/commands/advanced_conditions'
+
 module DataMapper
   module Adapters
     module Sql
@@ -15,7 +17,15 @@ module DataMapper
             @offset = @options[:offset]
             @reload = @options[:reload]
             @instance_id = @options[:id]
-            @conditions = @options[:conditions]
+            @conditions = AdvancedConditions.new(@adapter, self, @options[:conditions])
+          end
+          
+          def inspect
+            @options.inspect
+          end
+          
+          def conditions
+            @conditions
           end
           
           # If +true+ then force the command to reload any objects
@@ -48,6 +58,26 @@ module DataMapper
               sql << ' ' << association.to_sql
             end
             
+            shallow_included_associations.each do |association|
+              sql << ' ' << association.to_shallow_sql
+            end
+            
+            unless conditions.empty?
+              sql << ' WHERE (' << conditions.to_sql << ')'
+            end
+            
+            unless @order.nil?
+              sql << ' ORDER BY ' << @order.to_s
+            end
+        
+            unless @limit.nil?
+              sql << ' LIMIT ' << @limit.to_s
+            end
+            
+            unless @offset.nil?
+              sql << ' OFFSET ' << @offset.to_s
+            end
+            
             return sql
           end
           
@@ -56,7 +86,7 @@ module DataMapper
             # Return the Sql-escaped columns names to be selected in the results.
             def columns_for_select
               @columns_for_select || @columns_for_select = begin
-                qualify_columns = !included_associations.empty?
+                qualify_columns = (!included_associations.empty? || !shallow_included_associations.empty?)
                 columns.map { |column| column.to_sql(qualify_columns) }
               end
             end
@@ -70,6 +100,10 @@ module DataMapper
                 
                 included_associations.each do |assoc|
                   @columns += assoc.association_columns
+                end
+                
+                shallow_included_associations.each do |assoc|
+                  @columns += assoc.join_columns
                 end
                 
                 @columns
@@ -102,6 +136,15 @@ module DataMapper
               end
             end
             
+            def shallow_included_associations
+              @shallow_included_associations || @shallow_included_associations = begin
+                associations = primary_class_table.associations
+                shallow_include_options.map do |name|
+                  associations[name]
+                end.compact
+              end
+            end
+            
             def included_columns
               @included_columns || @included_columns = begin
                 include_options.map do |name|
@@ -113,6 +156,16 @@ module DataMapper
             def include_options
               @include_options || @include_options = begin
                 case x = @options[:include]
+                when Array then x
+                when Symbol then [x]
+                else []
+                end
+              end
+            end
+            
+            def shallow_include_options
+              @shallow_include_options || @shallow_include_options = begin
+                case x = @options[:shallow_include]
                 when Array then x
                 when Symbol then [x]
                 else []

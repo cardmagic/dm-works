@@ -51,7 +51,15 @@ describe DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand do
       FROM `animals`
       JOIN `animals_exhibits` ON `animals_exhibits`.`animal_id` = `animals`.`id`
       JOIN `exhibits` ON `exhibits`.`id` = `animals_exhibits`.`exhibit_id`
+    EOS
+  end
   
+  it "should shallow-join unmapped tables for has-and-belongs-to-many in the statement" do
+    loader_for(Animal, :shallow_include => :exhibits).to_sql.should == <<-EOS.compress_lines
+      SELECT `animals`.`id`, `animals`.`name`,
+        `animals_exhibits`.`animal_id`, `animals_exhibits`.`exhibit_id`
+      FROM `animals`
+      JOIN `animals_exhibits` ON `animals_exhibits`.`animal_id` = `animals`.`id`
     EOS
   end
 

@@ -34,9 +34,13 @@ module DataMapper
           
         end
       end
-            
+
       def association_columns
-        association_table.columns.reject { |column| column.lazy? } + [ left_foreign_key, right_foreign_key ]
+        association_table.columns.reject { |column| column.lazy? } + join_columns
+      end
+      
+      def join_columns
+        [ left_foreign_key, right_foreign_key ]
       end
       
       def association_table
@@ -74,6 +78,13 @@ module DataMapper
             #{left_foreign_key.to_sql(true)} = #{table.key.to_sql(true)}
           JOIN #{association_table.to_sql} ON
             #{association_table.key.to_sql(true)} = #{right_foreign_key.to_sql(true)}
+        EOS
+      end
+      
+      def to_shallow_sql
+        <<-EOS.compress_lines
+          JOIN #{join_table.to_sql} ON
+            #{left_foreign_key.to_sql(true)} = #{table.key.to_sql(true)}
         EOS
       end
       
