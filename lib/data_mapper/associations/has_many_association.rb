@@ -11,6 +11,10 @@ module DataMapper
           def #{@association_name}
             @#{@association_name} || (@#{@association_name} = DataMapper::Associations::HasManyAssociation::Set.new(self, #{@association_name.inspect}))
           end
+          
+          def #{@association_name}=(value)
+            #{@association_name}.set(value)
+          end
         EOS
       end
       
@@ -19,46 +23,48 @@ module DataMapper
         include Enumerable
         
         def each
-          entries.each { |item| yield item }
+          items.each { |item| yield item }
         end
 
         def size
-          entries.size
+          items.size
         end
         alias length size
 
         def [](key)
-          entries[key]
+          items[key]
         end
 
         def empty?
-          entries.empty?
+          items.empty?
         end
         
-        def entries
-          @entries || @entries = begin
+        def set(items)
+          @items = items
+        end
 
+        def items
+          @items || begin
             if @instance.loaded_set.nil?
-              []
+              @items = []
             else
-              @instance.session.all(
+              fk = association.foreign_key.to_sym
+              
+              associated_items = @instance.session.all(
                 association.constant,
                 association.foreign_key.to_sym => @instance.loaded_set.map(&:key)
-              ).group_by(&association.foreign_key.to_sym).each do |key,instances|
-                if instance = @instance.loaded_set.find { |entry| entry.key == key }
-                  instance.send(@association_name).set(instances)
-                end
-              end
+              ).group_by { |entry| entry.send(fk) }
               
-              @entries              
-            end
-          end
-        end
-
-        def set(results)
-          @entries = results
-        end
-
+              setter_method = "#{@association_name}=".to_sym
+              @instance.loaded_set.each do |entry|
+                entry.send(setter_method, associated_items[entry.key])
+              end # @instance.loaded_set.each
+              
+              return @items
+            end # if @instance.loaded_set.nil?
+          end # begin
+        end # def items
+        
         def inspect
           @entries.inspect
         end

@@ -23,10 +23,12 @@ describe DataMapper::Associations::HasManyAssociation do
   end
   
   it 'should eager-load associations for an entire set' do
-    zoos = Zoo.all
-    zoos.each do |zoo|
-      zoo.exhibits.each do |exhibit|
-        exhibit.zoo.should == zoo
+    database do
+      zoos = Zoo.all
+      zoos.each do |zoo|
+        zoo.exhibits.each do |exhibit|
+          exhibit.zoo.should == zoo
+        end
       end
     end
   end
