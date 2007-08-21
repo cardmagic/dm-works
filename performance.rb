@@ -63,6 +63,14 @@ end
 
 N = (ENV['N'] || 1000).to_i
 
+# 4.times do
+#   [DMAnimal, Zoo, Exhibit].each do |klass|
+#     klass.all.each do |instance|
+#       klass.create(instance.attributes.reject { |k,v| k == :id })
+#     end
+#   end
+# end
+
 Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
   
   x.report('ActiveRecord:id') do
