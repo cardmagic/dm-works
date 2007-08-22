@@ -80,28 +80,7 @@ module DataMapper
     end
     
     def self.embed(class_or_name, &block)
-      
-      embedded_class, embedded_class_name, accessor_name = nil
-      
-      if class_or_name.kind_of?(Class)
-        embedded_class = class_or_name
-        embedded_class_name = class_or_name.name.split('::').last
-        accessor_name = Inflector.underscore(embedded_class_name)
-      else
-        accessor_name = class_or_name.to_s
-        embedded_class_name = Inflector.camelize(accessor_name)
-        embedded_class = Class.new(EmbeddedValue)
-        self.const_set(embedded_class_name, embedded_class) unless const_defined?(embedded_class_name)
-      end
-
-      embedded_class.instance_variable_set('@containing_class', self)
-      embedded_class.class_eval(&block) if block_given?
-
-      class_eval <<-EOS
-        def #{accessor_name}
-          #{embedded_class_name}.new(self)
-        end
-      EOS
+      EmbeddedValue::define(self, class_or_name, &block)
     end
 
     def self.property_getter(name, mapping)
