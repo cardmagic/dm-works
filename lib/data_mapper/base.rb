@@ -20,6 +20,7 @@ module DataMapper
     
     def self.inherited(klass)
       klass.send(:undef_method, :id)
+      klass.const_set('XClass', Class)
       
       # When this class is sub-classed, copy the declared columns.
       klass.class_eval do
@@ -79,10 +80,16 @@ module DataMapper
     end
     
     def self.embed(name, &block)
-      EmbeddedValue.new(self, &block)
+      embedded_class_name = Inflector.camelize(name.to_s)
+      embedded_class = Class.new(EmbeddedValue)
+      
+      self.const_set(embedded_class_name, embedded_class) unless const_defined?(embedded_class_name)
+      
+      embedded_class.class_eval(&block)
+
       class_eval <<-EOS
         def #{name}
-          EmbeddedValue::Proxy.new(self)
+          #{embedded_class_name}.new(self)
         end
       EOS
     end
