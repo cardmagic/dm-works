@@ -10,6 +10,22 @@ class Person < DataMapper::Base
     property :city, :string
     property :state, :string, :size => 2
     property :zip_code, :string, :size => 10
+    
+    def city_state_zip_code
+      "#{city}, #{state} #{zip_code}"
+    end
+    
   end
+  
+  class Location < DataMapper::EmbeddedValue
+    property :city, :string
+    property :state, :string, :size => 2
+
+    def to_s
+      "#{city}, #{state}"
+    end
+  end
+  
+  embed Location
   
 end
