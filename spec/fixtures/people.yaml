@@ -13,3 +13,7 @@
 - name: Bob
   age: 29
   occupation: Peon
+  street: 123 Happy Ln.
+  city: Dallas
+  state: TX
+  zip_code: 75000

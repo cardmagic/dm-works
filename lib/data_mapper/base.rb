@@ -3,6 +3,7 @@ require 'data_mapper/support/active_record_impersonation'
 require 'data_mapper/validations/validation_helper'
 require 'data_mapper/associations'
 require 'data_mapper/callbacks'
+require 'data_mapper/embedded_value'
 
 module DataMapper
   
@@ -75,6 +76,15 @@ module DataMapper
       property_getter(name, mapping)
       property_setter(name, mapping)
       return name
+    end
+    
+    def self.embed(name, &block)
+      EmbeddedValue.new(self, &block)
+      class_eval <<-EOS
+        def #{name}
+          EmbeddedValue::Proxy.new(self)
+        end
+      EOS
     end
 
     def self.property_getter(name, mapping)
