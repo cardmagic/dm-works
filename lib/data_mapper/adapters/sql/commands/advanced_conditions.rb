@@ -27,12 +27,6 @@ module DataMapper
               else
                 raise "Unable to parse condition: #{condition.inspect}" if condition
               end
-                
-              if condition.kind_of?(String)
-                sql << condition
-              elsif condition.kind_of?(Array)
-                
-              end
             end
             
             parameters.unshift(sql.join(' '))
@@ -43,43 +37,42 @@ module DataMapper
             def expression_to_sql(clause, value, collector)
               qualify_columns = @loader.qualify_columns?
               
-              if clause.kind_of?(Symbol::Operator)
-                if clause.type == :select
-                  clause.options[:class] ||= @loader.klass
-              
-                  clause.options[:select] ||= if clause.value.to_s == @adapter[clause.options[:class]].default_foreign_key
-                    @adapter[clause.options[:class]].key.column_name
-                  else
-                    clause.value
-                  end
-              
-                  sub_select = @adapter.select_statement(clause.options.merge(value))
-                  expression_to_sql("#{primary_class_table[clause.value.to_sym].to_sql(qualify_columns)} IN ?", sub_select, collector)
-                else                
-                  @has_id = true if clause.value == :id
-                  op = case clause.type
-                    when :gt then '>'
-                    when :gte then '>='
-                    when :lt then '<'
-                    when :lte then '<='
-                    when :not then value.nil? ? 'IS NOT' : (value.kind_of?(Array) ? 'NOT IN' : '<>')
-                    when :eql then value.nil? ? 'IS' : (value.kind_of?(Array) ? 'IN' : '=')
-                    when :like then 'LIKE'
-                    when :in then 'IN'
-                    else raise ArgumentError.new('Operator type not supported')
-                  end
-                  expression_to_sql("#{primary_class_table[clause.value.to_sym].to_sql(qualify_columns)} #{op} ?", value, collector)
+              case clause
+              when Symbol::Operator then
+                operator = case clause.type
+                when :gt then '>'
+                when :gte then '>='
+                when :lt then '<'
+                when :lte then '<='
+                when :not then inequality_operator(value)
+                when :eql then equality_operator(value)
+                when :like then equality_operator(value, 'LIKE')
+                when :in then equality_operator(value)
+                else raise ArgumentError.new('Operator type not supported')
                 end
-              else
-                @has_id = true if clause == :id
-                case value
-                when Array then
-                  expression_to_sql("#{primary_class_table[clause.to_sym].to_sql(qualify_columns)} IN ?", value, collector)
-                when LoadCommand then
-                  expression_to_sql("#{primary_class_table[clause.to_sym].to_sql(qualify_columns)} IN ?", value, collector)
-                else
-                  collector << ["#{primary_class_table[clause.to_sym].to_sql(qualify_columns)} = ?", value]
-                end
+                collector << ["#{primary_class_table[clause].to_sql(qualify_columns)} #{operator} ?", value]
+              when Symbol then
+                collector << ["#{primary_class_table[clause].to_sql(qualify_columns)} #{equality_operator(value)} ?", value]
+              when String then
+                collector << [clause, value]
+              else raise "CAN HAS CRASH?"
+              end
+              
+            end
+            
+            def equality_operator(value, default = '=')
+              case value
+              when NilClass then 'IS'
+              when Array then 'IN'
+              else default
+              end
+            end
+            
+            def inequality_operator(value, default = '<>')
+              case value
+              when NilClass then 'IS NOT'
+              when Array then 'NOT IN'
+              else default
               end
             end
             
@@ -87,6 +80,9 @@ module DataMapper
               collection = []
               
               case x = conditions_hash.delete(:conditions)
+              when Array then
+                clause = x.shift
+                expression_to_sql(clause, x, collection)
               when Hash then
                 x.each_pair do |key,value|
                   expression_to_sql(key, value, collection)
