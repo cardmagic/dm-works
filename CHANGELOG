@@ -68,3 +68,4 @@
 * Renamed spec/has_many.rb to spec/has_many_spec.rb
 * Tweaked the loading of has_many relationships; big performance boost; got rid of an extra query
 * Added EmbeddedValue support, and accompanying spec
+* Fleshed out AdvancedConditions a bit; added conditions_spec.rb

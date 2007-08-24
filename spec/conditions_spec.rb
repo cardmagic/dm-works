@@ -12,7 +12,11 @@ describe DataMapper::Adapters::Sql::Commands::Conditions do
   end
   
   it 'should map implicit option names to field names' do
-    conditions_for(Zoo, :name => 'Galveston').to_sql.should == "`name` = 'Galveston'"
+    conditions_for(Zoo, :name => 'Galveston').to_parameterized_sql.should == ["`name` = ?", 'Galveston']
+  end
+  
+  it 'should qualify with table name when using a join' do
+    conditions_for(Zoo, :name => 'Galveston', :include => :exhibits).to_parameterized_sql.should == ["`zoos`.`name` = ?", 'Galveston']
   end
   
 end

@@ -12,13 +12,13 @@ module DataMapper
           def initialize(adapter, session, primary_class, options = {})
             @adapter, @session, @primary_class = adapter, session, primary_class
             
+            @options, conditions_hash = partition_options(options)
             @order = @options[:order]
             @limit = @options[:limit]
             @offset = @options[:offset]
             @reload = @options[:reload]
             @instance_id = @options[:id]
-            @options, conditions = partition_options(options)
-            @conditions = AdvancedConditions.new(@adapter, self, conditions)
+            @conditions = AdvancedConditions.new(@adapter, self, conditions_hash)
           end
           
           def inspect
@@ -51,7 +51,9 @@ module DataMapper
           
           # Generate a select statement based on the initialization
           # arguments.
-          def to_sql            
+          def to_sql
+            parameters = nil
+            
             sql = 'SELECT ' << columns_for_select.join(', ')
             sql << ' FROM ' << from_table_name            
             
@@ -64,7 +66,8 @@ module DataMapper
             end
             
             unless conditions.empty?
-              sql << ' WHERE (' << conditions.to_sql << ')'
+              where_clause, parameters = conditions.to_parameterized_sql
+              sql << ' WHERE (' << where_clause << ')'
             end
             
             unless @order.nil?
@@ -79,15 +82,34 @@ module DataMapper
               sql << ' OFFSET ' << @offset.to_s
             end
             
-            return sql
+            return escape_parameterized_sql(sql, parameters)
+          end
+          
+          def qualify_columns?
+            return @qualify_columns unless @qualify_columns.nil?
+            @qualify_columns = !(included_associations.empty? && shallow_included_associations.empty?)
           end
           
           private
           
+            def escape_parameterized_sql(statement, parameters)
+              statement.gsub(/\?/) do |x|
+                # Check if the condition is an in, clause.
+                case parameter = parameters.shift
+                when Array then
+                  '(' << parameter.map { |c| @adapter.quote_value(c) }.join(', ') << ')'
+                when LoadCommand then
+                  '(' << parameter.to_sql << ')'
+                else
+                  @adapter.quote_value(parameter)
+                end
+              end
+            end
+            
             # Return the Sql-escaped columns names to be selected in the results.
             def columns_for_select
               @columns_for_select || @columns_for_select = begin
-                qualify_columns = (!included_associations.empty? || !shallow_included_associations.empty?)
+                qualify_columns = qualify_columns?
                 columns.map { |column| column.to_sql(qualify_columns) }
               end
             end
@@ -191,7 +213,18 @@ module DataMapper
             end
             
             def partition_options(options)
-              options.partition { |k,v| k != :conditions && find_options.include?(k) }
+              find_options = @adapter.class::FIND_OPTIONS
+              conditions_hash = {}
+              options_hash = {}
+              options.each do |key,value|
+                if key != :conditions && find_options.include?(key)
+                  options_hash[key] = value
+                else
+                  conditions_hash[key] = value
+                end
+              end
+              
+              [ options_hash, conditions_hash ]
             end
           
         end # class LoadCommand
