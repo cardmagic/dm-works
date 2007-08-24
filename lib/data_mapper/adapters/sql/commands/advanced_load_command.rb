@@ -10,14 +10,15 @@ module DataMapper
           attr_reader :conditions, :options
           
           def initialize(adapter, session, primary_class, options = {})
-            @adapter, @session, @primary_class, @options = adapter, session, primary_class, options
+            @adapter, @session, @primary_class = adapter, session, primary_class
             
             @order = @options[:order]
             @limit = @options[:limit]
             @offset = @options[:offset]
             @reload = @options[:reload]
             @instance_id = @options[:id]
-            @conditions = AdvancedConditions.new(@adapter, self, @options[:conditions])
+            @options, conditions = partition_options(options)
+            @conditions = AdvancedConditions.new(@adapter, self, conditions)
           end
           
           def inspect
@@ -187,6 +188,10 @@ module DataMapper
             # Returns the DataMapper::Adapters::Sql::Mappings::Table for the +primary_class+.
             def primary_class_table
               @primary_class_table || (@primary_class_table = @adapter[@primary_class])
+            end
+            
+            def partition_options(options)
+              options.partition { |k,v| k != :conditions && find_options.include?(k) }
             end
           
         end # class LoadCommand

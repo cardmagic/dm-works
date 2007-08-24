@@ -5,22 +5,39 @@ module DataMapper
     
         class AdvancedConditions
       
-          def initialize(adapter, loader, conditions)
-            @adapter, @loader, @conditions = adapter, loader, conditions
-            @has_id = false
+          def initialize(adapter, loader, explicit_conditions, implicit_conditions)
+            @adapter, @loader = adapter, loader
+            @conditions = parse_conditions(conditions)
+            @conditions += implicit_conditions
           end
       
           def empty?
-            @conditions.nil? && implicits.empty? 
+            conditions.empty?
           end
           
           def implicits
             []
           end
       
-          def sql
+          def to_sql
             ""
           end
+          
+          private
+            
+            def implicit_conditions
+              @options.partition { |k,v| }
+            end
+            
+            def parse_conditions(conditions, options)
+              conditions = case conditions
+              when NilClass then []
+              when Array then conditions
+              when Hash then [conditions]
+              else raise "Unable to parse conditions: #{conditions.inspect}"
+              end
+            end
+                    
         end
     
       end
