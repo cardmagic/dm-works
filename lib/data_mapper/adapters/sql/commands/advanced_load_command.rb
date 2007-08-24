@@ -115,7 +115,8 @@ module DataMapper
                 @columns_for_select = []
                 
                 columns.each_with_index do |column,i|
-                  @loaders[column.table.klass].add_column(column, i)
+                  class_for_loader = column.table.klass
+                  @loaders[class_for_loader].add_column(column, i) if class_for_loader
                   @columns_for_select << column.to_sql(qualify_columns)
                 end
                 
