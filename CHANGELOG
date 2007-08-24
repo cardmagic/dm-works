@@ -70,3 +70,4 @@
 * Added EmbeddedValue support, and accompanying spec
 * Fleshed out AdvancedConditions a bit; added conditions_spec.rb
 * Added more AdvancedConditions specs
+* Added Loader to handle multi-instanced rows

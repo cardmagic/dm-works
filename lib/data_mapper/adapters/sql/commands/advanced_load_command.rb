@@ -1,4 +1,5 @@
 require 'data_mapper/adapters/sql/commands/advanced_conditions'
+require 'data_mapper/adapters/sql/commands/loader'
 
 module DataMapper
   module Adapters
@@ -7,7 +8,7 @@ module DataMapper
     
         class AdvancedLoadCommand
       
-          attr_reader :conditions, :options
+          attr_reader :conditions, :session, :options
           
           def initialize(adapter, session, primary_class, options = {})
             @adapter, @session, @primary_class = adapter, session, primary_class
@@ -19,6 +20,7 @@ module DataMapper
             @reload = @options[:reload]
             @instance_id = @options[:id]
             @conditions = AdvancedConditions.new(@adapter, self, conditions_hash)
+            @loaders = Hash.new { |h,k| h[k] = Loader.new(self, k) }
           end
           
           def inspect
@@ -91,7 +93,7 @@ module DataMapper
           end
           
           private
-          
+            
             def escape_parameterized_sql(statement, parameters)
               statement.gsub(/\?/) do |x|
                 # Check if the condition is an in, clause.
@@ -110,11 +112,10 @@ module DataMapper
             def columns_for_select
               @columns_for_select || begin
                 qualify_columns = qualify_columns?
-                @types = Hash.new { |h,k| h[k] = {} }
                 @columns_for_select = []
                 
                 columns.each_with_index do |column,i|
-                  @types[column.table.klass][i] = column
+                  @loaders[column.table.klass].add_column(column, i)
                   @columns_for_select << column.to_sql(qualify_columns)
                 end
                 
