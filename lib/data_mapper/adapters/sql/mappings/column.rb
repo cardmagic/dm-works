@@ -7,7 +7,7 @@ module DataMapper
         # Ordinal, Length/Size, Nullability are just a few.
         class Column
     
-          attr_accessor :name, :type, :options
+          attr_accessor :table, :name, :type, :options
     
           def initialize(adapter, table, name, type, options = {})
             @adapter = adapter

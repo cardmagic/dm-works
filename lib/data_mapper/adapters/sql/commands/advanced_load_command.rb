@@ -108,10 +108,19 @@ module DataMapper
             
             # Return the Sql-escaped columns names to be selected in the results.
             def columns_for_select
-              @columns_for_select || @columns_for_select = begin
+              @columns_for_select || begin
                 qualify_columns = qualify_columns?
-                columns.map { |column| column.to_sql(qualify_columns) }
+                @types = Hash.new { |h,k| h[k] = {} }
+                @columns_for_select = []
+                
+                columns.each_with_index do |column,i|
+                  @types[column.table.klass][i] = column
+                  @columns_for_select << column.to_sql(qualify_columns)
+                end
+                
+                @columns_for_select
               end
+              
             end
             
             # Returns the DataMapper::Adapters::Sql::Mappings::Column instances to

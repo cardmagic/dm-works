@@ -20,9 +20,19 @@ describe DataMapper::Adapters::Sql::Commands::Conditions do
     conditions.to_parameterized_sql.should == ["`zoos`.`name` = ?", 'Galveston']
   end
   
-  it 'should use greater_than_or_equal_to to limit results' do
-    conditions = conditions_for(Person, :age.gte => 28)
-    conditions.to_parameterized_sql.should == ["`age` >= ?", 28]
+  it 'should use Symbol::Operator to determine operator' do
+    conditions_for(Person, :age.gt => 28).to_parameterized_sql.should == ["`age` > ?", 28]
+    conditions_for(Person, :age.gte => 28).to_parameterized_sql.should == ["`age` >= ?", 28]
+    
+    conditions_for(Person, :age.lt => 28).to_parameterized_sql.should == ["`age` < ?", 28]
+    conditions_for(Person, :age.lte => 28).to_parameterized_sql.should == ["`age` <= ?", 28]
+    
+    conditions_for(Person, :age.not => 28).to_parameterized_sql.should == ["`age` <> ?", 28]
+    conditions_for(Person, :age.eql => 28).to_parameterized_sql.should == ["`age` = ?", 28]
+    
+    conditions_for(Person, :name.like => 'S%').to_parameterized_sql.should == ["`name` LIKE ?", 'S%']
+    
+    conditions_for(Person, :age.in => [ 28, 29 ]).to_parameterized_sql.should == ["`age` IN ?", [ 28, 29 ]]
   end
   
   it 'should use an IN clause for an Array' do
