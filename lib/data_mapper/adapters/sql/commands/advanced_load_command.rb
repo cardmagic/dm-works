@@ -51,6 +51,54 @@ module DataMapper
             @offset
           end
           
+          def call
+            
+            # This is all just an optimization concerning finding
+            # objects when only a key is passed. Pre-check the IdentityMap
+            # first when it's a single id, and if present, return the object.
+            # If it's an Array, then look for all matching objects, and
+            # if you find as many results as keys in the clause, return
+            # them and skip query execution.
+            # This should be moved to another method...
+            if instance_id && !reload?
+              if instance_id.kind_of?(Array)
+                instances = instance_id.map do |id|
+                  @session.identity_map.get(klass, id)
+                end.compact
+              
+                return instances if instances.size == instance_id.size
+              else
+                instance = @session.identity_map.get(klass, instance_id)
+                return instance unless instance.nil?
+              end
+            end
+          
+            # This is the actual execution of the query, and loading
+            # of objects. We should move the database specific stuff out
+            # to an Adapter#execute method that just yields Arrays for
+            # rows. Simpler cleanup.
+            reader = execute(to_sql)
+          
+            results = if eof?(reader)
+              nil
+            elsif limit == 1 || ( instance_id && !instance_id.kind_of?(Array) )
+              fetch_one(reader)
+            else
+              fetch_all(reader)
+            end
+            
+            close_reader(reader)
+            
+            return results
+          end
+          
+          # TODO: fetch_one and fetch_all depended on this method from the
+          # old LoadCommand. Unnecessary now. Just need to figure out how
+          # to wire up the call method.
+          def load_instances
+            raise NotImplementedError.new
+          end
+          
           # Generate a select statement based on the initialization
           # arguments.
           def to_sql
@@ -236,6 +284,28 @@ module DataMapper
               end
               
               [ options_hash, conditions_hash ]
+            end
+          
+          protected
+          
+            def count_rows(reader)
+              raise NotImplementedError.new
+            end
+
+            def close_reader(reader)
+              raise NotImplementedError.new
+            end
+
+            def execute(sql)
+              raise NotImplementedError.new
+            end
+
+            def fetch_one(reader)
+              fetch_all(reader).first
+            end
+
+            def fetch_all(reader)
+              load_instances(reader.fetch_fields.map { |field| field.name }, reader)
             end
           
         end # class LoadCommand
