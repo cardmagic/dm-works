@@ -111,10 +111,10 @@ module DataMapper
             
             # Execute the statement and load the objects.
             @adapter.execute(*to_parameterized_sql) do |reader, num_rows|
-              reader.each do |row|
-                @loaders.each_pair do |klass,loader|
-                  loader.materialize(row)
-                end
+              if @options.has_key?(:intercept_load)
+                load(reader, &@options[:intercept_load])
+              else
+                load(reader)
               end
             end
             
@@ -124,6 +124,26 @@ module DataMapper
               results.first
             else
               results
+            end
+          end
+          
+          def load(reader)
+            # The following blocks are identical aside from the yield.
+            # It's written this way to avoid a conditional within each
+            # iterator, and to take advantage of the performance of
+            # yield vs. Proc#call.            
+            if block_given?
+              reader.each do |row|
+                @loaders.each_pair do |klass,loader|
+                  yield(loader.materialize(row), row)
+                end
+              end
+            else
+              reader.each do |row|
+                @loaders.each_pair do |klass,loader|
+                  loader.materialize(row)
+                end
+              end
             end
           end
           

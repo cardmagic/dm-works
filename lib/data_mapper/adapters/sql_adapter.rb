@@ -46,7 +46,7 @@ module DataMapper
     class SqlAdapter < AbstractAdapter
       
       FIND_OPTIONS = [
-        :select, :limit, :class, :include, :shallow_include, :reload, :conditions, :order
+        :select, :limit, :class, :include, :shallow_include, :reload, :conditions, :order, :intercept_load
       ]
       
       def initialize(configuration)

@@ -86,5 +86,11 @@ describe DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand do
     # Maybe an ugly OrderedHash passed as the options...
     # loader_for(Person, :name => 'Sam', :age => 29).to_parameterized_sql.should == [expected_sql, 'Sam', 29]
   end
+  
+  it "should allow block-interception during load" do
+    result = false
+    Person.first(:intercept_load => lambda { result = true })
+    result.should == true
+  end
 
 end

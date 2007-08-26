@@ -72,3 +72,5 @@
 * Added more AdvancedConditions specs
 * Added Loader to handle multi-instanced rows
 * AdvancedLoadCommand replaced LoadCommand; down to 3 failing specs
+* All specs pass
+* Added :intercept_load finder option and accompanying spec
