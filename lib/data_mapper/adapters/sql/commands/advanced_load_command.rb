@@ -13,6 +13,7 @@ module DataMapper
           def initialize(adapter, session, primary_class, options = {})
             @adapter, @session, @primary_class = adapter, session, primary_class
             
+            @load_by_id = @options.has_key?(:id) && @options.size == 1
             @options, conditions_hash = partition_options(options)
             @order = @options[:order]
             @limit = @options[:limit]
@@ -51,25 +52,42 @@ module DataMapper
             @offset
           end
           
+          def load_by_id?
+            @load_by_id
+          end
+          
           def call
             
-            # This is all just an optimization concerning finding
-            # objects when only a key is passed. Pre-check the IdentityMap
-            # first when it's a single id, and if present, return the object.
-            # If it's an Array, then look for all matching objects, and
-            # if you find as many results as keys in the clause, return
-            # them and skip query execution.
-            # This should be moved to another method...
-            if instance_id && !reload?
-              if instance_id.kind_of?(Array)
-                instances = instance_id.map do |id|
-                  @session.identity_map.get(klass, id)
-                end.compact
+            results = []
+            
+            # Check to see if the query is for a specific id (or set of ids)
+            # and return them if found.
+            if load_by_id? && !reload? && instance_id = @options[:id]
               
-                return instances if instances.size == instance_id.size
+              # Return as many of the id's from the Array as possible.
+              # Query for the remainder. If the size of the Array and
+              # the size of the found objects match, just return.
+              if instance_id.kind_of?(Array)
+                found_ids = []
+                
+                instance_id.each_with_index do |id|
+                  if instance = @session.identity_map.get(@primary_class, id)
+                    found_ids << id
+                    results << instance 
+                  end
+                end
+                
+                # If all instances were found, then return immediately.
+                return results if results.size == instance_id.size
+                
+                # If only some instances were found, then remove the
+                # ids that were found from the list.
+                @options[:id] -= found_ids
               else
-                instance = @session.identity_map.get(klass, instance_id)
-                return instance unless instance.nil?
+                # If the id is for only a single record, attempt to find it.
+                if instance = @session.identity_map.get(klass, instance_id)
+                  return instance
+                end
               end
             end
           
@@ -95,8 +113,68 @@ module DataMapper
           # TODO: fetch_one and fetch_all depended on this method from the
           # old LoadCommand. Unnecessary now. Just need to figure out how
           # to wire up the call method.
-          def load_instances
-            raise NotImplementedError.new
+          def load_instances(fields, rows)            
+            table = @adapter[klass]
+            
+            set = []
+            columns = {}
+            key_ordinal = nil
+            key_column = table.key
+            type_ordinal = nil
+            type_column = nil
+            
+            fields.each_with_index do |field, i|
+              column = table.find_by_column_name(field.to_sym)
+              key_ordinal = i if column.key?
+              type_ordinal, type_column = i, column if column.name == :type
+              columns[column] = i
+            end
+            
+            if type_ordinal
+              
+              tables = Hash.new() do |h,k|
+                
+                table_for_row = @adapter[k.blank? ? klass : type_column.type_cast_value(k)]
+                key_ordinal_for_row = nil
+                columns_for_row = {}
+                
+                fields.each_with_index do |field, i|
+                  column = table_for_row.find_by_column_name(field.to_sym)
+                  key_ordinal_for_row = i if column.key?
+                  columns_for_row[column] = i
+                end
+                
+                h[k] = [ table_for_row.klass, table_for_row.key, key_ordinal_for_row, columns_for_row ]
+              end
+              
+              rows.each do |row|
+                klass_for_row, key_column_for_row, key_ordinal_for_row, columns_for_row = *tables[row[type_ordinal]]
+                
+                load_instance(
+                  create_instance(
+                    klass_for_row,
+                    key_column_for_row.type_cast_value(row[key_ordinal_for_row])
+                  ),
+                  columns_for_row,
+                  row,
+                  set
+                )
+              end
+            else
+              rows.each do |row|
+                load_instance(
+                  create_instance(
+                    klass,
+                    key_column.type_cast_value(row[key_ordinal])
+                  ),
+                  columns,
+                  row,
+                  set
+                )
+              end
+            end
+            
+            set.dup
           end
           
           # Generate a select statement based on the initialization
