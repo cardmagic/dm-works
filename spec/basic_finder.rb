@@ -44,6 +44,7 @@ context 'Finder' do
   specify 'should not find deleted objects' do
     database do
       wally = Animal[:name => 'Whale']
+      wally.new_record?.should == false
       wally.destroy!.should == true
     
       wallys_evil_twin = Animal[:name => 'Whale']
@@ -51,7 +52,8 @@ context 'Finder' do
     
       wally.new_record?.should == true
       wally.save
-    
+      wally.new_record?.should == false
+      
       Animal[:name => 'Whale'].should == wally
     end
   end

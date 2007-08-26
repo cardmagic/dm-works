@@ -70,6 +70,9 @@ module DataMapper
                 instance.instance_variable_set(:@__key, instance_id)
                 instance.instance_variable_set(:@new_record, false)
                 @session.identity_map.set(instance)
+              elsif instance.new_record?
+                instance.instance_variable_set(:@__key, instance_id)
+                instance.instance_variable_set(:@new_record, false)
               end
 
               instance.session = @session

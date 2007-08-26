@@ -103,7 +103,7 @@ module DataMapper
                 @instance_ids.reject! { |entry| found_ids.include?(entry) }
               else
                 # If the id is for only a single record, attempt to find it.
-                if instance = @session.identity_map.get(klass, @instance_ids)
+                if instance = @session.identity_map.get(@primary_class, @instance_ids)
                   return instance
                 end
               end
@@ -130,7 +130,7 @@ module DataMapper
           # Generate a select statement based on the initialization
           # arguments.
           def to_parameterized_sql
-            parameters = nil
+            parameters = []
             
             sql = 'SELECT ' << columns_for_select.join(', ')
             sql << ' FROM ' << from_table_name            
@@ -144,8 +144,8 @@ module DataMapper
             end
             
             unless conditions.empty?
-              where_clause, parameters = conditions.to_parameterized_sql
-              sql << ' WHERE (' << where_clause << ')'
+              where_clause, *parameters = conditions.to_parameterized_sql
+              sql << ' WHERE ' << where_clause
             end
             
             unless @order.nil?
@@ -160,11 +160,7 @@ module DataMapper
               sql << ' OFFSET ' << @offset.to_s
             end
             
-            return sql, parameters
-          end
-          
-          def to_sql
-            @adapter.escape_sql(*to_parameterized_sql)
+            parameters.unshift(sql)
           end
           
           def qualify_columns?

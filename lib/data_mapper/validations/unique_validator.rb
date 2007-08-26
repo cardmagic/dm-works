@@ -36,7 +36,6 @@ module DataMapper
         end
         
         finder_options.merge!({ target.session.mappings[target.class].key.name.not => target.key }) unless target.new_record?
-        
         target.session.first(target.class, finder_options).nil?
       end
       

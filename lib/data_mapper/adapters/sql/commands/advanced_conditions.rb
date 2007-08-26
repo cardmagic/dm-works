@@ -29,7 +29,7 @@ module DataMapper
               end
             end
             
-            parameters.unshift(sql.join(' '))
+            parameters.unshift("(#{sql.join(') AND (')})")
           end
           
           private
@@ -55,7 +55,9 @@ module DataMapper
                 collector << ["#{primary_class_table[clause].to_sql(qualify_columns)} #{equality_operator(value)} ?", value]
               when String then
                 collector << [clause, value]
-              else raise "CAN HAS CRASH?"
+              when Mappings::Column then
+                collector << ["#{clause.to_sql(qualify_columns)} #{equality_operator(value)} ?", value]
+              else raise "CAN HAS CRASH? #{clause.inspect}"
               end
               
             end
