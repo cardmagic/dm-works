@@ -74,3 +74,4 @@
 * AdvancedLoadCommand replaced LoadCommand; down to 3 failing specs
 * All specs pass
 * Added :intercept_load finder option and accompanying spec
+* Modified :intercept_load block signature to |instance,columns,row|

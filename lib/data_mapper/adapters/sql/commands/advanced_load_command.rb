@@ -135,7 +135,7 @@ module DataMapper
             if block_given?
               reader.each do |row|
                 @loaders.each_pair do |klass,loader|
-                  yield(loader.materialize(row), row)
+                  yield(loader.materialize(row), @columns, row)
                 end
               end
             else
