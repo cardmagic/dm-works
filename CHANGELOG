@@ -71,3 +71,4 @@
 * Fleshed out AdvancedConditions a bit; added conditions_spec.rb
 * Added more AdvancedConditions specs
 * Added Loader to handle multi-instanced rows
+* AdvancedLoadCommand replaced LoadCommand; down to 3 failing specs

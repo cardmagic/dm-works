@@ -9,6 +9,10 @@ module DataMapper
         @configuration = configuration
       end
       
+      def name
+        @configuration.name
+      end
+      
       def delete(instance_or_klass, options = nil)
         raise NotImplementedError.new
       end

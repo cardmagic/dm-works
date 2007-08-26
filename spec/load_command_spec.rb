@@ -17,6 +17,17 @@ return unless ENV['ADAPTER'].nil? || ENV['ADAPTER'] == 'mysql'
   
 describe DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand do
 
+  before(:all) do
+    fixtures(:zoos)
+  end
+  
+  it "should return a Struct for custom queries" do
+    results = database.query("SELECT * FROM zoos WHERE name = ?", 'Galveston')
+    zoo = results.first
+    zoo.class.superclass.should == DataMapper::Support::Struct
+    zoo.name.should == "Galveston"
+  end
+  
   def loader_for(klass, options = {})
     session = database
     DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand.new(session.adapter, session, klass, options)

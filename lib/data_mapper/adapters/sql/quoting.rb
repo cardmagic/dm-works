@@ -28,7 +28,13 @@ module DataMapper
             when Date then "'#{value.to_s}'"
             when Time, DateTime then "'#{value.strftime("%Y-%m-%d %H:%M:%S")}'"
             when TrueClass, FalseClass then value.to_s.upcase
-            else raise "Don't know how to quote #{value.inspect}"
+            when Array then "(#{value.map { |entry| quote_value(entry) }.join(', ')})"
+            else 
+              if value.responds_to?(:to_sql)
+                value.to_sql
+              else
+                raise "Don't know how to quote #{value.inspect}"
+              end
           end
         end
 

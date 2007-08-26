@@ -87,7 +87,7 @@ module DataMapper
       end
       
       def load(session, klass, options)
-        self.class::Commands::LoadCommand.new(self, session, klass, options).call
+        self.class::Commands::AdvancedLoadCommand.new(self, session, klass, options).call
       end
       
       def [](klass_or_table_name)

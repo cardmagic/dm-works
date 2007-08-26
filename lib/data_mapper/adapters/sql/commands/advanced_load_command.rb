@@ -13,8 +13,11 @@ module DataMapper
           def initialize(adapter, session, primary_class, options = {})
             @adapter, @session, @primary_class = adapter, session, primary_class
             
-            @load_by_id = @options.has_key?(:id) && @options.size == 1
             @options, conditions_hash = partition_options(options)
+            
+            @instance_ids = conditions_hash[:id]
+            @load_by_id = @instance_ids && conditions_hash.size == 1
+            
             @order = @options[:order]
             @limit = @options[:limit]
             @offset = @options[:offset]
@@ -24,10 +27,21 @@ module DataMapper
             @loaders = Hash.new { |h,k| h[k] = Loader.new(self, k) }
           end
           
+          # Display an overview of load options at a glance.          
           def inspect
-            @options.inspect
+            <<-EOS.compress_lines % (object_id * 2)
+              #<#{self.class.name}:0x%x
+                @database=#{@adapter.name}
+                @reload=#{@reload.inspect}
+                @load_by_id=#{@load_by_id.inspect}
+                @order=#{@order.inspect}
+                @limit=#{@limit.inspect}
+                @offset=#{@offset.inspect}
+                @options=#{@options.inspect}>
+            EOS
           end
-          
+                              
+          # Access the AdvancedConditions instance
           def conditions
             @conditions
           end
@@ -62,124 +76,60 @@ module DataMapper
             
             # Check to see if the query is for a specific id (or set of ids)
             # and return them if found.
-            if load_by_id? && !reload? && instance_id = @options[:id]
+            if load_by_id? && !reload?
               
               # Return as many of the id's from the Array as possible.
               # Query for the remainder. If the size of the Array and
               # the size of the found objects match, just return.
-              if instance_id.kind_of?(Array)
+              if @instance_ids.kind_of?(Array)
                 found_ids = []
                 
-                instance_id.each_with_index do |id|
+                @instance_ids.each do |id|
                   if instance = @session.identity_map.get(@primary_class, id)
+                    # Because we need to negate the found ids from
+                    # the id options, and because the key of the instance
+                    # is type-cast, and may be unequal to the original type,
+                    # we track the found ids in another array.
                     found_ids << id
                     results << instance 
                   end
                 end
                 
                 # If all instances were found, then return immediately.
-                return results if results.size == instance_id.size
+                return results if results.size == @instance_ids.size
                 
                 # If only some instances were found, then remove the
                 # ids that were found from the list.
-                @options[:id] -= found_ids
+                @instance_ids.reject! { |entry| found_ids.include?(entry) }
               else
                 # If the id is for only a single record, attempt to find it.
-                if instance = @session.identity_map.get(klass, instance_id)
+                if instance = @session.identity_map.get(klass, @instance_ids)
                   return instance
                 end
               end
             end
-          
-            # This is the actual execution of the query, and loading
-            # of objects. We should move the database specific stuff out
-            # to an Adapter#execute method that just yields Arrays for
-            # rows. Simpler cleanup.
-            reader = execute(to_sql)
-          
-            results = if eof?(reader)
-              nil
-            elsif limit == 1 || ( instance_id && !instance_id.kind_of?(Array) )
-              fetch_one(reader)
-            else
-              fetch_all(reader)
-            end
             
-            close_reader(reader)
-            
-            return results
-          end
-          
-          # TODO: fetch_one and fetch_all depended on this method from the
-          # old LoadCommand. Unnecessary now. Just need to figure out how
-          # to wire up the call method.
-          def load_instances(fields, rows)            
-            table = @adapter[klass]
-            
-            set = []
-            columns = {}
-            key_ordinal = nil
-            key_column = table.key
-            type_ordinal = nil
-            type_column = nil
-            
-            fields.each_with_index do |field, i|
-              column = table.find_by_column_name(field.to_sym)
-              key_ordinal = i if column.key?
-              type_ordinal, type_column = i, column if column.name == :type
-              columns[column] = i
-            end
-            
-            if type_ordinal
-              
-              tables = Hash.new() do |h,k|
-                
-                table_for_row = @adapter[k.blank? ? klass : type_column.type_cast_value(k)]
-                key_ordinal_for_row = nil
-                columns_for_row = {}
-                
-                fields.each_with_index do |field, i|
-                  column = table_for_row.find_by_column_name(field.to_sym)
-                  key_ordinal_for_row = i if column.key?
-                  columns_for_row[column] = i
+            # Execute the statement and load the objects.
+            @adapter.execute(*to_parameterized_sql) do |reader, num_rows|
+              reader.each do |row|
+                @loaders.each_pair do |klass,loader|
+                  loader.materialize(row)
                 end
-                
-                h[k] = [ table_for_row.klass, table_for_row.key, key_ordinal_for_row, columns_for_row ]
-              end
-              
-              rows.each do |row|
-                klass_for_row, key_column_for_row, key_ordinal_for_row, columns_for_row = *tables[row[type_ordinal]]
-                
-                load_instance(
-                  create_instance(
-                    klass_for_row,
-                    key_column_for_row.type_cast_value(row[key_ordinal_for_row])
-                  ),
-                  columns_for_row,
-                  row,
-                  set
-                )
-              end
-            else
-              rows.each do |row|
-                load_instance(
-                  create_instance(
-                    klass,
-                    key_column.type_cast_value(row[key_ordinal])
-                  ),
-                  columns,
-                  row,
-                  set
-                )
               end
             end
             
-            set.dup
+            results += @loaders[@primary_class].loaded_set
+            
+            if @limit == 1 || (@load_by_id && !@instance_ids.kind_of?(Array))
+              results.first
+            else
+              results
+            end
           end
           
           # Generate a select statement based on the initialization
           # arguments.
-          def to_sql
+          def to_parameterized_sql
             parameters = nil
             
             sql = 'SELECT ' << columns_for_select.join(', ')
@@ -210,7 +160,11 @@ module DataMapper
               sql << ' OFFSET ' << @offset.to_s
             end
             
-            return escape_parameterized_sql(sql, parameters)
+            return sql, parameters
+          end
+          
+          def to_sql
+            @adapter.escape_sql(*to_parameterized_sql)
           end
           
           def qualify_columns?
@@ -218,22 +172,7 @@ module DataMapper
             @qualify_columns = !(included_associations.empty? && shallow_included_associations.empty?)
           end
           
-          private
-            
-            def escape_parameterized_sql(statement, parameters)
-              statement.gsub(/\?/) do |x|
-                # Check if the condition is an in, clause.
-                case parameter = parameters.shift
-                when Array then
-                  '(' << parameter.map { |c| @adapter.quote_value(c) }.join(', ') << ')'
-                when LoadCommand then
-                  '(' << parameter.to_sql << ')'
-                else
-                  @adapter.quote_value(parameter)
-                end
-              end
-            end
-            
+          private            
             # Return the Sql-escaped columns names to be selected in the results.
             def columns_for_select
               @columns_for_select || begin
@@ -362,28 +301,6 @@ module DataMapper
               end
               
               [ options_hash, conditions_hash ]
-            end
-          
-          protected
-          
-            def count_rows(reader)
-              raise NotImplementedError.new
-            end
-
-            def close_reader(reader)
-              raise NotImplementedError.new
-            end
-
-            def execute(sql)
-              raise NotImplementedError.new
-            end
-
-            def fetch_one(reader)
-              fetch_all(reader).first
-            end
-
-            def fetch_all(reader)
-              load_instances(reader.fetch_fields.map { |field| field.name }, reader)
             end
           
         end # class LoadCommand

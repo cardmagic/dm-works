@@ -40,7 +40,7 @@ module DataMapper
               # setting both the original-hash value, and the
               # instance-variable through method chaining to avoid
               # lots of extra short-lived local variables.
-              hashes[column.name] = instance.instance_variable_set(
+              original_hashes[column.name] = instance.instance_variable_set(
                 column.instance_variable_name,
                 column.type_cast_value(values[index])
               ).hash
@@ -66,7 +66,7 @@ module DataMapper
               instance = @session.identity_map.get(@klass, instance_id)
 
               if instance.nil? || @reload
-                instance = instance_class.new()
+                instance = @klass.new()
                 instance.instance_variable_set(:@__key, instance_id)
                 instance.instance_variable_set(:@new_record, false)
                 @session.identity_map.set(instance)

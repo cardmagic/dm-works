@@ -79,24 +79,23 @@ module DataMapper
       def execute(*args)
         connection do |db|
           reader = db.query(escape_sql(*args))
-          result = yield(reader, reader.fetch_fields.map { |field| field.name })
+          result = yield(reader, reader.num_rows)
           reader.free
           result
         end
       end
       
       def query(*args)
-        
-        execute(*args) do |reader, fields|
-          struct = Support::Struct::define(fields)
+        execute(*args) do |reader,num_rows|
+          struct = Support::Struct::define(reader.fetch_fields.map { |field| field.name })
           
           results = []
           
           reader.each do |row|
             results << struct.new(row)
           end
-          results
           
+          results
         end
       end
       
