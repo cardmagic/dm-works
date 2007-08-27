@@ -18,6 +18,10 @@ module DataMapper
         @association_name
       end
 
+      def foreign_name
+        @foreign_name || (@foreign_name = (@options[:foreign_name] || @table.name).to_sym)
+      end
+      
       def constant
         @associated_class || @associated_class = begin
         
@@ -94,6 +98,10 @@ module DataMapper
           def #{@association_name}
             @#{@association_name} || (@#{@association_name} = HasAndBelongsToManyAssociation::Set.new(self, #{@association_name.inspect}))
           end
+          
+          def #{@association_name}=(value)
+            #{@association_name}.set(value)
+          end
         EOS
       end
       
@@ -132,14 +140,36 @@ module DataMapper
             if @instance.loaded_set.nil?
               []
             else
-              @instance.session.all(
-                association.constant,
-                association.foreign_key.to_sym => @instance.loaded_set.map(&:key)
-              ).group_by(&association.foreign_key.to_sym).each do |key,instances|
-                if instance = @instance.loaded_set.find { |entry| entry.key == key }
-                  instance.send(@association_name).set(instances)
+              
+              associated_items = Hash.new { |h,k| h[k] = [] }
+              left_key_index = nil
+              association_constant = association.constant
+              left_foreign_key = association.left_foreign_key
+              
+              matcher = lambda do |instance,columns,row|
+                
+                # Locate the column for the left-key.
+                unless left_key_index
+                  left_key_index = columns.index(association.left_foreign_key)
+                end
+                
+                if instance.kind_of?(association_constant)
+                  associated_items[left_foreign_key.type_cast_value(row[left_key_index])] << instance
                 end
               end
+                
+              @instance.session.all(association.constant,
+                left_foreign_key => @instance.loaded_set.map(&:key),
+                :shallow_include => association.foreign_name,
+                :intercept_load => matcher
+              )
+              
+              # do stsuff with associated_items hash.
+              setter_method = "#{@association_name}=".to_sym
+              
+              @instance.loaded_set.each do |entry|
+                entry.send(setter_method, associated_items[entry.key])
+              end # @instance.loaded_set.each
               
               @entries              
             end
@@ -151,7 +181,7 @@ module DataMapper
         end
 
         def inspect
-          @entries.inspect
+          entries.inspect
         end
       end
     

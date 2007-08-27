@@ -10,6 +10,7 @@ module DataMapper
           attr_reader :klass, :order, :limit, :instance_id, :conditions, :options
           
           def initialize(adapter, session, klass, options)
+            raise 'Should not be used anymore!'
             @adapter, @session, @klass, @options = adapter, session, klass, options
             
             @order = @options[:order]

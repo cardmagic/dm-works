@@ -26,6 +26,11 @@ end
 
 describe DataMapper::Associations::HasAndBelongsToManyAssociation do
 
+  before(:all) do
+    fixtures(:animals)
+    fixtures(:exhibits)
+  end
+  
   it "should generate the SQL for a join statement" do
     animals_association = database.schema[Exhibit].associations.find { |a| a.name == :animals }
   
@@ -33,6 +38,14 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
       JOIN `animals_exhibits` ON `animals_exhibits`.`exhibit_id` = `exhibits`.`id`
       JOIN `animals` ON `animals`.`id` = `animals_exhibits`.`animal_id`
     EOS
+  end
+  
+  it "should load associations" do
+    database do
+      froggy = Animal[:name => 'Frog']
+      froggy.exhibits.size.should == 1
+      froggy.exhibits.entries.first.should == Exhibit[:name => 'Amazonia']
+    end
   end
 
 end
