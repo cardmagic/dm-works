@@ -54,7 +54,7 @@ module DataMapper
         
             long_form << "(#{column.size})" unless column.size.nil?
             long_form << " NOT NULL" unless column.nullable?
-            long_form << " auto_increment" if column.key?
+            long_form << " auto_increment" if column.auto_increment?
             long_form << " default #{column.options[:default]}" if column.options.has_key?(:default)
         
             return long_form

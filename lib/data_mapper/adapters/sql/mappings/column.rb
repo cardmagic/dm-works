@@ -14,6 +14,11 @@ module DataMapper
             @table = table
             @name, @type, @options = name.to_sym, type, options
             
+            @key = (@options[:key] == true)
+            @nullable = (@options[:nullable] == true)
+            @lazy = @options.has_key?(:lazy) ? @options[:lazy] : @type == :text
+            @auto_increment = (@key == true && @type == :integer && @options[:auto_increment] != false)
+            
             (class << self; self end).class_eval <<-EOS
               def type_cast_value(value)
                 @adapter.type_cast_#{type}(value)
@@ -22,22 +27,26 @@ module DataMapper
           end
     
           def lazy=(value)
-            @options[:lazy] = value
+            @lazy = value
           end
     
           # Determines if the field should be lazy loaded.
           # You can set this explicitly, or accept the default,
           # which is false for all but text fields.
           def lazy?
-            @options[:lazy] || (type == :text)
+            @lazy
           end
       
           def nullable?
-            @options[:nullable] || true
+            @nullable
           end
       
           def key?
-            @options[:key] || false
+            @key
+          end
+          
+          def auto_increment?
+            @auto_increment
           end
     
           def to_sym
