@@ -71,7 +71,7 @@ module DataMapper
             
             if result
               @instance.instance_variable_set(:@new_record, false)
-              @instance.instance_variable_set(:@__key, result)
+              @instance.key = result
               calculate_original_hashes(@instance)
               @session.identity_map.set(@instance)
               callback(:after_create)

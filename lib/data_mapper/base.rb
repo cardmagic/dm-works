@@ -87,7 +87,8 @@ module DataMapper
       if mapping.lazy?
         class_eval <<-EOS
           def #{name}
-            lazy_load!("#{name}")
+            lazy_load!(#{name.inspect})
+            @#{name}
           end
         EOS
       else
@@ -110,20 +111,13 @@ module DataMapper
       end
     end
     
-    def lazy_load!(name)
-      (class << self; self end).send(:attr_accessor, name)
-      
-      column = session.schema[self.class][name.to_sym]
-      
-      # If the value is already loaded, then we don't need to do it again.
-      value = instance_variable_get(column.instance_variable_name)
-      return value unless value.nil?
-      
-      session.all(self.class, :select => [:id, name], :reload => true, :id => loaded_set.map(&:id)).each do |instance|
-        (class << self; self end).send(:attr_accessor, name)
+    def lazy_load!(*names)      
+      session.all(self.class, :select => ([:id] + names), :reload => true, :id => loaded_set.map(&:id)).each do |instance|
+        singleton_class = (class << instance; self end)
+        names.each do |name|
+          singleton_class.send(:attr_accessor, name)
+        end
       end
-      
-      instance_variable_get(column.instance_variable_name)
     end
         
     def attributes
@@ -174,6 +168,12 @@ module DataMapper
     
     def session
       @session || ( @session = database )
+    end
+    
+    def key=(value)
+      key_column = session.schema[self.class].key
+      @__key = key_column.type_cast_value(value)
+      instance_variable_set(key_column.instance_variable_name, @__key)
     end
     
     def key

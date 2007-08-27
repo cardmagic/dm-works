@@ -76,3 +76,5 @@
 * Added :intercept_load finder option and accompanying spec
 * Modified :intercept_load block signature to |instance,columns,row|
 * HasAndBelongsToMany works, all specs pass
+* Fixed a couple bugs with keys; Added DataMapper::Base#key= method
+* Made DataMapper::Base#lazy_load! a little more flexible

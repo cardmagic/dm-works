@@ -19,6 +19,7 @@ module DataMapper
             if column.key?
               @key = column 
               @key_index = index
+              @columns[index] = column
             else
               @columns[index] = column
             end
@@ -66,7 +67,7 @@ module DataMapper
               instance = @session.identity_map.get(@klass, instance_id)
 
               if instance.nil? || @reload
-                instance = @klass.new()
+                instance = @klass.new() if instance.nil?
                 instance.instance_variable_set(:@__key, instance_id)
                 instance.instance_variable_set(:@new_record, false)
                 @session.identity_map.set(instance)
