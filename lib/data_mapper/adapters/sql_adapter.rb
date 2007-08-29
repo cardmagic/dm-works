@@ -7,6 +7,7 @@ require 'data_mapper/adapters/sql/commands/table_exists_command'
 require 'data_mapper/adapters/sql/coersion'
 require 'data_mapper/adapters/sql/quoting'
 require 'data_mapper/adapters/sql/mappings/schema'
+require 'data_mapper/support/connection_pool'
 
 module DataMapper
   
@@ -52,16 +53,58 @@ module DataMapper
       def initialize(configuration)
         super
         @single_threaded = configuration.single_threaded
+        
+        unless single_threaded?
+          @connection_pool = Support::ConnectionPool.new { create_connection }
+        end
       end
       
       def single_threaded?
         @single_threaded
       end
-           
-      def connection(&block)
+      
+      def create_connection
         raise NotImplementedError.new
       end
-  
+      
+      def close_connection(conn)
+        raise NotImplementedError.new
+      end
+      
+      # Yields an available connection. Flushes the connection-pool if
+      # the connection returns an error.
+      def connection
+        begin
+          if single_threaded?
+            yield(@active_connection || @active_connection = create_connection)
+          else
+            @connection_pool.hold { |active_connection| yield(active_connection) }
+          end
+        rescue => execution_error
+          @configuration.log.fatal(execution_error)
+          
+          begin
+            if single_threaded?
+              close_connection(@active_connection)
+            else
+              @connections.available_connections.each do |active_connection|
+                close_connection(active_connection)
+              end
+            end
+          rescue => close_connection_error
+            @configuration.log.error(close_connection_error)
+          end
+          
+          if single_threaded?
+            @active_connection = create_connection
+          else
+            @connections.available_connections.clear
+          end
+          
+          raise execution_error
+        end
+      end
+        
       def transaction(&block)
         raise NotImplementedError.new
       end

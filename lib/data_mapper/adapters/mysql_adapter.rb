@@ -1,5 +1,4 @@
 require 'data_mapper/adapters/sql_adapter'
-require 'data_mapper/support/connection_pool'
 
 begin
   require 'mysql'
@@ -18,62 +17,17 @@ module DataMapper
     
     class MysqlAdapter < SqlAdapter
       
-      def initialize(configuration)
-        super
-        
-        create_connection = lambda do
-          Mysql.new(configuration.host, configuration.username, configuration.password, configuration.database)
-        end
-        
-        # Initialize the connection pool.
-        if single_threaded?
-          @connection_factory = create_connection
-          @active_connection = create_connection[]
-        else
-          @connections = Support::ConnectionPool.new(&create_connection)
-        end
+      def create_connection
+        Mysql.new(
+          @configuration.host,
+          @configuration.username,
+          @configuration.password,
+          @configuration.database
+        )
       end
       
-      # Yields an available connection. Flushes the connection-pool if
-      # the connection returns an error.
-      def connection
-        
-        if single_threaded?
-          begin
-            # BUG: Single_threaded mode totally breaks shit right now. No real idea why just from
-            # eyeballing this. Probably should move this into the SqlAdapter anyways and just
-            # force derived adapters to implement a #create_connection() and #close_connection(conn) methods.
-            yield(@active_connection)
-          rescue Mysql::Error => me
-            @configuration.log.fatal(me)
-            
-            begin
-              @active_connection.close
-            rescue => se
-              @configuration.log.error(se)
-            end
-            
-            @active_connection = @connection_factory[]
-          end
-        else
-          begin
-            @connections.hold { |dbh| yield(dbh) }
-          rescue Mysql::Error => me
-          
-            @configuration.log.fatal(me)
-          
-            @connections.available_connections.each do |sock|
-              begin
-                sock.close
-              rescue => se
-                @configuration.log.error(se)
-              end
-            end
-          
-            @connections.available_connections.clear
-            raise me
-          end
-        end
+      def close_connection(conn)
+        conn.close
       end
       
       def execute(*args)
@@ -160,30 +114,6 @@ module DataMapper
             @adapter.log.debug(sql)
             @adapter.connection { |db| db.query(sql) }
             true
-          end
-          
-        end
-        
-        class LoadCommand
-          def eof?(reader)
-            reader.num_rows == 0
-          end
-          
-          def close_reader(reader)
-            reader.free
-          end
-          
-          def execute(sql)
-            @adapter.log.debug(sql)
-            @adapter.connection { |db| db.query(to_sql) }
-          end
-          
-          def fetch_one(reader)
-            fetch_all(reader).first
-          end
-             
-          def fetch_all(reader)
-            load_instances(reader.fetch_fields.map { |field| field.name }, reader)
           end
           
         end
