@@ -2,29 +2,26 @@
 
 require 'lib/data_mapper'
 
-ENV['ADAPTER'] ||= 'mysql'
+adapter = ENV['ADAPTER'] || 'mysql'
+configuration_options = {
+  :adapter => adapter,
+  :log_stream => 'example.log',
+  :log_level => Logger::DEBUG,
+  :database => 'data_mapper_1'
+}
 
-DataMapper::Database.setup do
-  adapter  ENV['ADAPTER']
-  
-  unless ENV['LOGGER'] == 'false'
-    log_stream 'example.log'
-    log_level Logger::DEBUG
-  end
-  
-  database_name = 'data_mapper_1'
-  
-  case ENV['ADAPTER']
-    when 'postgresql' then
-      username 'postgres'
-    when 'mysql' then
-      username 'root'
-    when 'sqlite3' then
-      database_name << '.db'
-  end
-  
-  database database_name
+case adapter
+  when 'postgresql' then
+    configuration_options[:username] = 'postgres'
+  when 'mysql' then
+    configuration_options[:username] = 'root'
+  when 'sqlite3' then
+    configuration_options[:database] << '.db'
+  else
+    raise "Unsupported Adapter => #{adapter.inspect}"
 end
+
+DataMapper::Database.setup(configuration_options)
 
 Dir[File.dirname(__FILE__) + '/spec/models/*.rb'].each do |path|
   load path

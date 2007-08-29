@@ -43,57 +43,68 @@ module DataMapper
       @context
     end
     
-    def self.setup(name = :default, &initializer)
+    def self.setup(*args)
+      
+      name, options = nil
+      
+      if args.size == 1
+        name, options = :default, args[0]
+      elsif args.size == 2
+        name, options = args[0], args[1]
+      end        
+      
       current = self.new(name)
-      current.instance_eval(&initializer)
+      
+      options.each_pair do |k,v|
+        current.send("#{k}=", v)
+      end
+      
       @databases[name] = current
     end
     
     def initialize(name)
       @name = name
+      
+      @single_threaded = true
+      @adapter = nil
+      @host = 'localhost'
+      @database = nil
+      @username = 'root'
+      @password = ''
+      
+      @log_level = Logger::WARN
+      @log_stream = nil
     end
     
-    attr_reader :name
+    attr_reader :name, :adapter
+    attr_writer :single_threaded
+    attr_accessor :host, :database, :username, :password, :log_stream, :log_level
     
-    def adapter(value = nil)
-      return @adapter if value.nil?
+    def single_threaded?
+      @single_threaded
+    end
+    
+    def adapter=(value)
+      if @adapter
+        raise ArgumentError.new('The adapter is readonly after being set')
+      end
       
-      raise ArgumentError.new('The adapter is readonly after being set') unless @adapter.nil?
-      
-      require "data_mapper/adapters/#{String::memoized_underscore(value)}_adapter"
+      require "data_mapper/adapters/#{Inflector.underscore(value)}_adapter"
       adapter_class = Adapters::const_get(Inflector.classify(value) + "Adapter")
       
       @adapter = adapter_class.new(self)
     end
     
-    def host(value = nil); value.nil? ? (@host || 'localhost') : @host = value end
-    def database(value = nil); value.nil? ? @database : @database = value end
-    def username(value = nil); value.nil? ? @username : @username = value end
-    def password(value = nil); value.nil? ? (@password || '') : @password = value end
-    
-    # single_threaded mode is disabled by default currently since it's buggy.
-    def single_threaded(value = nil); value.nil? ? (@single_threaded.nil? ? @single_threaded = true : @single_threaded) : @single_threaded = value end
-    
-    def log(value = nil)
-      @log = value unless value.nil?
-
-      if @log.nil?
-        @log = log_stream.nil? ? Logger.new(nil) : Logger.new(log_stream, File::WRONLY | File::APPEND | File::CREAT)
-        @log.level = log_level || Logger::WARN
-        at_exit { @log.close }
+    def log
+      @log = Logger.new(@log_stream, File::WRONLY | File::APPEND | File::CREAT)
+      @log.level = @log_level
+      at_exit { @log.close }
+      
+      class << self
+        attr_reader :log
       end
       
-      @log
-    end
-    
-    def log_level(value = nil)
-      return @log_level if value.nil?
-      @log_level = value
-    end
-    
-    def log_stream(value = nil)
-      return @log_stream if value.nil?
-      @log_stream = value
+      return @log
     end
     
   end

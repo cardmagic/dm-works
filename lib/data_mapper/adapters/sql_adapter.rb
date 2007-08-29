@@ -52,15 +52,10 @@ module DataMapper
       
       def initialize(configuration)
         super
-        @single_threaded = configuration.single_threaded
         
-        unless single_threaded?
+        unless @configuration.single_threaded?
           @connection_pool = Support::ConnectionPool.new { create_connection }
         end
-      end
-      
-      def single_threaded?
-        @single_threaded
       end
       
       def create_connection
@@ -75,7 +70,7 @@ module DataMapper
       # the connection returns an error.
       def connection
         begin
-          if single_threaded?
+          if @configuration.single_threaded?
             yield(@active_connection || @active_connection = create_connection)
           else
             @connection_pool.hold { |active_connection| yield(active_connection) }
@@ -84,7 +79,7 @@ module DataMapper
           @configuration.log.fatal(execution_error)
           
           begin
-            if single_threaded?
+            if @configuration.single_threaded?
               close_connection(@active_connection)
             else
               @connections.available_connections.each do |active_connection|
@@ -95,7 +90,7 @@ module DataMapper
             @configuration.log.error(close_connection_error)
           end
           
-          if single_threaded?
+          if @configuration.single_threaded?
             @active_connection = create_connection
           else
             @connections.available_connections.clear

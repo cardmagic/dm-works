@@ -7,31 +7,26 @@ log_path = File.dirname(__FILE__) + '/../spec.log'
 require 'fileutils'
 FileUtils::rm log_path if File.exists?(log_path)
 
-case ENV['ADAPTER']
-when 'sqlite3' then
-  DataMapper::Database.setup do
-    adapter 'sqlite3'
-    database 'data_mapper_1.db'
-    log_stream 'spec.log'
-    log_level Logger::DEBUG
-  end
-when 'postgresql' then
-  DataMapper::Database.setup do
-    adapter  'postgresql'
-    database 'data_mapper_1'
-    username 'postgres'
-    log_stream 'spec.log'
-    log_level Logger::DEBUG
-  end
-else
-  DataMapper::Database.setup do
-    adapter 'mysql'
-    database 'data_mapper_1'
-    username 'root'
-    log_stream 'spec.log'
-    log_level Logger::DEBUG
-  end
+adapter = ENV['ADAPTER'] || 'mysql'
+configuration_options = {
+  :adapter => adapter,
+  :log_stream => 'spec.log',
+  :log_level => Logger::DEBUG,
+  :database => 'data_mapper_1'
+}
+
+case adapter
+  when 'postgresql' then
+    configuration_options[:username] = 'postgres'
+  when 'mysql' then
+    configuration_options[:username] = 'root'
+  when 'sqlite3' then
+    configuration_options[:database] << '.db'
+  else
+    raise "Unsupported Adapter => #{adapter.inspect}"
 end
+
+DataMapper::Database.setup(configuration_options)
 
 Dir[File.dirname(__FILE__) + '/models/*.rb'].each do |path|
   load path
