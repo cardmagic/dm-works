@@ -87,3 +87,4 @@
 * Database#setup now takes a Hash of options instead of a block-initializer
 * Validation chaining should work for all association types
 * Save chaining should work for has_many associations
+* Added benchmarks for in-session performance to performance.rb

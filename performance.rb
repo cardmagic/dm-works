@@ -81,12 +81,24 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
     N.times { DMAnimal[1] }
   end
   
+  x.report('DataMapper:id:in-session') do
+    database do
+      N.times { DMAnimal[1] }
+    end
+  end
+  
   x.report('ActiveRecord:all') do
     N.times { ARAnimal.find(:all) }
   end
   
   x.report('DataMapper:all') do
     N.times { DMAnimal.all }
+  end
+  
+  x.report('DataMapper:all:in-session') do
+    database do
+      N.times { DMAnimal.all }
+    end
   end
   
   x.report('ActiveRecord:conditions') do
@@ -97,8 +109,20 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
     N.times { Zoo[:name => 'Galveston'] }
   end
   
+  x.report('DataMapper:conditions:short:in-session') do
+    database do
+      N.times { Zoo[:name => 'Galveston'] }
+    end
+  end
+  
   x.report('DataMapper:conditions:long') do
     N.times { Zoo.find(:first, :conditions => ['name = ?', 'Galveston']) }
+  end
+  
+  x.report('DataMapper:conditions:long:in-session') do
+    database do
+      N.times { Zoo.find(:first, :conditions => ['name = ?', 'Galveston']) }
+    end
   end
   
   people = [
@@ -161,7 +185,13 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
   
   x.report('DataMapper:associations') do
     N.times do
-      database do
+      Zoo.all.each { |zoo| zoo.exhibits.entries }
+    end
+  end
+  
+  x.report('DataMapper:associations:in-session') do
+    database do
+      N.times do
         Zoo.all.each { |zoo| zoo.exhibits.entries }
       end
     end
