@@ -22,8 +22,27 @@ module DataMapper
         
         include Enumerable
         
+        def valid?(context)
+          @items.nil? || @items.empty? ? true : @items.all? { |item| item.valid?(context) }
+        end
+        
+        def save
+          unless @items.nil? || @items.empty?
+            setter_method = "#{@association_name}=".to_sym
+            ivar_name = association.foreign_key.instance_variable_name
+            @items.each do |item|
+              item.instance_variable_set(ivar_name, @instance.key)
+              item.save
+            end
+          end
+        end
+        
         def each
           items.each { |item| yield item }
+        end
+        
+        def <<(associated_item)
+          items << associated_item
         end
 
         def size
@@ -31,8 +50,8 @@ module DataMapper
         end
         alias length size
 
-        def [](key)
-          items[key]
+        def [](index)
+          items[index]
         end
 
         def empty?

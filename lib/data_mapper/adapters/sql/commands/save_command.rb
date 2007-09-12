@@ -101,9 +101,15 @@ module DataMapper
               return false if @adapter.table_exists?(@instance)
               execute_create_table(to_create_table_sql)
             else
-              return false unless @instance.dirty?
+              return false unless @instance.dirty? || !@instance.valid?
               callback(:before_save)
               result = @instance.new_record? ? insert! : update!
+              
+              @instance.instance_variables.each do |ivar_name|
+                ivar = @instance.instance_variable_get(ivar_name)
+                ivar.save if ivar && ivar.respond_to?(:save) && ivar.method(:save).arity == 0
+              end
+              
               @instance.session = @session
               callback(:after_save)
               result

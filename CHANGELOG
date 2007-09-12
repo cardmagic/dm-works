@@ -85,3 +85,5 @@
 * Added MysqlAdapter#create_connection and MysqlAdapter#close_connection concrete methods
 * Made SqlAdapter#connection a concrete method (instead of abstract), with support for single_threaded operation
 * Database#setup now takes a Hash of options instead of a block-initializer
+* Validation chaining should work for all association types
+* Save chaining should work for has_many associations

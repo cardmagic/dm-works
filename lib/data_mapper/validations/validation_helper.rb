@@ -31,9 +31,18 @@ module DataMapper
       end
       
       def valid?(context = :general)
-        self.class.callbacks.execute(:before_validation, self) &
-          self.class.validations.execute(context, self) &
-          self.class.callbacks.execute(:after_validation, self)
+        return false unless self.class.callbacks.execute(:before_validation, self)
+        return false unless self.class.validations.execute(context, self)
+        return false unless instance_variables.all? do |ivar_name|
+          ivar = instance_variable_get(ivar_name)
+          if ivar && ivar.respond_to?(:valid?)
+            ivar.send(:valid?, context)
+          else
+            true
+          end
+        end        
+        return false unless self.class.callbacks.execute(:after_validation, self)
+        return true
       end
       
       module ClassMethods

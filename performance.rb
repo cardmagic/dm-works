@@ -21,11 +21,11 @@ log_path = File.dirname(__FILE__) + '/development.log'
 require 'fileutils'
 FileUtils::rm log_path if File.exists?(log_path)
 
-DataMapper::Database.setup do
-  adapter   'mysql'
-  database 'data_mapper_1'
-  username 'root'
-end
+DataMapper::Database.setup({
+  :adapter => 'mysql',
+  :database => 'data_mapper_1',
+  :username => 'root'
+})
 
 class DMAnimal < DataMapper::Base
   set_table_name 'animals'
