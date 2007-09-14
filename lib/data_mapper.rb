@@ -18,7 +18,7 @@ require 'data_mapper/base'
 # This block of code is for compatibility with Ruby On Rails' database.yml
 # file, allowing you to simply require the data_mapper.rb in your
 # Rails application's environment.rb to configure the DataMapper.
-if defined? RAILS_ENV
+if defined?(RAILS_ROOT) && File.exists?(RAILS_ROOT + '/config/database.yml')
   require 'yaml'
   
   rails_config = YAML::load_file(RAILS_ROOT + '/config/database.yml')
