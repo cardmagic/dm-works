@@ -88,3 +88,4 @@
 * Validation chaining should work for all association types
 * Save chaining should work for has_many associations
 * Added benchmarks for in-session performance to performance.rb
+* Removed block conditions; They're slower and don't offer any real advantages

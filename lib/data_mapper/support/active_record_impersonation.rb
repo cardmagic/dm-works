@@ -29,12 +29,12 @@ module DataMapper
           first(search_attributes) || create(search_attributes.merge(create_attributes))
         end
         
-        def all(options = {}, &b)
-          database.all(self, options, &b)
+        def all(options = {})
+          database.all(self, options)
         end
         
-        def first(*args, &b)
-          database.first(self, *args, &b)
+        def first(*args)
+          database.first(self, *args)
         end
         
         def delete_all
@@ -45,11 +45,11 @@ module DataMapper
           database.truncate(self)
         end
         
-        def find(type_or_id, options = {}, &b)
+        def find(type_or_id, options = {})
           case type_or_id
-            when :first then first(options, &b)
-            when :all then all(options, &b)
-            else first(type_or_id, options, &b)
+            when :first then first(options)
+            when :all then all(options)
+            else first(type_or_id, options)
           end
         end
         

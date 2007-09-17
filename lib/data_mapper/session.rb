@@ -17,7 +17,7 @@ module DataMapper
       @identity_map || ( @identity_map = IdentityMap.new )
     end
     
-    def first(klass, *args, &b)
+    def first(klass, *args)
       id = nil
       options = nil
       
