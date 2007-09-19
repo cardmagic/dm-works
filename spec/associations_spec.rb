@@ -1,4 +1,4 @@
-return unless ENV['ADAPTER'].nil? || ENV['ADAPTER'] == 'mysql'
+unless ENV['ADAPTER'].nil? || ENV['ADAPTER'] == 'mysql'
 
 describe DataMapper::Associations::HasManyAssociation do
   
@@ -47,5 +47,7 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
       froggy.exhibits.entries.first.should == Exhibit[:name => 'Amazonia']
     end
   end
+
+end
 
 end
