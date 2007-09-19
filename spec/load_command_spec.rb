@@ -13,7 +13,7 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
   
 end
 
-return unless ENV['ADAPTER'].nil? || ENV['ADAPTER'] == 'mysql'
+unless ENV['ADAPTER'].nil? || ENV['ADAPTER'] == 'mysql'
   
 describe DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand do
 
@@ -92,5 +92,7 @@ describe DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand do
     Person.first(:intercept_load => lambda { result = true })
     result.should == true
   end
+
+end
 
 end
