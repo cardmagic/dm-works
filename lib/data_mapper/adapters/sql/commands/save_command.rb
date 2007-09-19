@@ -27,8 +27,11 @@ module DataMapper
         
             keys = []
             values = []
-        
-            @instance.dirty_attributes.each_pair { |k,v| keys << table[k].to_sql; values << v }
+            attributes = @instance.dirty_attributes
+            
+            attributes[:type] = @instance.class.name if table.multi_class?
+            
+            attributes.each_pair { |k,v| keys << table[k].to_sql; values << v }
         
             # Formatting is a bit off here, but it looks nicer in the log this way.
             sql = "INSERT INTO #{table.to_sql} (#{keys.join(', ')}) \

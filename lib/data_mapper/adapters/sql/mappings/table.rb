@@ -20,7 +20,14 @@ module DataMapper
             @columns = []
             @columns_hash = Hash.new { |h,k| h[k] = @columns.find { |c| c.name == k } }
             @columns_by_column_name = Hash.new { |h,k| h[k.to_s] = @columns.find { |c| c.column_name == k.to_s } }
+            
             @associations = AssociationsSet.new
+            
+            @multi_class = false
+          end
+          
+          def multi_class?
+            @multi_class
           end
           
           def associations
@@ -70,6 +77,7 @@ module DataMapper
               reset_derived_columns!
               column = Column.new(@adapter, self, column_name, type, options)
               @columns.send(column_name == :id ? :unshift : :push, column)
+              @multi_class = true if column_name == :type
             end
         
             return column
