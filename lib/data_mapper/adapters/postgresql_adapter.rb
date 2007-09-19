@@ -17,52 +17,46 @@ module DataMapper
   module Adapters
     
     class PostgresqlAdapter < SqlAdapter
-      
-      def initialize(configuration)
-        super
-        # Initialize the connection pool.
-        @connections = Support::ConnectionPool.new do
-          # add port parameter to configuration
-          pg_conn = PGconn.connect(configuration.host, 5432, "", "", configuration.database, configuration.username, configuration.password)
-        end
+
+      def create_connection
+        PGconn.connect(
+          @configuration.host,
+          5432,
+          "",
+          "",
+          @configuration.database,
+          @configuration.username,
+          @configuration.password
+        )
       end
-
-
-      # Returns an available connection. Flushes the connection-pool if
-      # the connection returns an error.
-      def connection
-        raise ArgumentError.new('PostgresqlAdapter#connection requires a block-parameter') unless block_given?
-        begin
-          @connections.hold { |connection| yield connection }
-        rescue PGError => me
-          
-          @configuration.log.fatal(me)
-          
-          @connections.available_connections.each do |sock|
-            begin
-              sock.close
-            rescue => se
-              @configuration.log.error(se)
-            end
-          end
-          
-          @connections.available_connections.clear
-          raise me
+      
+      def close_connection(conn)
+        conn.close
+      end
+      
+      def execute(*args)
+        connection do |db|
+          sql = escape_sql(*args)
+          log.debug(sql)
+          pg_result = db.exec(sql)
+          result = yield(pg_result, pg_result.cmdstatus.split(' ').last.to_i)
+          pg_result.clear
+          result
         end
       end
       
       def query(*args)
-        pg_result = connection { |db| db.exec(escape_sql(*args)) }
-        
-        struct = Struct.new(*pg_result.fields.map { |field| Inflector.underscore(field).to_sym })
-        results = []
-        
-        pg_result.each do |row|
-          results << struct.new(*row)
+        execute(*args) do |reader,num_rows|
+          struct = Struct.new(*reader.fields.map { |field| Inflector.underscore(field.name).to_sym })
+          
+          results = []
+          
+          reader.each do |row|
+            results << struct.new(*row)
+          end
+          
+          results
         end
-        
-        pg_result.clear
-        return results
       end
       
       TABLE_QUOTING_CHARACTER = '"'.freeze
@@ -191,48 +185,48 @@ module DataMapper
             return long_form
           end
         end
-        
-        class LoadCommand
-          def eof?(pg_result)
-            pg_result.result.entries.empty?
-          end
-          
-          def close_reader(pg_result)
-            pg_result.clear
-          end
-          
-          def execute(sql)
-            @adapter.log.debug(sql)
-            @adapter.connection { |db| db.exec(to_sql) }
-          end
-          
-          def fetch_one(pg_result)
-            load(process_row(columns(pg_result), pg_result.result[0]))
-          end
-          
-          def fetch_all(pg_result)
-            load_instances(pg_result.fields, pg_result)
-          end
-
-          private
-          
-          def columns(pg_result)
-            columns = {}
-            pg_result.fields.each_with_index do |name, index|
-              columns[name] = index
-            end
-            columns
-          end
-         
-          def process_row(columns, row)
-            hash = {}
-            columns.each_pair do |name,index|
-              hash[name] = row[index]
-            end
-            hash
-          end
-          
-        end
+               #  
+               # class LoadCommand
+               #   def eof?(pg_result)
+               #     pg_result.result.entries.empty?
+               #   end
+               #   
+               #   def close_reader(pg_result)
+               #     pg_result.clear
+               #   end
+               #   
+               #   def execute(sql)
+               #     @adapter.log.debug(sql)
+               #     @adapter.connection { |db| db.exec(to_sql) }
+               #   end
+               #   
+               #   def fetch_one(pg_result)
+               #     load(process_row(columns(pg_result), pg_result.result[0]))
+               #   end
+               #   
+               #   def fetch_all(pg_result)
+               #     load_instances(pg_result.fields, pg_result)
+               #   end
+               # 
+               #   private
+               #   
+               #   def columns(pg_result)
+               #     columns = {}
+               #     pg_result.fields.each_with_index do |name, index|
+               #       columns[name] = index
+               #     end
+               #     columns
+               #   end
+               #  
+               #   def process_row(columns, row)
+               #     hash = {}
+               #     columns.each_pair do |name,index|
+               #       hash[name] = row[index]
+               #     end
+               #     hash
+               #   end
+               #   
+               # end
         
       end
       
