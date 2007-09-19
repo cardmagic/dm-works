@@ -1,3 +1,4 @@
+p Dir.pwd
 # Copyright (c) 2006 Erik Hatcher, Thiago Jackiw
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -18,7 +19,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-require 'active_record'
 require 'rexml/document'
 require 'net/http'
 require 'yaml'
@@ -32,21 +32,24 @@ require File.dirname(__FILE__) + '/common_methods'
 require File.dirname(__FILE__) + '/deprecation'
 require File.dirname(__FILE__) + '/search_results'
 
+module DataMapper
+  class Database
+    def solr=(value)
+      @solr_url
+    end
+    
+    def solr
+      @solr_url || 'http://localhost:8982/solr'
+    end
+  end
+end
+
 module ActsAsSolr
   
-  class Post    
+  class Post
     def self.execute(request)
       begin
-        if File.exists?(RAILS_ROOT+'/config/solr.yml')
-          config = YAML::load_file(RAILS_ROOT+'/config/solr.yml')
-          url = config[RAILS_ENV]['url']
-          # for backwards compatibility
-          url ||= "http://#{config[RAILS_ENV]['host']}:#{config[RAILS_ENV]['port']}/#{config[RAILS_ENV]['servlet_path']}"
-        else
-          url = 'http://localhost:8982/solr'
-        end
-        connection = Solr::Connection.new(url)
-        return connection.send(request)
+        return Solr::Connection.new(database.solr).send(request)
       rescue 
         raise "Couldn't connect to the Solr server at #{url}. #{$!}"
         false
@@ -57,4 +60,4 @@ module ActsAsSolr
 end
 
 # reopen ActiveRecord and include the acts_as_solr method
-ActiveRecord::Base.extend ActsAsSolr::ActsMethods
+DataMapper::Base.extend ActsAsSolr::ActsMethods

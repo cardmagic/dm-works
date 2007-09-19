@@ -22,13 +22,19 @@ if defined?(RAILS_ROOT) && File.exists?(RAILS_ROOT + '/config/database.yml')
   
   rails_config = YAML::load_file(RAILS_ROOT + '/config/database.yml')
   current_config = rails_config[RAILS_ENV.to_s]
-
-  DataMapper::Database.setup do
-    adapter   current_config['adapter']
-    host      current_config['host']
-    database  current_config['database']
-    username  current_config['username']
-    password  current_config['password']
-    cache WeakHash::Factory
+  
+  default_database_config = {
+    :adapter  => current_config['adapter'],
+    :host     => current_config['host'],
+    :database => current_config['database'],
+    :username => current_config['username'],
+    :password => current_config['password']
+  }
+  
+  if File.exists?(RAILS_ROOT + '/config/solr.yml')
+    solr_config = YAML::load_file(RAILS_ROOT + '/config/solr.yml') 
+    default_database_config.merge({ :solr => solr_config[RAILS_ENV]['url'] })
   end
+  
+  DataMapper::Database.setup(default_database_config)
 end
