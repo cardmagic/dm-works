@@ -15,7 +15,7 @@ module DataMapper
             @name, @type, @options = name.to_sym, type, options
             
             @key = (@options[:key] == true)
-            @nullable = @options.has_key?(:nullable) ? @options[:nullable] : (@type == :text)
+            @nullable = @options.has_key?(:nullable) ? @options[:nullable] : true
             @lazy = @options.has_key?(:lazy) ? @options[:lazy] : @type == :text
             @auto_increment = (@key == true && @type == :integer && @options[:auto_increment] != false)
             
