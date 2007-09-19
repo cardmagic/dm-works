@@ -28,7 +28,7 @@ module DataMapper
           end
           
           def reflect_columns
-            @adapter.reflect_columns(to_sql)
+            @adapter.reflect_columns(self)
           end
           
           def columns

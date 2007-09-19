@@ -30,7 +30,7 @@ module DataMapper
             when TrueClass, FalseClass then value.to_s.upcase
             when Array then "(#{value.map { |entry| quote_value(entry) }.join(', ')})"
             else 
-              if value.responds_to?(:to_sql)
+              if value.respond_to?(:to_sql)
                 value.to_sql
               else
                 raise "Don't know how to quote #{value.inspect}"

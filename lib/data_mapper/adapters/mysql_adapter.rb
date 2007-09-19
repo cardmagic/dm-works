@@ -43,20 +43,20 @@ module DataMapper
       
       def query(*args)
         execute(*args) do |reader,num_rows|
-          struct = Support::Struct::define(reader.fetch_fields.map { |field| field.name })
+          struct = Struct.new(*reader.fetch_fields.map { |field| Inflector.underscore(field.name).to_sym })
           
           results = []
           
           reader.each do |row|
-            results << struct.new(row)
+            results << struct.new(*row)
           end
           
           results
         end
       end
       
-      def reflect_columns(table_name)
-        query("SHOW COLUMNS IN #{table_name}")
+      def reflect_columns(table)
+        query("SHOW COLUMNS IN ?", table)
       end
       
       TABLE_QUOTING_CHARACTER = '`'.freeze
