@@ -126,11 +126,11 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
   end
   
   people = [
-    ['Sam', 29, 'Programmer'],
-    ['Amy', 28, 'Business Analyst Manager'],
-    ['Scott', 25, 'Programmer'],
-    ['Josh', 23, 'Supervisor'],
-    ['Bob', 40, 'Peon']
+    ['Sam', 29, 'Programmer', 'A slow text field'],
+    ['Amy', 28, 'Business Analyst Manager', 'A slow text field'],
+    ['Scott', 25, 'Programmer', 'A slow text field'],
+    ['Josh', 23, 'Supervisor', 'A slow text field'],
+    ['Bob', 40, 'Peon', 'A slow text field']
     ]
 
   DMPerson.truncate!
@@ -138,7 +138,7 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
   x.report('ActiveRecord:insert') do
     N.times do
       people.each do |a|
-        ARPerson::create(:name => a[0], :age => a[1], :occupation => a[2])
+        ARPerson::create(:name => a[0], :age => a[1], :occupation => a[2], :notes => a[3])
       end
     end
   end
@@ -148,7 +148,7 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
   x.report('DataMapper:insert') do
     N.times do
       people.each do |a|
-        DMPerson::create(:name => a[0], :age => a[1], :occupation => a[2])
+        DMPerson::create(:name => a[0], :age => a[1], :occupation => a[2], :notes => a[3])
       end
     end
   end

@@ -27,6 +27,10 @@ module DataMapper
             @associations
           end
           
+          def reflect_columns
+            @adapter.reflect_columns(to_sql)
+          end
+          
           def columns
             key if @key.nil?
             @columns

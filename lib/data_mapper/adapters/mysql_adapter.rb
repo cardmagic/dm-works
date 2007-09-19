@@ -55,6 +55,10 @@ module DataMapper
         end
       end
       
+      def reflect_columns(table_name)
+        query("SHOW COLUMNS IN #{table_name}")
+      end
+      
       TABLE_QUOTING_CHARACTER = '`'.freeze
       COLUMN_QUOTING_CHARACTER = '`'.freeze
       
