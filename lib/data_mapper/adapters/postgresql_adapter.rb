@@ -124,7 +124,16 @@ module DataMapper
             table = @adapter[@klass_or_instance]
             sequence = @adapter.sequence_name(table)
             # truncate the table and reset the sequence value
-            "DELETE FROM " << table.to_sql << "; SELECT setval('#{sequence}', (SELECT COALESCE(MAX(id)+(SELECT increment_by FROM #{sequence}), (SELECT min_value FROM #{sequence})) FROM #{table.to_sql}), false)"
+            sql = "DELETE FROM " << table.to_sql
+            if table.key.auto_increment?
+              sql << <<-EOS.compress_lines
+                ; SELECT setval('#{sequence}',
+                  (SELECT COALESCE( MAX(id) + (SELECT increment_by FROM #{sequence} ),
+                  (SELECT min_value FROM #{sequence})
+                ) FROM #{table.to_sql}), false)
+              EOS
+            end
+            return sql
           end
 
           def execute_drop(sql)
