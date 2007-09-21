@@ -9,7 +9,7 @@ module DataMapper
     class Sqlite3Adapter < SqlAdapter
       
       def create_connection
-        conn = SQLite3::Database.new(configuration.database)
+        conn = SQLite3::Database.new(@configuration.database)
         conn.results_as_hash = true
         conn
       end
@@ -23,23 +23,9 @@ module DataMapper
           sql = escape_sql(*args)
           log.debug(sql)
           reader = db.query(sql)
-          result = yield(reader, reader.num_rows)
-          reader.free
+          result = yield(reader, reader.count)
+          reader.close
           result
-        end
-      end
-      
-      def query(*args)
-        execute(*args) do |reader,num_rows|
-          struct = Struct.new(*reader.fetch_fields.map { |field| Inflector.underscore(field.name).to_sym })
-          
-          results = []
-          
-          reader.each do |row|
-            results << struct.new(*row)
-          end
-          
-          results
         end
       end
       

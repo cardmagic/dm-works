@@ -1,5 +1,6 @@
 require 'logger'
 require 'data_mapper/session'
+require 'data_mapper/adapters/abstract_adapter'
 
 # Delegates to DataMapper::database.
 # Will not overwrite if a method of the same name is pre-defined.
@@ -89,7 +90,7 @@ module DataMapper
         raise ArgumentError.new('The adapter is readonly after being set')
       end
       
-      if value.is_a?(AbstractAdapter)
+      if value.is_a?(DataMapper::Adapters::AbstractAdapter)
         @adapter = value
       else
         require "data_mapper/adapters/#{Inflector.underscore(value)}_adapter"
