@@ -8,33 +8,38 @@ module DataMapper
     
     class Sqlite3Adapter < SqlAdapter
       
-      def initialize(configuration)
-        super
-        @connections = Support::ConnectionPool.new do
-          dbh = SQLite3::Database.new(configuration.database)
-          dbh.results_as_hash = true
-          dbh
+      def create_connection
+        conn = SQLite3::Database.new(configuration.database)
+        conn.results_as_hash = true
+        conn
+      end
+      
+      def close_connection(conn)
+        conn.close
+      end
+      
+      def execute(*args)
+        connection do |db|
+          sql = escape_sql(*args)
+          log.debug(sql)
+          reader = db.query(sql)
+          result = yield(reader, reader.num_rows)
+          reader.free
+          result
         end
       end
       
-      def connection
-        raise ArgumentError.new('Sqlite3Adapter#connection requires a block-parameter') unless block_given?
-        begin
-          @connections.hold { |connection| yield connection }
-        rescue SQLite3::Exception => sle
+      def query(*args)
+        execute(*args) do |reader,num_rows|
+          struct = Struct.new(*reader.fetch_fields.map { |field| Inflector.underscore(field.name).to_sym })
           
-          @configuration.log.fatal(sle)
+          results = []
           
-          @connections.available_connections.each do |sock|
-            begin
-              sock.close
-            rescue => se
-              @configuration.log.error(se)
-            end
+          reader.each do |row|
+            results << struct.new(*row)
           end
           
-          @connections.available_connections.clear
-          raise sle
+          results
         end
       end
       
@@ -55,10 +60,10 @@ module DataMapper
         
         reader.close
         
-        struct = Support::Struct::define(fields)
+        struct = Struct.new(*fields)
         
         rows.map do |row|
-          struct.new(row)
+          struct.new(*row)
         end
       end
       
@@ -166,60 +171,6 @@ module DataMapper
           end
         end # class DeleteCommand
          
-        class LoadCommand
-          def eof?(reader)
-            reader.eof?
-          end
-          
-          def close_reader(reader)
-            reader.close
-          end
-          
-          def execute(sql)
-            @adapter.connection { |db| db.query(to_sql) }
-          end
-          
-          def fetch_one(reader)
-            load(reader.next)
-          end
-          
-          def fetch_all(reader)
-            fields = nil
-            rows = []
-            
-            until reader.eof?
-              hash = reader.next
-              break if hash.nil?
-              
-              fields = hash.keys.select { |field| field.is_a?(String) } unless fields
-              
-              rows << fields.map { |name| hash[name] }
-            end
-            
-            load_instances(fields, rows)
-          end
-          
-          def fetch_structs(reader)
-            fields = nil
-            rows = []
-            
-            until reader.eof?
-              hash = reader.next
-              break if hash.nil?
-              
-              fields = hash.keys.select { |field| field.is_a?(String) } unless fields
-              
-              rows << fields.map { |name| hash[name] }
-            end
-            
-            fields = fields.inject({}) do |h,f|
-              h[f] = fields.index(f); h
-            end
-            
-            load_structs(fields, rows)
-          end
-        end
-        
       end # module Commands
       
     end # class Sqlite3Adapter

@@ -26,13 +26,19 @@ case adapter
     raise "Unsupported Adapter => #{adapter.inspect}"
 end
 
-DataMapper::Database.setup(configuration_options)
-
-Dir[File.dirname(__FILE__) + '/models/*.rb'].each do |path|
-  load path
+def load_models
+  Dir[File.dirname(__FILE__) + '/models/*.rb'].each do |path|
+    load path
+  end
 end
 
+DataMapper::Database.setup(:mock, :adapter => :mock)
+database(:mock) { load_models }  
+
+DataMapper::Database.setup(configuration_options)
+
 database do |db|
+  load_models
   db.schema.each do |table|
     db.create_table(table.klass)
   end

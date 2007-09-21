@@ -1,7 +1,7 @@
 describe DataMapper::Adapters::Sql::Commands::Conditions do
   
   def conditions_for(klass, options = {})
-    session = database
+    session = database(:mock)
     DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand.new(
       session.adapter, session, klass, options
     ).conditions

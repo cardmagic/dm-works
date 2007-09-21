@@ -89,10 +89,14 @@ module DataMapper
         raise ArgumentError.new('The adapter is readonly after being set')
       end
       
-      require "data_mapper/adapters/#{Inflector.underscore(value)}_adapter"
-      adapter_class = Adapters::const_get(Inflector.classify(value) + "Adapter")
+      if value.is_a?(AbstractAdapter)
+        @adapter = value
+      else
+        require "data_mapper/adapters/#{Inflector.underscore(value)}_adapter"
+        adapter_class = Adapters::const_get(Inflector.classify(value) + "Adapter")
       
-      @adapter = adapter_class.new(self)
+        @adapter = adapter_class.new(self)
+      end
     end
     
     def log

@@ -29,7 +29,7 @@ describe DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand do
   end
   
   def loader_for(klass, options = {})
-    session = database
+    session = database(:mock)
     DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand.new(session.adapter, session, klass, options)
   end
 
