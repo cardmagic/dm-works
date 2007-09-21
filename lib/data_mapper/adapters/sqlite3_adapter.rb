@@ -6,6 +6,10 @@ require 'sqlite3'
 module DataMapper
   module Adapters
     
+    # Where are the docs on SQLite3? Damnit... http://sqlite-ruby.rubyforge.org
+    # is a little confusing when it says it's NOT for sqlite3.
+    # And it seems to be missing methods that are obviously in the gem (like #total_changes).
+    # Guess I'll peek at the local rdocs when I get some more time to clean this up...
     class Sqlite3Adapter < SqlAdapter
       
       def create_connection
@@ -43,8 +47,6 @@ module DataMapper
           
           rows << fields.map { |field| hash[field] }
         end
-        
-        reader.close
         
         struct = Struct.new(*fields)
         
