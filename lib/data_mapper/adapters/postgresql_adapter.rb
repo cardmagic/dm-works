@@ -47,7 +47,7 @@ module DataMapper
       
       def query(*args)
         execute(*args) do |reader,num_rows|
-          struct = Struct.new(*reader.fields.map { |field| Inflector.underscore(field.name).to_sym })
+          struct = Struct.new(*reader.fields.map { |field| Inflector.underscore(field).to_sym })
           
           results = []
           

@@ -1,4 +1,5 @@
 require File.dirname(__FILE__) + '/../lib/data_mapper'
+require File.dirname(__FILE__) + '/mock_adapter'
 require 'yaml'
 require 'pp'
 
@@ -32,7 +33,8 @@ def load_models
   end
 end
 
-DataMapper::Database.setup(:mock, :adapter => :mock)
+mock_db = DataMapper::Database.setup(:mock, {})
+mock_db.adapter = MockAdapter.new(mock_db)
 database(:mock) { load_models }  
 
 DataMapper::Database.setup(configuration_options)
