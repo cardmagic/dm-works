@@ -70,6 +70,7 @@ module DataMapper
       @adapter = nil
       @host = 'localhost'
       @database = nil
+      @schema_search_path = nil
       @username = 'root'
       @password = ''
       
@@ -79,7 +80,7 @@ module DataMapper
     
     attr_reader :name, :adapter
     attr_writer :single_threaded
-    attr_accessor :host, :database, :username, :password, :log_stream, :log_level
+    attr_accessor :host, :database, :schema_search_path, :username, :password, :log_stream, :log_level
     
     def single_threaded?
       @single_threaded

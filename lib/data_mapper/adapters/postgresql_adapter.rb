@@ -15,9 +15,36 @@ end
 
 module DataMapper
   module Adapters
+    module Sql
+      module Mappings
+        class Table
+          def to_sql
+            @to_sql || @to_sql = (quote_table_with_schema.freeze)
+          end
+
+          def sequence_sql
+            @sequence_sql || @sequence_sql = quote_table_with_schema("_id_seq").freeze
+          end
+          
+          private 
+          
+          def quote_table_with_schema(table_suffix = nil)
+            parts = name.split('.')
+            parts.last << table_suffix if table_suffix
+            parts.map { |part|
+@adapter.quote_table_name(part) }.join('.')
+          end
+        end
+      end
+    end
     
     class PostgresqlAdapter < SqlAdapter
-
+      
+      def schema_search_path
+        @schema_search_path || @schema_search_path =
+          @configuration.schema_search_path.split(',').collect{|s| s.ensure_wrapped_with("'")} if @configuration.schema_search_path
+      end
+      
       def create_connection
         PGconn.connect(
           @configuration.host,
@@ -61,7 +88,7 @@ module DataMapper
       
       TABLE_QUOTING_CHARACTER = '"'.freeze
       COLUMN_QUOTING_CHARACTER = '"'.freeze
-
+      
       def type_cast_boolean(value)
         case value
           when TrueClass, FalseClass then value
@@ -80,10 +107,6 @@ module DataMapper
         end
       end
       
-      def sequence_name(table)
-        quote_table_name(table.to_sql.gsub('"', '') + "_id_seq")
-      end
-      
       TYPES.merge!({
         :integer => 'integer'.freeze,
         :string => 'varchar'.freeze,
@@ -96,9 +119,15 @@ module DataMapper
         
         class TableExistsCommand
           def to_sql
-            # TODO cache this somewhere
-            schema_list = @adapter.connection { |db| db.exec('SHOW search_path').result[0][0].split(',').collect { |s| "'#{s}'" }.join(',') }
-            "SELECT tablename FROM pg_tables WHERE schemaname IN (#{schema_list}) AND tablename = #{table_name}"
+            # if the table is qualified, search only that schema
+            schema_list, unqualified_table_name = if table_name.index('.')
+              table_name.slice(1..-2).split('.').collect {|t| t.ensure_wrapped_with("'")}
+            elsif @adapter.schema_search_path
+              [@adapter.schema_search_path, table_name]
+            else
+              [@adapter.connection { |db| db.exec('SHOW search_path').result[0][0].split(',').collect { |t| t.ensure_wrapped_with("'") }.join(',') }, table_name]
+            end
+            "SELECT tablename FROM pg_tables WHERE schemaname IN (#{schema_list}) AND tablename = #{unqualified_table_name}"
           end
           
           def call
@@ -122,7 +151,7 @@ module DataMapper
 
           def to_truncate_sql
             table = @adapter[@klass_or_instance]
-            sequence = @adapter.sequence_name(table)
+            sequence = table.sequence_sql
             # truncate the table and reset the sequence value
             sql = "DELETE FROM " << table.to_sql
             if table.key.auto_increment?
@@ -152,7 +181,7 @@ module DataMapper
               db.exec(sql)
               # Current id or latest value read from sequence in this session
               # See: http://www.postgresql.org/docs/8.1/interactive/functions-sequence.html
-              @instance.key || db.exec("SELECT last_value from #{@adapter.sequence_name(@adapter[@instance.class])}")[0][0]
+              @instance.key || db.exec("SELECT last_value from #{@adapter[@instance.class].sequence_sql}")[0][0]
             end
           end
           
@@ -171,8 +200,16 @@ module DataMapper
           
           def to_create_table_sql
             table = @adapter[@instance]
+            schema_name = table.name.index('.') ? table.name.split('.').first : nil
+            schema_list = @adapter.connection { |db| db.exec('SELECT nspname FROM pg_namespace').result.collect { |r| r[0] }.join(',') }
 
-            sql = "CREATE TABLE " << table.to_sql
+            sql = if schema_name and !schema_list.include?(schema_name)
+                "CREATE SCHEMA #{@adapter.quote_table_name(schema_name)}; " 
+            else
+              ''
+            end
+            
+            sql << "CREATE TABLE " << table.to_sql
 
             sql << " (" << table.columns.map do |column|
               column_long_form(column)
