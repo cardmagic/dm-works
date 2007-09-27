@@ -66,18 +66,23 @@ module DataMapper
         raise NotImplementedError.new
       end
       
-      # Yields an available connection. Flushes the connection-pool if
-      # the connection returns an error.
+      # Yields an available connection. Flushes the connection-pool and reconnects
+      # if the connection returns an error.
       def connection
         begin
+          # Yield the appropriate connection
           if @configuration.single_threaded?
             yield(@active_connection || @active_connection = create_connection)
           else
             @connection_pool.hold { |active_connection| yield(active_connection) }
           end
         rescue => execution_error
-          @configuration.log.fatal(execution_error)
+          # Log error on failure
+          @configuration.log.error(execution_error)
           
+          # Close all open connections, assuming that if one
+          # had an error, it's likely due to a lost connection,
+          # in which case all connections are likely broken.
           begin
             if @configuration.single_threaded?
               close_connection(@active_connection)
@@ -87,9 +92,12 @@ module DataMapper
               end
             end
           rescue => close_connection_error
-            @configuration.log.error(close_connection_error)
+            # An error on closing the connection is almost expected
+            # if the socket is broken.
+            @configuration.log.warn(close_connection_error)
           end
           
+          # Reopen fresh connections.
           if @configuration.single_threaded?
             @active_connection = create_connection
           else
