@@ -1,6 +1,7 @@
 require 'data_mapper/adapters/abstract_adapter'
 require 'data_mapper/adapters/sql/commands/load_command'
 require 'data_mapper/adapters/sql/commands/advanced_load_command'
+require 'data_mapper/adapters/sql/commands/count_command'
 require 'data_mapper/adapters/sql/commands/save_command'
 require 'data_mapper/adapters/sql/commands/delete_command'
 require 'data_mapper/adapters/sql/commands/table_exists_command'
