@@ -26,8 +26,6 @@ end
 if application_root && File.exists?(application_root + '/config/database.yml')
   require 'yaml'
   
-  p application_root, application_environment
-  
   database_configurations = YAML::load_file(application_root + '/config/database.yml')
   current_database_config = database_configurations[application_environment] || database_configurations[application_environment.to_sym]
   

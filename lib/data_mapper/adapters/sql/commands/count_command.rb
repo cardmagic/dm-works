@@ -22,7 +22,7 @@ module DataMapper
           end
           
           def call
-            @adapter.query(to_sql).first.row_count
+            @adapter.query(to_sql).first.row_count.to_i
           end
           
         end
