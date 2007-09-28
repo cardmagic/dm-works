@@ -13,21 +13,30 @@ require 'data_mapper/support/inflector'
 require 'data_mapper/database'
 require 'data_mapper/base'
 
-# This block of code is for compatibility with Ruby On Rails' database.yml
+# This block of code is for compatibility with Ruby On Rails' or Merb's database.yml
 # file, allowing you to simply require the data_mapper.rb in your
 # Rails application's environment.rb to configure the DataMapper.
-if defined?(RAILS_ROOT) && File.exists?(RAILS_ROOT + '/config/database.yml')
+
+application_root, application_environment = *if defined?(MERB_ROOT)
+  [MERB_ROOT, MERB_ENV]
+elsif defined?(RAILS_ROOT)
+  [RAILS_ROOT, RAILS_ENV]
+end
+
+if application_root && File.exists?(application_root + '/config/database.yml')
   require 'yaml'
   
-  rails_config = YAML::load_file(RAILS_ROOT + '/config/database.yml')
-  current_config = rails_config[RAILS_ENV.to_s]
+  p application_root, application_environment
+  
+  database_configurations = YAML::load_file(application_root + '/config/database.yml')
+  current_database_config = database_configurations[application_environment] || database_configurations[application_environment.to_sym]
   
   default_database_config = {
-    :adapter  => current_config['adapter'],
-    :host     => current_config['host'],
-    :database => current_config['database'],
-    :username => current_config['username'],
-    :password => current_config['password']
+    :adapter  => current_database_config['adapter'] || current_database_config[:adapter],
+    :host     => current_database_config['host'] || current_database_config[:host],
+    :database => current_database_config['database'] || current_database_config[:database],
+    :username => current_database_config['username'] || current_database_config[:username],
+    :password => current_database_config['password'] || current_database_config[:password]
   }
   
   DataMapper::Database.setup(default_database_config)
