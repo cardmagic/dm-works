@@ -23,6 +23,10 @@ module DataMapper
             return !truncate? && !drop? && @klass_or_instance.kind_of?(Class)
           end
           
+          def klass
+            @klass_or_instance.kind_of?(Class) ? @klass_or_instance : @klass_or_instance.class
+          end
+          
           def table
             case @klass_or_instance
             when Class, String then @adapter[@klass_or_instance]
