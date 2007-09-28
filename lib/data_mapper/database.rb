@@ -73,6 +73,7 @@ module DataMapper
       @schema_search_path = nil
       @username = 'root'
       @password = ''
+      @index_path = (Dir::pwd + "/indexes")
       
       @log_level = Logger::WARN
       @log_stream = nil
@@ -80,7 +81,7 @@ module DataMapper
     
     attr_reader :name, :adapter
     attr_writer :single_threaded
-    attr_accessor :host, :database, :schema_search_path, :username, :password, :log_stream, :log_level
+    attr_accessor :host, :database, :schema_search_path, :username, :password, :log_stream, :log_level, :index_path
     
     def single_threaded?
       @single_threaded

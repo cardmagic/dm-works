@@ -9,6 +9,10 @@ module DataMapper
         @configuration = configuration
       end
       
+      def index_path
+        @configuration.index_path
+      end
+      
       def name
         @configuration.name
       end

@@ -5,6 +5,12 @@ require 'data_mapper/associations'
 require 'data_mapper/callbacks'
 require 'data_mapper/embedded_value'
 
+begin
+  require 'ferret'
+rescue LoadError
+  puts "Install the Ferret gem for simple search support."
+end
+
 module DataMapper
   
   class Base
@@ -181,6 +187,27 @@ module DataMapper
     
     def self.protected_attributes
       @protected_attributes ||= []
+    end
+    
+    def self.index
+      @index || @index = Ferret::Index::Index.new(:path => "#{database.adapter.index_path}/#{name}")
+    end
+    
+    def self.reindex!
+      all.each do |record|
+        index << record.attributes
+      end
+    end
+    
+    def self.search(phrase)
+      ids = []
+      
+      query = "#{database.schema[self].columns.map(&:name).join('|')}:\"#{phrase}\""
+
+      index.search_each(query) do |document_id, score|
+        ids << index[document_id][:id]
+      end
+      return all(:id => ids)
     end
     
     def self.protect(*keys)
