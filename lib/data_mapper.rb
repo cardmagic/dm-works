@@ -30,10 +30,5 @@ if defined?(RAILS_ROOT) && File.exists?(RAILS_ROOT + '/config/database.yml')
     :password => current_config['password']
   }
   
-  if File.exists?(RAILS_ROOT + '/config/solr.yml')
-    solr_config = YAML::load_file(RAILS_ROOT + '/config/solr.yml') 
-    default_database_config.merge({ :solr => solr_config[RAILS_ENV]['url'] })
-  end
-  
   DataMapper::Database.setup(default_database_config)
 end
