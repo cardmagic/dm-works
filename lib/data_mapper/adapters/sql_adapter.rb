@@ -136,6 +136,10 @@ module DataMapper
         self.class::Commands::AdvancedLoadCommand.new(self, session, klass, options).call
       end
       
+      def count(klass_or_instance, options)
+        self.class::Commands::CountCommand.new(self, klass_or_instance, options).call
+      end
+      
       def [](klass_or_table_name)
         schema[klass_or_table_name]
       end

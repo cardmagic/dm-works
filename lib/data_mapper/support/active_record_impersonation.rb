@@ -37,6 +37,10 @@ module DataMapper
           database.first(self, *args)
         end
         
+        def count(*args)
+          database.count(self, *args)
+        end
+        
         def delete_all
           database.delete_all(self)
         end

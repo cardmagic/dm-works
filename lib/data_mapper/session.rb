@@ -44,6 +44,10 @@ module DataMapper
       @adapter.load(self, klass, options)
     end
     
+    def count(klass, options = {})
+      @adapter.count(klass, options)
+    end
+    
     def save(instance)
       @adapter.save(self, instance)
     end
