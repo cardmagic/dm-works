@@ -48,11 +48,11 @@ module DataMapper
           end
           
           def drop!
-            @adapter.delete(@klass, :drop => true) if exists?
+            @adapter.delete(self, :drop => true) if exists?
           end
           
           def create!
-            @adapter.save(database, @klass) unless exists?
+            @adapter.save(database, self) unless exists?
           end
       
           def key

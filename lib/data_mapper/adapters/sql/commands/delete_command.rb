@@ -23,16 +23,20 @@ module DataMapper
             return !truncate? && !drop? && @klass_or_instance.kind_of?(Class)
           end
           
-          def klass
-            @klass_or_instance.kind_of?(Class) ? @klass_or_instance : @klass_or_instance.class
+          def table
+            case @klass_or_instance
+            when Class, String then @adapter[@klass_or_instance]
+            when DataMapper::Adapters::Sql::Mappings::Table then @klass_or_instance
+            else raise "Unsupported type: #{@klass_or_instance.inspect}"
+            end
           end
           
           def to_truncate_sql
-            "TRUNCATE TABLE " << @adapter[@klass_or_instance].to_sql
+            "TRUNCATE TABLE " << table.to_sql
           end
           
           def to_drop_sql
-            "DROP TABLE #{@adapter[@klass_or_instance].to_sql}"
+            "DROP TABLE #{table.to_sql}"
           end
           
           def to_delete_sql

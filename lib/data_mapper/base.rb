@@ -18,13 +18,54 @@ module DataMapper
     include Validations::ValidationHelper
     include Associations
     
+    # Track classes that inherit from DataMapper::Base.
+    def self.subclasses
+      @subclasses || (@subclasses = [])
+    end
+    
+    def self.auto_migrate!
+      subclasses.each do |subclass|
+        subclass.auto_migrate!
+      end
+    end
+    
     def self.inherited(klass)
-      klass.send(:undef_method, :id)
-      klass.const_set('XClass', Class)
+      DataMapper::Base::subclasses << klass
+      klass.send(:undef_method, :id)      
       
       # When this class is sub-classed, copy the declared columns.
       klass.class_eval do
+        
+        def self.auto_migrate!
+          if self::subclasses.empty?
+            database.schema[self].drop!
+            database.save(self)
+          else
+            schema = database.schema
+            columns = self::subclasses.inject(schema[self].columns) do |span, subclass|
+              span + schema[subclass].columns
+            end
+            
+            table_name = schema[self].name.to_s
+            table = schema[table_name]
+            columns.each do |column|
+              table.add_column(column.name, column.type, column.options)
+            end
+            
+            table.drop!
+            table.create!
+            
+            # raise "STI table creation support not available! #{columns.inspect}"
+          end
+        end
+        
+        def self.subclasses
+          @subclasses || (@subclasses = [])
+        end
+        
         def self.inherited(subclass)
+          
+          self::subclasses << subclass
           
           database.schema[subclass.superclass].columns.each do |c|
             subclass.property(c.name, c.type, c.options)

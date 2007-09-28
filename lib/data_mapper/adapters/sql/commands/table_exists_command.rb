@@ -11,6 +11,7 @@ module DataMapper
       
           def table_name
             @table_name || @table_name = case @klass_or_name
+            when Mappings::Table then @adapter.quote_value(@klass_or_name.name)
             when String then @adapter.quote_value(@klass_or_name)
             when Class then @adapter.quote_value(@adapter[@klass_or_name].name)
             else raise ArgumentError.new('klass_or_name must be a mapped-class or a table name')

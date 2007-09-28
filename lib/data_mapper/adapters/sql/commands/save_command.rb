@@ -39,7 +39,7 @@ module DataMapper
           end
           
           def to_create_table_sql
-            table = @adapter[@instance]
+            table = @instance.is_a?(Mappings::Table) ? @instance : @adapter[@instance]
         
             sql = "CREATE TABLE " << table.to_sql << " ("
         
@@ -100,7 +100,8 @@ module DataMapper
           end
           
           def call
-            if @instance.kind_of?(Class)
+            if (@instance.kind_of?(Class) && @instance.ancestors.include?(DataMapper::Base)) \
+              || @instance.kind_of?(Mappings::Table)
               return false if @adapter.table_exists?(@instance)
               execute_create_table(to_create_table_sql)
             else

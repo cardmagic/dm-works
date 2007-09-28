@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 
+require 'irb'
 require 'lib/data_mapper'
 
 adapter = ENV['ADAPTER'] || 'mysql'
@@ -26,6 +27,8 @@ DataMapper::Database.setup(configuration_options)
 Dir[File.dirname(__FILE__) + '/spec/models/*.rb'].each do |path|
   load path
 end
+
+IRB::start
 
 if false
 
