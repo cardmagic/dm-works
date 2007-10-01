@@ -40,6 +40,11 @@ module DataMapper
     
     class PostgresqlAdapter < SqlAdapter
       
+      def schema_search_path
+        @schema_search_path || @schema_search_path =
+        @configuration.schema_search_path.split(',').collect{|s| s.ensure_wrapped_with("'")} if @configuration.schema_search_path
+      end
+      
       def create_connection
         connection = PGconn.connect(
           @configuration.host,
