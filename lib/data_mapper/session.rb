@@ -84,6 +84,10 @@ module DataMapper
       @adapter.schema
     end
     
+    def table(klass)
+      @adapter.schema[klass]
+    end
+    
     def log
       @adapter.log
     end
