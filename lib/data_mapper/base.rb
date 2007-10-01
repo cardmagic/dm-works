@@ -158,13 +158,28 @@ module DataMapper
       end
     end
     
-    def lazy_load!(*names)      
-      session.all(self.class, :select => ([:id] + names), :reload => true, :id => loaded_set.map(&:id)).each do |instance|
+    # Lazy-loads the attributes for a loaded_set, then overwrites the accessors
+    # for the named methods so that the lazy_loading is skipped the second time.
+    def lazy_load!(*names)
+      
+      reset_attribute = lambda do |instance|
         singleton_class = (class << instance; self end)
         names.each do |name|
           singleton_class.send(:attr_accessor, name)
         end
       end
+      
+      unless new_record?
+        session.all(
+          self.class,
+          :select => ([:id] + names),
+          :reload => true,
+          :id => loaded_set.map(&:id)
+        ).each(&reset_attribute)
+      else
+        reset_attribute[self]
+      end
+      
     end
         
     def attributes
@@ -173,14 +188,19 @@ module DataMapper
       end
     end
     
+    # Mass-assign mapped fields.
     def attributes=(values_hash)
+      table = session.schema[self.class]
+      
       values_hash.reject do |key, value|
         protected_attribute? key
       end.each_pair do |key, value|
-        symbolic_instance_variable_set(key, value)
+        if column = table[key]
+          instance_variable_set(column.instance_variable_name, value)
+        end
       end
     end
-    
+        
     def protected_attribute?(key)
       self.class.protected_attributes.include?(key.kind_of?(Symbol) ? key : key.to_sym)
     end
