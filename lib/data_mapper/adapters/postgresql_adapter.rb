@@ -41,8 +41,15 @@ module DataMapper
     class PostgresqlAdapter < SqlAdapter
       
       def schema_search_path
-        @schema_search_path || @schema_search_path =
-        @configuration.schema_search_path.split(',').collect{|s| s.ensure_wrapped_with("'")} if @configuration.schema_search_path
+        @schema_search_path || @schema_search_path = begin
+          if @configuration.schema_search_path
+            @configuration.schema_search_path.split(',').map do |part|
+              part.blank? ? nil : part.strip.ensure_wrapped_with("'")
+            end.compact
+          else
+            []
+          end
+        end
       end
       
       def create_connection
@@ -55,15 +62,9 @@ module DataMapper
           @configuration.username,
           @configuration.password
         )
-
-        @schema_search_path || @schema_search_path = begin
-          @configuration.schema_search_path.split(',').collect do |schema| 
-            schema.ensure_wrapped_with("'")
-          end
-        end
-        
-        if @configuration.schema_search_path 
-          connection.exec("SET search_path TO #{@schema_search_path}")
+     
+        unless schema_search_path.empty?
+          connection.exec("SET search_path TO #{schema_search_path}")
         end
         
         return connection
@@ -134,7 +135,7 @@ module DataMapper
             # if the table is qualified, search only that schema
             schema_list, unqualified_table_name = if table_name.index('.')
               table_name.slice(1..-2).split('.').collect {|t| t.ensure_wrapped_with("'")}
-            elsif @adapter.schema_search_path
+            elsif !@adapter.schema_search_path.empty?
               [@adapter.schema_search_path, table_name]
             else
               [@adapter.connection { |db| db.exec('SHOW search_path').result[0][0].split(',').collect { |t| t.ensure_wrapped_with("'") }.join(',') }, table_name]
@@ -211,7 +212,6 @@ module DataMapper
           end
           
           def to_create_table_sql
-            table = @adapter[@instance]
             schema_name = table.name.index('.') ? table.name.split('.').first : nil
             schema_list = @adapter.connection { |db| db.exec('SELECT nspname FROM pg_namespace').result.collect { |r| r[0] }.join(',') }
 

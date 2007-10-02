@@ -41,9 +41,7 @@ DataMapper::Database.setup(configuration_options)
 
 database do |db|
   load_models
-  db.schema.each do |table|
-    db.create_table(table.klass)
-  end
+  DataMapper::Base::auto_migrate!
 end
 
 at_exit do

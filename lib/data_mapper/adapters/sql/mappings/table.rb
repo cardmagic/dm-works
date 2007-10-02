@@ -103,7 +103,7 @@ module DataMapper
                 Inflector.tableize(@klass_or_name.name)
               end
             else
-              raise '+klass_or_name+ must be a Class or a string containing the name of a table'
+              raise "+klass_or_name+ (#{@klass_or_name.inspect}) must be a Class or a string containing the name of a table"
             end.freeze
           end
       
@@ -120,7 +120,13 @@ module DataMapper
           end
       
           def inspect
-            "#<%s:0x%x @klass=%s, @name=%s, @columns=%s>" % [self.class.name, (object_id * 2), @klass.name, to_sql, @columns.inspect]
+            "#<%s:0x%x @klass=%s, @name=%s, @columns=%s>" % [
+              self.class.name,
+              (object_id * 2),
+              name,
+              to_sql,
+              @columns.inspect
+            ]
           end
       
           private

@@ -9,9 +9,16 @@ module DataMapper
             @adapter, @session, @instance = adapter, session, instance
           end
       
+          def table
+            @table || @table = case @instance
+            when DataMapper::Adapters::Sql::Mappings::Table then @instance
+            when DataMapper::Base then @adapter[@instance.class]
+            when Class then @adapter[@instance]
+            else raise "Don't know how to map #{@instance.inspect} to a table."
+            end
+          end
+          
           def to_update_sql
-            table = @adapter[@instance.class]
-        
             sql = "UPDATE " << table.to_sql << " SET "
         
             @instance.dirty_attributes.map do |k, v|
@@ -21,10 +28,7 @@ module DataMapper
             sql[0, sql.size - 2] << " WHERE #{table.key.to_sql} = " << @adapter.quote_value(@instance.key)
           end
           
-          def to_insert_sql
-        
-            table = @adapter[@instance.class]
-        
+          def to_insert_sql        
             keys = []
             values = []
             attributes = @instance.dirty_attributes
@@ -38,9 +42,7 @@ module DataMapper
     VALUES (#{values.map { |v| @adapter.quote_value(v) }.join(', ')})"
           end
           
-          def to_create_table_sql
-            table = @instance.is_a?(Mappings::Table) ? @instance : @adapter[@instance]
-        
+          def to_create_table_sql        
             sql = "CREATE TABLE " << table.to_sql << " ("
         
             sql << table.columns.map do |column|
