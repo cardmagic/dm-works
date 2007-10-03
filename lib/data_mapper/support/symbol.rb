@@ -1,5 +1,7 @@
 module DataMapper
   module Support
+    
+    # Extends 
     module Symbol
       
       class Operator
@@ -76,6 +78,7 @@ module DataMapper
       def avg
         Operator.new(self, :avg)
       end
+      
       alias average avg
   
       def min

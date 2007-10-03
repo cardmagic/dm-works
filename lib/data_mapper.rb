@@ -1,5 +1,15 @@
+# This file begins the loading sequence.
+#
+# Quick Overview:
+# * Requires set, fastthread, support libs, and base
+# * Sets the applications root and environment for compatibility with rails or merb
+# * Checks for the database.yml and loads it if it exists
+# * Sets up the database using the config from the yaml file or from the environment
+# * 
+
 # This line just let's us require anything in the +lib+ sub-folder
 # without specifying a full path.
+
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 
 # Require the basics...

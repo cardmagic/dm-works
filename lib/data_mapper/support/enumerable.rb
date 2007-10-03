@@ -1,5 +1,13 @@
 module DataMapper
+  # The Support module adds functionality to Make Things Easier(tm):
+  # * grouping by attributes of objects in an array (returns a hash, see #DataMapper::Support::Enumerable)
+  # * adds symbols for operators like <= (lte), like, in, select, etc (see #DataMapper::Support::Symbol)
+  # * adds methods for strings, allowing us to ensure strings are wrapped with content (see #DataMapper::Support::String)
+  # * pulls in ActiveSupport's Inflector module
+  # * loads #DataMapper::Database and #DataMapper::Base
   module Support
+    
+    # Extends Array to include an instance method for grouping objects
     module Enumerable
       
       # Group a collection of elements into groups within a
