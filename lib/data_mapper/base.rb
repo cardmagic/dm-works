@@ -95,12 +95,15 @@ module DataMapper
     
     def initialize(details = nil)
       
-      unless details.nil?
+      case details
+      when Hash then
         details.reject do |key, value|
           protected_attribute? key
         end.each_pair do |key, value|
           instance_variable_set("@#{key}", value)
         end
+      when DataMapper::Base then self.attributes = details.attributes
+      when NilClass then nil
       end
     end
     
