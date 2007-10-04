@@ -39,6 +39,10 @@ class DMPerson < DataMapper::Base
   property :age, :integer
   property :occupation, :string
   property :notes, :text, :lazy => true
+  property :street, :string
+  property :city, :string
+  property :state, :string, :size => 2
+  property :zip_code, :string, :size => 10
 end
 
 class Exhibit < DataMapper::Base
@@ -208,4 +212,38 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
       database.query("SELECT * FROM zoos")
     end
   end
+  
+  x.report('ActiveRecord:accessors') do
+    person = ARPerson.find(:first)
+      
+    N.times do
+      <<-VCARD
+        #{person.name} (#{person.age})
+        #{person.occupation}
+        
+        #{person.street}
+        #{person.city}, #{person.state} #{person.zip_code}
+        
+        #{person.notes}
+      VCARD
+    end
+  end
+  
+  x.report('DataMapper:accessors') do
+    person = DMPerson.first
+      
+    N.times do
+      <<-VCARD
+        #{person.name} (#{person.age})
+        #{person.occupation}
+        
+        #{person.street}
+        #{person.city}, #{person.state} #{person.zip_code}
+        
+        #{person.notes}
+      VCARD
+    end
+  end
+    
+    
 end
