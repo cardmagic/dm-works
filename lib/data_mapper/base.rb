@@ -186,7 +186,8 @@ module DataMapper
         
     def attributes
       session.schema[self.class].columns.inject({}) do |values, column|
-        values[column.name] = instance_variable_get(column.instance_variable_name); values
+        values[column.name] = send(column.name)
+        values
       end
     end
     

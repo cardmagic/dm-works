@@ -39,16 +39,26 @@ module DataMapper
           reader.free
           result
         end
+      rescue => e
+        handle_error(e)
       end
       
       def query(*args)
         execute(*args) do |reader,num_rows|
-          struct = Struct.new(*reader.fetch_fields.map { |field| Inflector.underscore(field.name).to_sym })
+          fields = reader.fetch_fields.map { |field| Inflector.underscore(field.name).to_sym }
           
           results = []
           
-          reader.each do |row|
-            results << struct.new(*row)
+          if fields.size > 1
+            struct = Struct.new(*fields)
+          
+            reader.each do |row|
+              results << struct.new(*row)
+            end
+          else
+            reader.each do |row|
+              results << row[0]
+            end
           end
           
           results

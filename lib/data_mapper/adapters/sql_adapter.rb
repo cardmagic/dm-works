@@ -113,8 +113,35 @@ module DataMapper
         raise NotImplementedError.new
       end
       
-      def query(sql)
+      # Should be overwritten in concrete Adapter implementations.
+      # Should use handle_error for rescues.
+      # Example implementation follows.
+      def execute(*args)
         raise NotImplementedError.new
+        
+        connection do |db|
+          sql = escape_sql(*args)
+          log.debug(sql)
+          reader = db.query(sql)
+          result = yield(reader, reader.num_rows)
+          reader.free
+          result
+        end
+        
+      # rescue => e
+      #  handle_error(e)
+      end
+      
+      def insert(*args)
+        raise NotImplementedError.new
+      end
+      
+      def query(*args)
+        raise NotImplementedError.new
+      end
+      
+      def handle_error(error)
+        raise error
       end
       
       def schema
@@ -176,11 +203,11 @@ module DataMapper
       end
       
       # This callback copies and sub-classes modules and classes
-      # in the AbstractAdapter to the inherited class so you don't
+      # in the SqlAdapter to the inherited class so you don't
       # have to copy and paste large blocks of code from the
       # SqlAdapter.
       # 
-      # Basically, when inheriting from the AbstractAdapter, you
+      # Basically, when inheriting from the SqlAdapter, you
       # aren't just inheriting a single class, you're inheriting
       # a whole graph of Types. For convenience.
       def self.inherited(base)
