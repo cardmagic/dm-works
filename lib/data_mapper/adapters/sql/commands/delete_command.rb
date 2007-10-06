@@ -101,16 +101,20 @@ module DataMapper
             execute(sql)
           end
           
-          def execute_drop(sql)
-            execute(sql)
-          end
-          
           def execute_delete_all(sql)
             execute(sql)
           end
           
           def execute(sql)
-            raise NotImplementedError.new
+            @adapter.execute(sql) do |reader, row_count|
+              row_count > 0
+            end
+          end
+          
+          def execute_drop(sql)
+            @adapter.execute(sql) do |reader, row_count|
+              true
+            end
           end
           
         end

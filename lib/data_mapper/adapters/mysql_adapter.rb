@@ -35,8 +35,8 @@ module DataMapper
           sql = escape_sql(*args)
           log.debug(sql)
           reader = db.query(sql)
-          result = yield(reader, reader.num_rows)
-          reader.free
+          result = yield(reader, reader.nil? ? db.affected_rows : reader.num_rows)
+          reader.free unless reader.nil?
           result
         end
       rescue => e
@@ -58,24 +58,6 @@ module DataMapper
       FALSE_ALIASES.unshift('0'.freeze)
       
       module Commands
-        
-        class DeleteCommand
-          
-          def execute(sql)
-            @adapter.connection do |db|
-              @adapter.log.debug(sql)
-              db.query(sql)
-              db.affected_rows > 0
-            end
-          end
-          
-          def execute_drop(sql)
-            @adapter.log.debug(sql)
-            @adapter.connection { |db| db.query(sql) }
-            true
-          end
-          
-        end
         
         class SaveCommand
           
