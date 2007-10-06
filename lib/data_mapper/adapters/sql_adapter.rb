@@ -235,11 +235,17 @@ module DataMapper
       # a whole graph of Types. For convenience.
       def self.inherited(base)
         
-        queries = base.const_set('Commands', Module.new)
+        commands = base.const_set('Commands', Module.new)
 
         Sql::Commands.constants.each do |name|
-          queries.const_set(name, Class.new(Sql::Commands.const_get(name)))
-        end  
+          commands.const_set(name, Class.new(Sql::Commands.const_get(name)))
+        end
+        
+        mappings = base.const_set('Mappings', Module.new)
+        
+        Sql::Mappings.constants.each do |name|
+          mappings.const_set(name, Class.new(Sql::Mappings.const_get(name)))
+        end
         
         base.const_set('TYPES', TYPES.dup)
         base.const_set('FIND_OPTIONS', FIND_OPTIONS.dup)
