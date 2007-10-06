@@ -23,7 +23,9 @@ module DataMapper
           end
           
           def call
-            raise NotImplementedError.new
+            @adapter.execute(to_sql) do |reader, row_count|
+              row_count > 0
+            end
           end
       
         end

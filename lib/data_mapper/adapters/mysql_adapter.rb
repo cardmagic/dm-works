@@ -59,17 +59,6 @@ module DataMapper
       
       module Commands
         
-        class TableExistsCommand
-          def call
-            sql = to_sql
-            @adapter.log.debug(sql)
-            reader = @adapter.connection { |db| db.query(sql) }
-            result = reader.num_rows > 0
-            reader.free
-            result
-          end
-        end
-        
         class DeleteCommand
           
           def execute(sql)
