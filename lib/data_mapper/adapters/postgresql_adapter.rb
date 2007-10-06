@@ -79,7 +79,7 @@ module DataMapper
           sql = escape_sql(*args)
           log.debug(sql)
           pg_result = db.exec(sql)
-          result = yield(pg_result, pg_result.cmdstatus.split(' ').last.to_i)
+          result = yield(pg_result, pg_result.cmdstatus.split(' ').last.to_i) if block_given?
           pg_result.clear
           result
         end

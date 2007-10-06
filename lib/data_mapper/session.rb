@@ -76,6 +76,10 @@ module DataMapper
       @adapter[klass].exists?
     end
     
+    def execute(*args)
+      @adapter.execute(*args)
+    end
+    
     def query(*args)      
       @adapter.query(*args)
     end

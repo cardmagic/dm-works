@@ -13,12 +13,12 @@ configuration_options = {
   :adapter => adapter,
   :log_stream => 'spec.log',
   :log_level => Logger::DEBUG,
-  :database => 'data_mapper_1'
+  :database =>  ENV['DATABASE'] || 'data_mapper_1'
 }
 
 case adapter
   when 'postgresql' then
-    configuration_options[:username] = 'postgres'
+    configuration_options[:username] = ENV['USERNAME'] || 'postgres'
   when 'mysql' then
     configuration_options[:username] = 'root'
   when 'sqlite3' then

@@ -78,3 +78,8 @@ desc "Publish to RubyForge"
 task :rubyforge => [ :rdoc, :gem ] do
   Rake::SshDirPublisher.new("#{ENV['RUBYFORGE_USER']}@rubyforge.org", "/var/www/gforge-projects/#{PROJECT}", 'doc').upload
 end
+
+task :install do
+  sh %{rake package}
+  sh %{sudo gem install pkg/#{PROJECT}-#{PACKAGE_VERSION}}
+end

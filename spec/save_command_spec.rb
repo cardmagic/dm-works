@@ -1,7 +1,11 @@
 describe DataMapper::Adapters::Sql::Commands::SaveCommand do
   
   it "should create a new row" do
+    total = Zoo.all.length
     Zoo.create({ :name => 'bob' })
+    zoo = Zoo[:name => 'bob']
+    zoo.name.should == 'bob'
+    Zoo.all.length.should == total+1
   end
   
   it "should update an existing row" do
