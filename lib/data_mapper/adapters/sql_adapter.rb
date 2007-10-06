@@ -136,10 +136,33 @@ module DataMapper
         raise NotImplementedError.new
       end
       
-      def query(*args)
+      # Must implement! Passes in the result of a query execution and
+      # should return an Array of Symbols.
+      def fetch_fields(reader)
         raise NotImplementedError.new
       end
       
+      def query(*args)
+        execute(*args) do |reader,num_rows|
+          fields = fetch_fields(reader)
+          
+          results = []
+          
+          if fields.size > 1
+            struct = Struct.new(*fields)
+          
+            reader.each do |row|
+              results << struct.new(*row)
+            end
+          else
+            reader.each do |row|
+              results << row[0]
+            end
+          end
+          
+          results
+        end
+      end      
       def handle_error(error)
         raise error
       end
