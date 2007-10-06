@@ -44,7 +44,7 @@ describe DataMapper::Adapters::Sql::Commands::SaveCommand do
     database do # Use the same Session so the reference-equality checks will pass.
       mary = Animal::create(:name => 'Mary')
       mary.name = 'Jane'
-      # Retrieving the id during creation, the following #save call would fail,
+      # Without retrieving the id during creation, the following #save call would fail,
       # because we wouldn't know what id to update.
       mary.save.should == true
       jane = Animal.first(:name => 'Jane')
