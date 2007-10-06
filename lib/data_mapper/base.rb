@@ -172,7 +172,7 @@ module DataMapper
         end
       end
       
-      unless new_record?
+      unless new_record? || loaded_set.nil?
         session.all(
           self.class,
           :select => ([:id] + names),

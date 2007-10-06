@@ -16,6 +16,11 @@ describe DataMapper::Adapters::Sql::Commands::SaveCommand do
     dallas.save
   end
   
+  it "should be able to read other attributes after a record is created" do
+    zoo = Zoo.create({ :name => 'bob' })
+    zoo.notes.should == nil
+  end
+  
   it "should stamp association on save" do
     database do
       dallas = Zoo[:name => 'Dallas']
