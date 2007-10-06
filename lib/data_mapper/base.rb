@@ -8,7 +8,6 @@ require 'data_mapper/embedded_value'
 begin
   require 'ferret'
 rescue LoadError
-  puts "Install the Ferret gem for simple search support."
 end
 
 module DataMapper
