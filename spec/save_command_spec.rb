@@ -40,4 +40,14 @@ describe DataMapper::Adapters::Sql::Commands::SaveCommand do
     miami.should be_valid
   end
   
+  it "should retrieve it's id on creation if the key is auto-incrementing so it can be successively updated" do
+    database do # Use the same Session so the reference-equality checks will pass.
+      mary = Animal::create(:name => 'Mary')
+      mary.name = 'Jane'
+      mary.save.should == true
+      jane = Animal.first(:name => 'Jane')
+      mary.should == jane
+    end
+  end
+  
 end
