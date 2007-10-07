@@ -85,8 +85,6 @@ module DataMapper
          
         class SaveCommand
           def to_create_table_sql
-            table = @adapter[@instance]
-
             sql = "CREATE TABLE " << table.to_sql
 
             sql << " (" << table.columns.map do |column|
@@ -128,7 +126,7 @@ module DataMapper
         
         class DeleteCommand
           def to_truncate_sql
-            "DELETE FROM " << @adapter[@klass_or_instance].to_sql
+            "DELETE FROM " << table.to_sql
           end
           
           def execute(sql)
