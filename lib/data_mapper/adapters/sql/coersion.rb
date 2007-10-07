@@ -1,3 +1,6 @@
+require 'bigdecimal' 
+require 'bigdecimal/util'
+
 module DataMapper
   module Adapters
     module Sql
@@ -45,6 +48,13 @@ module DataMapper
           raw_value.to_i # Integer(raw_value) would be "safer", but not as fast.
         rescue ArgumentError
           nil
+        end
+        
+        def type_cast_decimal(raw_value) 
+          return nil if raw_value.blank? 
+          raw_value.to_d
+        rescue ArgumentError 
+          nil 
         end
         
         def type_cast_datetime(raw_value)

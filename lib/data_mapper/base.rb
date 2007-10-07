@@ -59,8 +59,6 @@ module DataMapper
             
             table.drop!
             table.create!
-            
-            # raise "STI table creation support not available! #{columns.inspect}"
           end
         end
         
