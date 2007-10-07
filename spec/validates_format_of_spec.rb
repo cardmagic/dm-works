@@ -1,6 +1,6 @@
-context 'An Employee' do
+context DataMapper::Validations::FormatValidator do
   
-  setup do
+  before(:all) do
     class Employee
 
       include DataMapper::CallbacksHelper
@@ -10,7 +10,7 @@ context 'An Employee' do
     end
   end
   
-  specify('must have a valid email address') do
+  it 'must have a valid email address' do
     class Employee
       validations.clear!
       validates_format_of :email, :as => :email_address, :on => :save
@@ -32,7 +32,7 @@ context 'An Employee' do
     e.valid?(:save).should == true
   end
   
-  specify('must have a valid organization code') do
+  it 'must have a valid organization code' do
     class Employee
       validations.clear!
       

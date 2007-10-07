@@ -1,6 +1,10 @@
-context 'An Animal' do
+describe DataMapper::Validations::UniqueValidator do
   
-  specify('must have a unique name') do
+  before(:all) do 
+    fixtures('people')
+  end
+  
+  it 'must have a unique name' do
     class Animal
       validations.clear!
       validates_uniqueness_of :name, :context => :save
@@ -17,14 +21,7 @@ context 'An Animal' do
     bugaboo.valid?(:save).should == true
   end
   
-end
-
-context 'A Person' do
-  setup do 
-    fixtures 'people'
-  end
-  
-  specify('must have a unique name for their occupation') do
+  it 'must have a unique name for their occupation' do
     class Person
       validations.clear!
       validates_uniqueness_of :name, :context => :save, :scope => :occupation

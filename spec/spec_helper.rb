@@ -34,6 +34,7 @@ def load_models
 end
 
 mock_db = DataMapper::Database.setup(:mock, {})
+p mock_db
 mock_db.adapter = MockAdapter.new(mock_db)
 database(:mock) { load_models }  
 

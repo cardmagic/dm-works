@@ -1,6 +1,6 @@
-context 'Validations' do
+describe DataMapper::Validations do
   
-  setup do
+  before(:all) do
     class Cow
       
       include DataMapper::CallbacksHelper
@@ -10,7 +10,7 @@ context 'Validations' do
     end
   end
   
-  specify('should allow you to specify not-null fields in different contexts') do
+  it 'should allow you to specify not-null fields in different contexts' do
     class Cow
       validations.clear!
       validates_presence_of :name, :context => :save
@@ -26,7 +26,7 @@ context 'Validations' do
     betsy.valid?(:save).should == true
   end
   
-  specify('should be able to use ":on" for a context alias') do
+  it 'should be able to use ":on" for a context alias' do
     class Cow
       validations.clear!
       validates_presence_of :name, :age, :on => :create
@@ -44,7 +44,7 @@ context 'Validations' do
     maggie.valid?(:create).should == true
   end
   
-  specify('should default to a general context if unspecified') do
+  it 'should default to a general context if unspecified' do
     class Cow
       validations.clear!
       validates_presence_of :name, :age

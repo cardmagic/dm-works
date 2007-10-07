@@ -1,6 +1,6 @@
-context 'A Cow' do
+describe DataMapper::Validations::ConfirmationValidator do
   
-  setup do
+  before(:all) do
     class Cow
 
       include DataMapper::CallbacksHelper
@@ -10,7 +10,7 @@ context 'A Cow' do
     end
   end
   
-  specify('') do
+  it 'should pass validation' do
     class Cow
       validations.clear!
       validates_confirmation_of :name, :context => :save

@@ -28,6 +28,7 @@ describe DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand do
   
   def loader_for(klass, options = {})
     session = database(:mock)
+#    p session.adapter
     DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand.new(session.adapter, session, klass, options)
   end
 
@@ -90,5 +91,88 @@ describe DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand do
     Person.first(:intercept_load => lambda { result = true })
     result.should == true
   end
+  
+  it 'database-specific load should not fail' do
+
+     DataMapper::database do |db|
+       froggy = db.first(Animal, :conditions => ['name = ?', 'Frog'])
+       froggy.name.should == 'Frog'
+     end
+
+   end
+
+   it 'current-database load should not fail' do
+     froggy = DataMapper::database.first(Animal).name.should == 'Frog'
+   end
+
+   it 'load through ActiveRecord impersonation should not fail' do
+     Animal.find(:all).size.should == 16
+   end
+
+   it 'load through Og impersonation should not fail' do
+     Animal.all.size.should == 16
+   end
+
+   it ':conditions option should accept a hash' do
+     Animal.all(:conditions => { :name => 'Frog' }).size.should == 1
+   end
+
+   it 'non-standard options should be considered part of the conditions' do
+     database.log.debug('non-standard options should be considered part of the conditions')
+     zebra = Animal.first(:name => 'Zebra')
+     zebra.name.should == 'Zebra'
+
+     elephant = Animal[:name => 'Elephant']
+     elephant.name.should == 'Elephant'
+
+     aged = Person.all(:age => 29)
+     aged.size.should == 2
+     aged.first.name.should == 'Sam'
+     aged.last.name.should == 'Bob'
+
+     fixtures(:animals)
+   end
+
+   it 'should not find deleted objects' do
+     database do
+       wally = Animal[:name => 'Whale']
+       wally.new_record?.should == false
+       wally.destroy!.should == true
+
+       wallys_evil_twin = Animal[:name => 'Whale']
+       wallys_evil_twin.should == nil
+
+       wally.new_record?.should == true
+       wally.save
+       wally.new_record?.should == false
+
+       Animal[:name => 'Whale'].should == wally
+     end
+   end
+
+   it 'lazy-loads should issue for whole sets' do
+     people = Person.all
+
+     people.each do |person|
+       person.notes
+     end
+   end
 
 end
+
+=begin
+context 'Sub-selection' do
+  
+  specify 'should return a Cup' do
+    Animal[:id.select => { :name => 'cup' }].name.should == 'Cup'
+  end
+  
+  specify 'should return all exhibits for Galveston zoo' do
+    Exhibit.all(:zoo_id.select(Zoo) => { :name => 'Galveston' }).size.should == 3
+  end
+  
+  specify 'should allow a sub-select in the select-list' do
+    Animal[:select => [ :id.count ]]
+  end
+end
+=end

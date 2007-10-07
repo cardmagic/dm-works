@@ -1,6 +1,6 @@
-context 'A Cow' do
+describe DataMapper::Validations::LengthValidator do
   
-  setup do
+  before(:all) do
     class Cow
       
       include DataMapper::CallbacksHelper
@@ -10,7 +10,7 @@ context 'A Cow' do
     end
   end
   
-  specify('should not have a name shorter than 3 characters') do
+  it 'should not have a name shorter than 3 characters' do
     class Cow
       validations.clear!
       validates_length_of :name, :min => 3, :context => :save
@@ -34,7 +34,7 @@ context 'A Cow' do
   end
 
 
-  specify('should not have a name longer than 10 characters') do
+  it 'should not have a name longer than 10 characters' do
     class Cow
       validations.clear!
       validates_length_of :name, :max => 10, :context => :save
@@ -52,7 +52,7 @@ context 'A Cow' do
     betsy.valid?(:save).should == true
   end
 
-  specify('should have a name that is 8 characters long') do
+  it 'should have a name that is 8 characters long' do
     class Cow
       validations.clear!
       validates_length_of :name, :is => 8, :context => :save
@@ -73,7 +73,7 @@ context 'A Cow' do
     betsy.valid?(:save).should == true
   end
 
-  specify('should have a name that is between 10 and 15 characters long') do
+  it 'should have a name that is between 10 and 15 characters long' do
     class Cow
       validations.clear!
       validates_length_of :name, :in => (10..15), :context => :save
