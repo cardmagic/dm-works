@@ -13,7 +13,7 @@ module DataMapper
             @table || @table = case @instance
             when DataMapper::Adapters::Sql::Mappings::Table then @instance
             when DataMapper::Base then @adapter[@instance.class]
-            when Class then @adapter[@instance]
+            when Class, String then @adapter[@instance]
             else raise "Don't know how to map #{@instance.inspect} to a table."
             end
           end
