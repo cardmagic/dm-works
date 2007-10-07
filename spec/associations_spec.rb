@@ -1,5 +1,3 @@
-unless ENV['ADAPTER'].nil? || ENV['ADAPTER'] == 'mysql'
-
 describe DataMapper::Associations::HasManyAssociation do
   
   it "should generate the SQL for a join statement" do
@@ -47,7 +45,5 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
       froggy.exhibits.entries.first.should == Exhibit[:name => 'Amazonia']
     end
   end
-
-end
 
 end
