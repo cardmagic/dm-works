@@ -27,6 +27,7 @@ module DataMapper
       end
       
       def count_rows(db, reader)
+        return db.total_changes if db.total_changes
         count = 0
         reader.each { |row| count += 1 }
         count
@@ -71,10 +72,12 @@ module DataMapper
       module Commands
         
         class TableExistsCommand
+          # This should be removable in favor of the new information_schema version
           def to_sql
             "SELECT name FROM sqlite_master WHERE type = \"table\" AND name = #{table_name}"
           end
           
+          # This should be removable in favor of the new #call impl
           def call
             reader = @adapter.connection { |db| db.query(to_sql) }
             result = reader.entries.size > 0
@@ -84,6 +87,7 @@ module DataMapper
         end # class TableExistsCommand
          
         class SaveCommand
+          # The main difference here is the lack of the PRIMARY KEY command, which SQLite probably supports
           def to_create_table_sql
             sql = "CREATE TABLE " << table.to_sql
 
@@ -93,7 +97,8 @@ module DataMapper
 
             return sql
           end
-
+          
+          # Can we just use the PG version as the default?
           def column_long_form(column)
             long_form = "#{column.to_sql} #{@adapter.class::TYPES[column.type] || column.type}"
 
@@ -104,6 +109,7 @@ module DataMapper
             return long_form
           end
           
+          # This should be replaced with a generic Adapter#insert command
           def execute_insert(sql)
             @adapter.connection do |db|
               db.query(sql)
@@ -111,24 +117,24 @@ module DataMapper
             end
           end
           
+          # We need to update count_rows to use total_changes if appropriate, but then this should swap
+          # right out
           def execute_update(sql)
             @adapter.connection do |db|
               db.query(sql)
               db.total_changes > 0
             end
           end
-          
-          def execute_create_table(sql)
-            @adapter.connection { |db| db.query(sql) }
-            true
-          end
+
         end # class SaveCommand
         
         class DeleteCommand
+          # We need to replace this with drop/reload
           def to_truncate_sql
             "DELETE FROM " << table.to_sql
           end
           
+          # Delete#execute should work just fine
           def execute(sql)
             @adapter.connection do |db|
               db.query(sql)
@@ -136,10 +142,6 @@ module DataMapper
             end
           end
           
-          def execute_drop(sql)
-            @adapter.connection { |db| db.query(sql) }
-            true
-          end
         end # class DeleteCommand
          
       end # module Commands
