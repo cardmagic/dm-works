@@ -7,7 +7,7 @@ module DataMapper
       
       def initialize(klass, association_name, options)
         @adapter = database.adapter
-        @table = adapter[klass]
+        @table = adapter.table(klass)
         @association_name = association_name.to_sym
         @options = options
         
@@ -48,7 +48,7 @@ module DataMapper
       end
       
       def association_table
-        @association_table || (@association_table = adapter[constant])
+        @association_table || (@association_table = adapter.table(constant))
       end
       
       def join_table
@@ -56,7 +56,7 @@ module DataMapper
           join_table_name = @options[:join_table] || 
             [ table.name.to_s, database.schema[constant].name.to_s ].sort.join('_')
             
-          adapter[join_table_name]
+          adapter.table(join_table_name)
         end        
       end
       

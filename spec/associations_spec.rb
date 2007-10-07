@@ -96,18 +96,18 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
   
   it 'has an animals association' do
     [@amazonia, Exhibit.new].each do |exhibit|
-      exhibit.animals.class.should == DataMapper::Associations::HasAndBelongsToManyAssociation
+      exhibit.animals.class.should == DataMapper::Associations::HasAndBelongsToManyAssociation::Set
     end
   end
   
   it 'has many animals' do
-    @amazonia.animals.size.should == 2
+    @amazonia.animals.size.should == 1
   end
   
   it 'should load associations magically' do
     Exhibit.all.each do |exhibit|
       exhibit.animals.each do |animal|
-        animal.exhibits.should.include?(exhibit)
+        animal.exhibits.should include(exhibit)
       end
     end
   end

@@ -15,20 +15,20 @@ if ENV['ADAPTER'] == 'postgresql'
     end
     
     it "should return a quoted table name for a simple table" do
-      table_sql = database.adapter[Cage].to_sql
+      table_sql = database.adapter.table(Cage).to_sql
       table_sql.should == "\"cages\""
     end
   
     it "should return a quoted schema and table name for a table which specifies a schema" do
-      table_sql = database.adapter[CageInSchema].to_sql
+      table_sql = database.adapter(CageInSchema).to_sql
       table_sql.should == "\"my_schema\".\"cages\""
     end
 
     it "should search only the specified schema if qualified" do
       database.save(Cage)
-      database.adapter[CageInSchema].exists?.should == false
+      database.adapter.table(CageInSchema).exists?.should == false
       database.save(CageInSchema)
-      database.adapter[CageInSchema].exists?.should == true
+      database.adapter.table(CageInSchema).exists?.should == true
     end
     
     after do

@@ -186,8 +186,13 @@ module DataMapper
         self.class::Commands::CountCommand.new(self, klass_or_instance, options).call
       end
       
-      def [](klass_or_table_name)
-        schema[klass_or_table_name]
+      def table(instance)
+        case instance
+        when DataMapper::Adapters::Sql::Mappings::Table then instance
+        when DataMapper::Base then schema[instance.class]
+        when Class, String then schema[instance]
+        else raise "Don't know how to map #{instance.inspect} to a table."
+        end
       end
       
       # Escape a string of SQL with a set of arguments.

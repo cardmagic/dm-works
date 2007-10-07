@@ -11,7 +11,7 @@ task :default => 'test'
 desc "Run specifications"
 Spec::Rake::SpecTask.new('test') do |t|
   t.spec_opts = [ '-rspec/spec_helper' ]
-  t.spec_files = FileList[(ENV['FILES'] || 'spec/**/*.rb')].exclude 'mock_adapter.rb'
+  t.spec_files = FileList[(ENV['FILES'] || 'spec/**/*_spec.rb')]
 end
 
 desc "Run comparison with ActiveRecord"

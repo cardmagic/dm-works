@@ -34,14 +34,14 @@ module DataMapper
                     if k.type == :select
                       k.options[:class] ||= @loader.klass
                   
-                      k.options[:select] ||= if k.value.to_s == @adapter[k.options[:class]].default_foreign_key
-                        @adapter[k.options[:class]].key.column_name
+                      k.options[:select] ||= if k.value.to_s == @adapter.table(k.options[:class]).default_foreign_key
+                        @adapter.table(k.options[:class]).key.column_name
                       else
                         k.value
                       end
                   
                       sub_select = @adapter.select_statement(k.options.merge(v))
-                      normalize(["#{@adapter[@loader.klass][k.value.to_sym].to_sql} IN ?", sub_select], collector)
+                      normalize(["#{@adapter.table(@loader.klass)[k.value.to_sym].to_sql} IN ?", sub_select], collector)
                     else                
                       @has_id = true if k.value == :id
                       op = case k.type
@@ -55,17 +55,17 @@ module DataMapper
                         when :in then 'IN'
                         else raise ArgumentError.new('Operator type not supported')
                       end
-                      normalize(["#{@adapter[@loader.klass][k.value.to_sym].to_sql} #{op} ?", v], collector)
+                      normalize(["#{@adapter.table(@loader.klass)[k.value.to_sym].to_sql} #{op} ?", v], collector)
                     end
                   else
                     @has_id = true if k == :id
                     case v
                     when Array then
-                      normalize(["#{@adapter[@loader.klass][k.to_sym].to_sql} IN ?", v], collector)
+                      normalize(["#{@adapter.table(@loader.klass)[k.to_sym].to_sql} IN ?", v], collector)
                     when LoadCommand then
-                      normalize(["#{@adapter[@loader.klass][k.to_sym].to_sql} IN ?", v], collector)
+                      normalize(["#{@adapter.table(@loader.klass)[k.to_sym].to_sql} IN ?", v], collector)
                     else
-                      normalize(["#{@adapter[@loader.klass][k.to_sym].to_sql} = ?", v], collector)
+                      normalize(["#{@adapter.table(@loader.klass)[k.to_sym].to_sql} = ?", v], collector)
                     end
                   end
                 end
@@ -120,7 +120,7 @@ module DataMapper
           end
           
           def table
-            @table || (@table = @adapter[@loader.klass])
+            @table || (@table = @adapter.table(@loader.klass))
           end
           
           def implicits

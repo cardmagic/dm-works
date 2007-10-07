@@ -52,7 +52,7 @@ module DataMapper
                 select_columns = select_columns.kind_of?(Array) ? select_columns : [select_columns]
                 select_columns.map { |column| @adapter.quote_column_name(column.to_s) }
               else
-                @options[:select] = @adapter[klass].columns.select do |column|
+                @options[:select] = @adapter.table(klass).columns.select do |column|
                   include?(column.name) || !column.lazy?
                 end.map { |column| column.to_sql }
               end
@@ -63,7 +63,7 @@ module DataMapper
             @table_name || @table_name = if @options.has_key?(:table)
               @adapter.quote_table_name(@options[:table])
             else
-              @adapter[klass].to_sql
+              @adapter.table(klass).to_sql
             end
           end
           
@@ -126,7 +126,7 @@ module DataMapper
               klass
             end
 
-            mapping = @adapter[instance_class]
+            mapping = @adapter.table(instance_class)
 
             instance_id = mapping.key.type_cast_value(hash['id'])   
             instance = @session.identity_map.get(instance_class, instance_id)
@@ -161,7 +161,7 @@ module DataMapper
           end
           
           def load_instances(fields, rows)            
-            table = @adapter[klass]
+            table = @adapter.table(klass)
             
             set = []
             columns = {}
@@ -181,7 +181,7 @@ module DataMapper
               
               tables = Hash.new() do |h,k|
                 
-                table_for_row = @adapter[k.blank? ? klass : type_column.type_cast_value(k)]
+                table_for_row = @adapter.table(k.blank? ? klass : type_column.type_cast_value(k))
                 key_ordinal_for_row = nil
                 columns_for_row = {}
                 

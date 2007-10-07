@@ -296,12 +296,12 @@ module DataMapper
 
             # Return the Sql-escaped table name of the +primary_class+.
             def from_table_name
-              @from_table_name || (@from_table_name = @adapter[@primary_class].to_sql)
+              @from_table_name || (@from_table_name = @adapter.table(@primary_class).to_sql)
             end
             
             # Returns the DataMapper::Adapters::Sql::Mappings::Table for the +primary_class+.
             def primary_class_table
-              @primary_class_table || (@primary_class_table = @adapter[@primary_class])
+              @primary_class_table || (@primary_class_table = @adapter.table(@primary_class))
             end
             
             def partition_options(options)

@@ -7,25 +7,17 @@ module DataMapper
       
           def initialize(adapter, session, instance)
             @adapter, @session, @instance = adapter, session, instance
-          end
-      
-          def table
-            @table || @table = case @instance
-            when DataMapper::Adapters::Sql::Mappings::Table then @instance
-            when DataMapper::Base then @adapter[@instance.class]
-            when Class, String then @adapter[@instance]
-            else raise "Don't know how to map #{@instance.inspect} to a table."
-            end
+            @table = adapter.table(instance)
           end
           
           def to_update_sql
-            sql = "UPDATE " << table.to_sql << " SET "
+            sql = "UPDATE " << @table.to_sql << " SET "
         
             @instance.dirty_attributes.map do |k, v|
-              sql << table[k].to_sql << " = " << @adapter.quote_value(v) << ", "
+              sql << @table[k].to_sql << " = " << @adapter.quote_value(v) << ", "
             end
         
-            sql[0, sql.size - 2] << " WHERE #{table.key.to_sql} = " << @adapter.quote_value(@instance.key)
+            sql[0, sql.size - 2] << " WHERE #{@table.key.to_sql} = " << @adapter.quote_value(@instance.key)
           end
           
           def to_insert_sql        
@@ -33,23 +25,23 @@ module DataMapper
             values = []
             attributes = @instance.dirty_attributes
             
-            attributes[:type] = @instance.class.name if table.multi_class?
+            attributes[:type] = @instance.class.name if @table.multi_class?
             
-            attributes.each_pair { |k,v| keys << table[k].to_sql; values << v }
+            attributes.each_pair { |k,v| keys << @table[k].to_sql; values << v }
         
             # Formatting is a bit off here, but it looks nicer in the log this way.
-            sql = "INSERT INTO #{table.to_sql} (#{keys.join(', ')}) \
+            sql = "INSERT INTO #{@table.to_sql} (#{keys.join(', ')}) \
     VALUES (#{values.map { |v| @adapter.quote_value(v) }.join(', ')})"
           end
           
           def to_create_table_sql        
-            sql = "CREATE TABLE " << table.to_sql << " ("
+            sql = "CREATE TABLE " << @table.to_sql << " ("
         
-            sql << table.columns.map do |column|
+            sql << @table.columns.map do |column|
               column_long_form(column)
             end.join(', ')
         
-            sql << ", PRIMARY KEY (#{table.key.to_sql}))"
+            sql << ", PRIMARY KEY (#{@table.key.to_sql}))"
         
             return sql
           end

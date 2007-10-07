@@ -7,7 +7,7 @@ module DataMapper
       
       def initialize(klass, association_name, options)
         @adapter = database.adapter
-        @table = adapter[klass]
+        @table = adapter.table(klass)
         @association_name = association_name.to_sym
         @options = options
         
@@ -38,7 +38,7 @@ module DataMapper
       end
       
       def association_table
-        @association_table || (@association_table = adapter[constant])
+        @association_table || (@association_table = adapter.table(constant))
       end
       
       def to_sql

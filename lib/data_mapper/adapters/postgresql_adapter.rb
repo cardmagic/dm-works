@@ -154,11 +154,10 @@ module DataMapper
           end
 
           def to_truncate_sql
-            table = @adapter[@klass_or_instance]
-            sequence = table.sequence_sql
+            sequence = @table.sequence_sql
             # truncate the table and reset the sequence value
-            sql = "DELETE FROM " << table.to_sql
-            if table.key.auto_increment?
+            sql = "DELETE FROM " << @table.to_sql
+            if @table.key.auto_increment?
               sql << <<-EOS.compress_lines
                 ; SELECT setval('#{sequence}',
                   (SELECT COALESCE( MAX(id) + (SELECT increment_by FROM #{sequence} ),
@@ -185,7 +184,7 @@ module DataMapper
               db.exec(sql)
               # Current id or latest value read from sequence in this session
               # See: http://www.postgresql.org/docs/8.1/interactive/functions-sequence.html
-              @instance.key || db.exec("SELECT last_value from #{@adapter[@instance.class].sequence_sql}")[0][0]
+              @instance.key || db.exec("SELECT last_value from #{@table.sequence_sql}")[0][0]
             end
           end
           
@@ -203,7 +202,7 @@ module DataMapper
           end
           
           def to_create_table_sql
-            schema_name = table.name.index('.') ? table.name.split('.').first : nil
+            schema_name = table.name.index('.') ? @table.name.split('.').first : nil
             schema_list = @adapter.connection { |db| db.exec('SELECT nspname FROM pg_namespace').result.collect { |r| r[0] }.join(',') }
 
             sql = if schema_name and !schema_list.include?(schema_name)
@@ -212,9 +211,9 @@ module DataMapper
               ''
             end
             
-            sql << "CREATE TABLE " << table.to_sql
+            sql << "CREATE TABLE " << @table.to_sql
 
-            sql << " (" << table.columns.map do |column|
+            sql << " (" << @table.columns.map do |column|
               column_long_form(column)
             end.join(', ') << ")"
 

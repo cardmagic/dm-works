@@ -98,7 +98,7 @@ module DataMapper
             elsif @klass_or_name.kind_of?(Class)
               if @klass_or_name.superclass != DataMapper::Base \
                 && @klass_or_name.ancestors.include?(DataMapper::Base)
-                @adapter[@klass_or_name.superclass].name
+                @adapter.table(@klass_or_name.superclass).name
               else
                 Inflector.tableize(@klass_or_name.name)
               end

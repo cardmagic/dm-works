@@ -7,6 +7,7 @@ module DataMapper
       
           def initialize(adapter, klass_or_instance, options = nil)
             @adapter, @klass_or_instance, @options = adapter, klass_or_instance, options
+            @table = adapter.table(@klass_or_instance)
           end
       
           def truncate?
@@ -27,25 +28,16 @@ module DataMapper
             @klass_or_instance.kind_of?(Class) ? @klass_or_instance : @klass_or_instance.class
           end
           
-          def table
-            @table || @table = case @klass_or_instance
-            when DataMapper::Adapters::Sql::Mappings::Table then @klass_or_instance
-            when DataMapper::Base then @adapter[@klass_or_instance.class]
-            when Class, String then @adapter[@klass_or_instance]
-            else raise "Don't know how to map #{@klass_or_instance.inspect} to a table."
-            end
-          end
-          
           def to_truncate_sql
-            "TRUNCATE TABLE " << table.to_sql
+            "TRUNCATE TABLE " << @table.to_sql
           end
           
           def to_drop_sql
-            "DROP TABLE #{table.to_sql}"
+            "DROP TABLE #{@table.to_sql}"
           end
           
           def to_delete_sql
-            sql = "DELETE FROM " << @adapter[klass].to_sql
+            sql = "DELETE FROM " << @table.to_sql
             sql << " WHERE id = " << @adapter.quote_value(@klass_or_instance.key) unless delete_all?
             return sql
           end

@@ -65,15 +65,15 @@ module DataMapper
     end
     
     def create_table(klass)
-      @adapter[klass].create!
+      @adapter.table(klass).create!
     end
     
     def drop_table(klass)
-      @adapter[klass].drop!
+      @adapter.table(klass).drop!
     end
     
     def table_exists?(klass)
-      @adapter[klass].exists?
+      @adapter.table(klass).exists?
     end
     
     def execute(*args)
