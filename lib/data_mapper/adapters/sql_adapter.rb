@@ -88,7 +88,7 @@ module DataMapper
             if @configuration.single_threaded?
               close_connection(@active_connection)
             else
-              @connections.available_connections.each do |active_connection|
+              @connection_pool.available_connections.each do |active_connection|
                 close_connection(active_connection)
               end
             end
@@ -102,7 +102,7 @@ module DataMapper
           if @configuration.single_threaded?
             @active_connection = create_connection
           else
-            @connections.available_connections.clear
+            @connection_pool.available_connections.clear
           end
           
           raise execution_error
@@ -139,7 +139,7 @@ module DataMapper
       def query(*args)
         execute(*args) do |reader,num_rows|
           fields = fetch_fields(reader)
-          
+
           results = []
           
           if fields.size > 1

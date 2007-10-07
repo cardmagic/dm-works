@@ -72,8 +72,6 @@ module DataMapper
             else
               @klass_or_instance.class.callbacks.execute(:before_destroy, @klass_or_instance)
               
-              puts to_sql
-              
               result = execute(to_sql)
               
               if result

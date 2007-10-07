@@ -145,6 +145,8 @@ module DataMapper
       
       current = self.new(name)
       
+      current.single_threaded = false if options[:single_threaded] == false
+      
       options.each_pair do |k,v|
         current.send("#{k}=", v)
       end

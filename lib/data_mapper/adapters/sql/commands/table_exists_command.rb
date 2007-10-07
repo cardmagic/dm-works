@@ -24,7 +24,7 @@ module DataMapper
           end
           
           def call
-            @adapter.execute(to_sql) { |reader, row_count| return row_count > 0 }
+            @adapter.execute(to_sql) { |reader, row_count| row_count > 0 }
           end          
       
         end

@@ -13,7 +13,8 @@ configuration_options = {
   :adapter => adapter,
   :log_stream => 'spec.log',
   :log_level => Logger::DEBUG,
-  :database =>  ENV['DATABASE'] || 'data_mapper_1'
+  :database =>  ENV['DATABASE'] || 'data_mapper_1',
+  :single_threaded => false
 }
 
 case adapter
@@ -33,12 +34,11 @@ def load_models
   end
 end
 
+DataMapper::Database.setup(:default, configuration_options)
+
 mock_db = DataMapper::Database.setup(:mock, {})
-p mock_db
 mock_db.adapter = MockAdapter.new(mock_db)
 database(:mock) { load_models }  
-
-DataMapper::Database.setup(configuration_options)
 
 database do |db|
   load_models

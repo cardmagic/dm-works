@@ -28,7 +28,6 @@ describe DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand do
   
   def loader_for(klass, options = {})
     session = database(:mock)
-#    p session.adapter
     DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand.new(session.adapter, session, klass, options)
   end
 

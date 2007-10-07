@@ -13,9 +13,7 @@ module DataMapper
     class Sqlite3Adapter < SqlAdapter
       
       def create_connection
-        conn = SQLite3::Database.new(@configuration.database)
-        conn.results_as_hash = true
-        conn
+        SQLite3::Database.new(@configuration.database)
       end
       
       def close_connection(conn)
@@ -38,7 +36,7 @@ module DataMapper
       end
       
       def fetch_fields(reader)
-        reader.columns.map { |field| Inflector.underscore(field.name).to_sym }
+        reader.columns.map { |field| Inflector.underscore(field).to_sym }
       end
       
       TYPES.merge!({
@@ -89,9 +87,9 @@ module DataMapper
         class SaveCommand
           # The main difference here is the lack of the PRIMARY KEY command, which SQLite probably supports
           def to_create_table_sql
-            sql = "CREATE TABLE " << table.to_sql
+            sql = "CREATE TABLE " << @table.to_sql
 
-            sql << " (" << table.columns.map do |column|
+            sql << " (" << @table.columns.map do |column|
               column_long_form(column)
             end.join(', ') << ")"
 
@@ -131,7 +129,7 @@ module DataMapper
         class DeleteCommand
           # We need to replace this with drop/reload
           def to_truncate_sql
-            "DELETE FROM " << table.to_sql
+            "DELETE FROM " << @table.to_sql
           end
           
           # Delete#execute should work just fine

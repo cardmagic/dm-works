@@ -3,7 +3,7 @@
 require 'irb'
 require 'lib/data_mapper'
 
-adapter = ENV['ADAPTER'] || 'mysql'
+adapter = ENV['ADAPTER'] || 'sqlite3'
 configuration_options = {
   :adapter => adapter,
   :log_stream => 'example.log',
