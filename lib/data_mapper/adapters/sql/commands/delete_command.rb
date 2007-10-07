@@ -85,7 +85,7 @@ module DataMapper
             
             return result
           rescue => error
-            @adapter.log.error(error)
+            @adapter.log.error { error }
             raise error
           end
           
@@ -105,7 +105,6 @@ module DataMapper
           end
           
           def execute_drop(sql)
-            @adapter.log.debug(sql)            
             @adapter.execute(sql) { |r,c| true }
           end
           

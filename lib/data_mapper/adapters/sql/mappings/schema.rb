@@ -7,11 +7,14 @@ module DataMapper
     
         class Schema
     
-          def initialize(adapter)
+          attr_reader :name
+          
+          def initialize(adapter, database_name)
+            @name = database_name
             @adapter = adapter
             @tables = Hash.new { |h,k| h[k] = Table.new(@adapter, k) }
           end
-
+          
           def [](klass)
             @tables[klass]
           end
