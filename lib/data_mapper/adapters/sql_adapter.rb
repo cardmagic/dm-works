@@ -113,23 +113,17 @@ module DataMapper
         raise NotImplementedError.new
       end
       
-      # Should be overwritten in concrete Adapter implementations.
-      # Should use handle_error for rescues.
-      # Example implementation follows.
       def execute(*args)
-        raise NotImplementedError.new
-        
         connection do |db|
           sql = escape_sql(*args)
           log.debug(sql)
-          reader = db.query(sql)
-          result = yield(reader, reader.num_rows)
-          reader.free
+          reader = query_returning_reader(db)
+          result = yield(reader, count_rows(db, reader))
+          free_reader(reader)
           result
         end
-        
-      # rescue => e
-      #  handle_error(e)
+      rescue => e
+        handle_error(e)
       end
       
       def insert(*args)
@@ -163,6 +157,7 @@ module DataMapper
           results
         end
       end      
+      
       def handle_error(error)
         raise error
       end

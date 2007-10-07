@@ -30,17 +30,16 @@ module DataMapper
         conn.close
       end
       
-      def execute(*args)
-        connection do |db|
-          sql = escape_sql(*args)
-          log.debug(sql)
-          reader = db.query(sql)
-          result = yield(reader, reader.nil? ? db.affected_rows : reader.num_rows)
-          reader.free unless reader.nil?
-          result
-        end
-      rescue => e
-        handle_error(e)
+      def query_returning_reader(db, sql)
+        db.query(sql)
+      end
+      
+      def count_rows(db, reader)
+        reader.nil? ? db.affected_rows : reader.num_rows
+      end
+      
+      def free_reader(reader)
+        reader.free unless reader.nil?
       end
       
       def fetch_fields(reader)

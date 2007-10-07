@@ -69,36 +69,27 @@ module DataMapper
         
         return connection
       end
-      
+
       def close_connection(conn)
         conn.close
       end
-      
-      def execute(*args)
-        connection do |db|
-          sql = escape_sql(*args)
-          log.debug(sql)
-          pg_result = db.exec(sql)
-          result = yield(pg_result, pg_result.cmdstatus.split(' ').last.to_i) if block_given?
-          pg_result.clear
-          result
-        end
+
+      def query_returning_reader(db, sql)
+        db.exec(sql)
       end
       
-      def query(*args)
-        execute(*args) do |reader,num_rows|
-          struct = Struct.new(*reader.fields.map { |field| Inflector.underscore(field).to_sym })
-          
-          results = []
-          
-          reader.each do |row|
-            results << struct.new(*row)
-          end
-          
-          results
-        end
+      def count_rows(db, reader)
+        reader.cmdstatus.split(' ').last.to_i
       end
       
+      def free_reader(reader)
+        reader.clear
+      end
+      
+      def fetch_fields(reader)
+        reader.fields.map { |field| Inflector.underscore(field).to_sym }
+      end
+            
       TABLE_QUOTING_CHARACTER = '"'.freeze
       COLUMN_QUOTING_CHARACTER = '"'.freeze
       

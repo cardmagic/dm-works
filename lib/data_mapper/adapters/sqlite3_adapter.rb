@@ -21,38 +21,23 @@ module DataMapper
       def close_connection(conn)
         conn.close
       end
-      
-      def execute(*args)
-        connection do |db|
-          sql = escape_sql(*args)
-          log.debug(sql)
-          reader = db.query(sql)
-          result = yield(reader, reader.count)
-          reader.close
-          result
-        end
+
+      def query_returning_reader(db, sql)
+        db.query(sql)
       end
       
-      def query(*args)
-        reader = connection { |db| db.query(escape_sql(*args)) }
-        
-        fields = nil
-        rows = []
-        
-        until reader.eof?
-          hash = reader.next
-          break if hash.nil?
-          
-          fields = hash.keys.select { |field| field.is_a?(String) } unless fields
-          
-          rows << fields.map { |field| hash[field] }
-        end
-        
-        struct = Struct.new(*fields)
-        
-        rows.map do |row|
-          struct.new(*row)
-        end
+      def count_rows(db, reader)
+        count = 0
+        reader.each { |row| count += 1 }
+        count
+      end
+      
+      def free_reader(reader)
+        reader.close
+      end
+      
+      def fetch_fields(reader)
+        reader.columns.map { |field| Inflector.underscore(field.name).to_sym }
       end
       
       TYPES.merge!({
