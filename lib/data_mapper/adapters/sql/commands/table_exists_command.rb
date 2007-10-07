@@ -15,14 +15,17 @@ module DataMapper
           end
           
           def to_sql
-            "SHOW TABLES LIKE #{table_name}"
+            unless table_name.index(".")
+              "select table_name from information_schema.tables where table_name = #{table_name}"
+            else
+              table_schema, table_name = @table.name.split(".")
+              "select table_name from information_schema.tables where table_name = '#{table_name}' and table_schema = '#{table_schema}'"
+            end
           end
           
           def call
-            @adapter.execute(to_sql) do |reader, row_count|
-              row_count > 0
-            end
-          end
+            @adapter.execute(to_sql) { |reader, row_count| return row_count > 0 }
+          end          
       
         end
     

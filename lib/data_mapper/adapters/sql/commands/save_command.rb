@@ -120,11 +120,15 @@ module DataMapper
           end
           
           def execute_update(sql)
-            raise NotImplementedError.new
+            @adapter.log.debug(sql)            
+            @adapter.execute(sql) do |reader, row_count|
+              return row_count > 0
+            end
           end
-          
+                    
           def execute_create_table(sql)
-            raise NotImplementedError.new
+            @adapter.log.debug(sql)            
+            @adapter.execute(sql) { |r,c| true }
           end
           
           private

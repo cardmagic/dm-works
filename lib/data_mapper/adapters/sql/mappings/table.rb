@@ -116,7 +116,11 @@ module DataMapper
           end
       
           def to_sql
-            @to_sql || (@to_sql = @adapter.quote_table_name(name).freeze)
+            @to_sql ||= quote_table.freeze
+          end
+          
+          def quote_table
+            @adapter.quote_table_name(name)
           end
       
           def inspect

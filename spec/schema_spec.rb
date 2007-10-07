@@ -20,7 +20,7 @@ if ENV['ADAPTER'] == 'postgresql'
     end
   
     it "should return a quoted schema and table name for a table which specifies a schema" do
-      table_sql = database.adapter(CageInSchema).to_sql
+      table_sql = database.adapter.table(CageInSchema).to_sql
       table_sql.should == "\"my_schema\".\"cages\""
     end
 

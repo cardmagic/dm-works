@@ -72,6 +72,8 @@ module DataMapper
             else
               @klass_or_instance.class.callbacks.execute(:before_destroy, @klass_or_instance)
               
+              puts to_sql
+              
               result = execute(to_sql)
               
               if result
@@ -105,9 +107,8 @@ module DataMapper
           end
           
           def execute_drop(sql)
-            @adapter.execute(sql) do |reader, row_count|
-              true
-            end
+            @adapter.log.debug(sql)            
+            @adapter.execute(sql) { |r,c| true }
           end
           
         end
