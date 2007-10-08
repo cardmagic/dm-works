@@ -68,7 +68,7 @@ module DataMapper
           
           def execute_insert(sql)
             @adapter.connection do |db|
-              @adapter.log.debug(sql)
+              @adapter.log.debug { sql }
               db.query(sql)
               db.insert_id
             end
@@ -76,14 +76,14 @@ module DataMapper
           
           def execute_update(sql)
             @adapter.connection do |db|
-              @adapter.log.debug(sql)
+              @adapter.log.debug { sql }
               db.query(sql)
               db.affected_rows > 0
             end
           end
           
           def execute_create_table(sql)
-            @adapter.log.debug(sql)
+            @adapter.log.debug { sql }
             @adapter.connection { |db| db.query(sql) }
             true
           end

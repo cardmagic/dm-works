@@ -117,7 +117,7 @@ describe DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand do
    end
 
    it 'non-standard options should be considered part of the conditions' do
-     database.log.debug('non-standard options should be considered part of the conditions')
+     database.log.debug { 'non-standard options should be considered part of the conditions' }
      zebra = Animal.first(:name => 'Zebra')
      zebra.name.should == 'Zebra'
 

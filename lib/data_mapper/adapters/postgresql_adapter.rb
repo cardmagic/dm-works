@@ -151,7 +151,7 @@ module DataMapper
           # Fix this to use the RETURNING hack
           def execute_insert(sql)
             @adapter.connection do |db|
-              @adapter.log.debug(sql)
+              @adapter.log.debug { sql }
               db.exec(sql)
               # Current id or latest value read from sequence in this session
               # See: http://www.postgresql.org/docs/8.1/interactive/functions-sequence.html

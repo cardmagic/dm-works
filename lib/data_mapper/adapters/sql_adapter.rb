@@ -116,7 +116,7 @@ module DataMapper
       def execute(*args)
         connection do |db|
           sql = escape_sql(*args)
-          log.debug(sql)
+          log.debug { sql }
           reader = query_returning_reader(db, sql)
           result = yield(reader, count_rows(db, reader))
           free_reader(reader)
