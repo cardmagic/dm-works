@@ -237,7 +237,7 @@ module DataMapper
     end
     
     def self.foreign_key
-      String::memoized_underscore(self.name) + "_id"
+      Inflector.underscore(self.name) + "_id"
     end
     
     def inspect

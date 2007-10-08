@@ -112,7 +112,7 @@ module DataMapper
           end
       
           def default_foreign_key
-            @default_foreign_key || (@default_foreign_key = "#{String::memoized_underscore(Inflector.singularize(name))}_id".freeze)
+            @default_foreign_key || (@default_foreign_key = "#{Inflector.underscore(Inflector.singularize(name))}_id".freeze)
           end
       
           def to_sql
