@@ -12,6 +12,13 @@ describe DataMapper::Associations::BelongsToAssociation do
     @aviary.zoo.should == @aviary.session.first(Zoo, :name => 'San Diego')
   end
   
+  it "is assigned a zoo_id" do
+    zoo = Zoo.first
+    exhibit = Exhibit.new(:name => 'bob')
+    exhibit.zoo = zoo
+    exhibit.instance_variable_get("@zoo_id").should == zoo.id    
+  end
+  
   it 'can build its zoo' do
     database do |db|
       e = Exhibit.new({:name => 'Super Extra Crazy Monkey Cage'})

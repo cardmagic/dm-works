@@ -48,7 +48,6 @@ module DataMapper
             else
               
               # Temp variable for the instance variable name.
-              setter_method = "#{@association_name}=".to_sym
               fk = association.foreign_key.to_sym
               
               set = @instance.loaded_set.group_by { |instance| instance.send(fk) }
@@ -72,7 +71,12 @@ module DataMapper
           @associated = association.constant.new(options)
         end
       
+        def setter_method
+          "#{@association_name}=".to_sym
+        end
+        
         def set(val)
+          @instance.instance_variable_set(association.foreign_key.instance_variable_name, val.key)
           @associated = val
         end
             
