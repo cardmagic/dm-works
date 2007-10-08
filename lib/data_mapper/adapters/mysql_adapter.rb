@@ -58,6 +58,12 @@ module DataMapper
       
       module Commands
         
+        class TableExistsCommand
+          def to_sql
+            "select table_name from information_schema.tables where table_name = #{table_name} and table_schema = '#{@adapter.schema.name}'"
+          end
+        end
+        
         class SaveCommand
           
           def execute_insert(sql)
