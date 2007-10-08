@@ -16,10 +16,10 @@ module DataMapper
           
           def to_sql
             unless table_name.index(".")
-              "select table_name from information_schema.tables where table_name = #{table_name} and table_schema = '#{@adapter.schema.name}'"
+              "select table_name from information_schema.tables where table_name = #{table_name} and table_catalog = '#{@adapter.schema.name}'"
             else
               table_schema, table_name = @table.name.split(".")
-              "select table_name from information_schema.tables where table_name = '#{table_name}' and table_schema = '#{table_schema}'"
+              "select table_name from information_schema.tables where table_name = '#{table_name}' and table_catalog = '#{table_schema}'"
             end
           end
           
