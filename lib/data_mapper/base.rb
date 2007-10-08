@@ -93,12 +93,7 @@ module DataMapper
     def initialize(details = nil)
       
       case details
-      when Hash then
-        details.reject do |key, value|
-          protected_attribute? key
-        end.each_pair do |key, value|
-          instance_variable_set("@#{key}", value)
-        end
+      when Hash then self.attributes = details
       when DataMapper::Base then self.attributes = details.attributes
       when NilClass then nil
       end
@@ -199,6 +194,8 @@ module DataMapper
       end.each_pair do |key, value|
         if column = table[key]
           instance_variable_set(column.instance_variable_name, value)
+        else
+          send("#{key}=", value)
         end
       end
     end
