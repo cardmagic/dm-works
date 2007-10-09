@@ -15,7 +15,7 @@ module DataMapper
           end
           
           def call
-            @adapter.query(to_sql).first.row_count.to_i
+            @adapter.query(to_sql).first.to_i
           end
           
         end
