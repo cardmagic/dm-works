@@ -201,7 +201,11 @@ module DataMapper
       if value.is_a?(DataMapper::Adapters::AbstractAdapter)
         @adapter = value
       else
-        require "data_mapper/adapters/#{Inflector.underscore(value)}_adapter"
+        begin
+          require "data_mapper/adapters/#{Inflector.underscore(value)}_adapter"
+        rescue LoadError
+          require "#{Inflector.underscore(value)}_adapter"
+        end
         adapter_class = Adapters::const_get(Inflector.classify(value) + "Adapter")
       
         @adapter = adapter_class.new(self)
