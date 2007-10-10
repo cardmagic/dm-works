@@ -32,6 +32,7 @@ module DataMapper
       # instance within the DataMapper::Adapters::Sql::Mappings::Table 
       def initialize(instance, association_name)
         @instance, @association_name = instance, association_name.to_sym
+        @instance.loaded_associations << self
       end
   
       # #association provides lazily initialized access to the declared
