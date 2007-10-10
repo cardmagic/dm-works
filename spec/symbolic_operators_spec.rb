@@ -1,5 +1,9 @@
 describe Symbol::Operator do
   
+  before(:all) do
+    fixtures(:people)
+  end
+  
   it 'should use greater_than_or_equal_to to limit results' do
     Person.all(:age.gte => 28).size.should == 3
   end

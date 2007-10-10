@@ -29,21 +29,21 @@ case adapter
 end
 
 def load_models
-  Dir[File.dirname(__FILE__) + '/models/*.rb'].each do |path|
+  Dir[File.dirname(__FILE__) + '/models/*.rb'].sort.each do |path|
     load path
   end
 end
 
 DataMapper::Database.setup(:default, configuration_options)
 
-mock_db = DataMapper::Database.setup(:mock, {})
-mock_db.adapter = MockAdapter.new(mock_db)
-database(:mock) { load_models }  
-
 database do |db|
   load_models
   DataMapper::Base::auto_migrate!
 end
+
+mock_db = DataMapper::Database.setup(:mock, {})
+mock_db.adapter = MockAdapter.new(mock_db)
+database(:mock) { load_models }
 
 at_exit do
   database do |db|
@@ -58,12 +58,14 @@ def fixtures(name, force = false)
   entry = YAML::load_file(File.dirname(__FILE__) + "/fixtures/#{name}.yaml")
   klass = Kernel::const_get(Inflector.classify(Inflector.singularize(name)))
   
-  database.schema[klass].drop! if force
-  database.schema[klass].create!
-  klass.truncate!
+  klass.auto_migrate!
   
   (entry.kind_of?(Array) ? entry : [entry]).each do |hash|
-    klass::create(hash)
+    if hash['type']
+      Object::const_get(hash['type'])::create(hash)
+    else
+      klass::create(hash)
+    end
   end
 end
 

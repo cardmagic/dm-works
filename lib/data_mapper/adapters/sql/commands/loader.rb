@@ -10,6 +10,9 @@ module DataMapper
             @columns = {}
             @key = nil
             @key_index = nil
+            @type_override_present = false
+            @type_override_index = nil
+            @type_override = nil
             @session = load_command.session
             @reload = load_command.reload?
             @set = []
@@ -19,10 +22,15 @@ module DataMapper
             if column.key?
               @key = column 
               @key_index = index
-              @columns[index] = column
-            else
-              @columns[index] = column
             end
+            
+            if column.type == :class
+              @type_override_present = true
+              @type_override_index = index
+              @type_override = column
+            end
+            
+            @columns[index] = column
           
             self
           end
@@ -30,8 +38,12 @@ module DataMapper
           def materialize(values)
 
             instance_id = @key.type_cast_value(values[@key_index])
-            instance = create_instance(instance_id)
-            
+            instance = if @type_override_present
+              create_instance(instance_id, @type_override.type_cast_value(values[@type_override_index]))
+            else
+              create_instance(instance_id)
+            end
+              
             @klass.callbacks.execute(:before_materialize, instance)
             
             original_hashes = {}
@@ -63,11 +75,11 @@ module DataMapper
           
           private
           
-            def create_instance(instance_id)
+            def create_instance(instance_id, instance_type = @klass)
               instance = @session.identity_map.get(@klass, instance_id)
 
               if instance.nil? || @reload
-                instance = @klass.new() if instance.nil?
+                instance = instance_type.new() if instance.nil?
                 instance.instance_variable_set(:@__key, instance_id)
                 instance.instance_variable_set(:@new_record, false)
                 @session.identity_map.set(instance)

@@ -70,13 +70,12 @@ module DataMapper
           
           self::subclasses << subclass
           
-          database.schema[subclass.superclass].columns.each do |c|
+          database.table(self).columns.each do |c|
             subclass.property(c.name, c.type, c.options)
             subclass.before_create do
               @type = self.class
             end if c.name == :type
-          end
-          
+          end          
         end
       end
     end

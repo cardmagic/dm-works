@@ -24,6 +24,15 @@ module DataMapper
         db.query(sql)
       end
       
+      def insert(*args)
+        connection do |db|
+          sql = escape_sql(*args)
+          log.debug { sql }
+          db.query(sql)
+          yield(db.last_insert_row_id)
+        end
+      end
+      
       def count_rows(db, reader)
         return db.total_changes if db.total_changes
         count = 0
@@ -109,10 +118,7 @@ module DataMapper
           
           # This should be replaced with a generic Adapter#insert command
           def execute_insert(sql)
-            @adapter.connection do |db|
-              db.query(sql)
-              db.last_insert_row_id
-            end
+            @adapter.insert(sql) { |insert_id| insert_id }
           end
           
           # We need to update count_rows to use total_changes if appropriate, but then this should swap

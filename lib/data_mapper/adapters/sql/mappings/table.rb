@@ -127,7 +127,7 @@ module DataMapper
             "#<%s:0x%x @klass=%s, @name=%s, @columns=%s>" % [
               self.class.name,
               (object_id * 2),
-              name,
+              klass.inspect,
               to_sql,
               @columns.inspect
             ]
