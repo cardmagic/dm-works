@@ -249,6 +249,10 @@ module DataMapper
       "#<%s:0x%x @new_record=%s, %s>" % [self.class.name, (object_id * 2), new_record?, inspected_attributes.join(', ')]
     end
     
+    def loaded_associations
+      @loaded_associations || @loaded_associations = []
+    end
+    
     def session=(value)
       @session = value
     end
