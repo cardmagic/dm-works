@@ -1,7 +1,5 @@
 require 'data_mapper/adapters/abstract_adapter'
 require 'data_mapper/adapters/sql/commands/load_command'
-require 'data_mapper/adapters/sql/commands/advanced_load_command'
-require 'data_mapper/adapters/sql/commands/count_command'
 require 'data_mapper/adapters/sql/commands/save_command'
 require 'data_mapper/adapters/sql/commands/delete_command'
 require 'data_mapper/adapters/sql/commands/table_exists_command'
@@ -179,11 +177,11 @@ module DataMapper
       end
       
       def load(session, klass, options)
-        self.class::Commands::AdvancedLoadCommand.new(self, session, klass, options).call
+        self.class::Commands::LoadCommand.new(self, session, klass, options).call
       end
       
       def count(klass_or_instance, options)
-        self.class::Commands::CountCommand.new(self, klass_or_instance, options).call
+        query("SELECT COUNT(*) AS row_count FROM " + table(klass_or_instance).to_sql).first.to_i
       end
       
       def table(instance)

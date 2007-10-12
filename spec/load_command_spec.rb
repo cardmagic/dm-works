@@ -13,7 +13,7 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
   
 end
   
-describe DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand do
+describe DataMapper::Adapters::Sql::Commands::LoadCommand do
 
   before(:all) do
     fixtures(:zoos)
@@ -28,7 +28,7 @@ describe DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand do
   
   def loader_for(klass, options = {})
     session = database(:mock)
-    DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand.new(session.adapter, session, klass, options)
+    DataMapper::Adapters::Sql::Commands::LoadCommand.new(session.adapter, session, klass, options)
   end
 
   it "should return a simple select statement for a given class" do

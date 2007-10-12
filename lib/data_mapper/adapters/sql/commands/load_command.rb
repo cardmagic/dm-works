@@ -1,4 +1,5 @@
-require File.dirname(__FILE__) + '/conditions'
+require 'data_mapper/adapters/sql/commands/conditions'
+require 'data_mapper/adapters/sql/commands/loader'
 
 module DataMapper
   module Adapters
@@ -7,288 +8,316 @@ module DataMapper
     
         class LoadCommand
       
-          attr_reader :klass, :order, :limit, :instance_id, :conditions, :options
+          attr_reader :conditions, :session, :options
           
-          def initialize(adapter, session, klass, options)
-            raise 'Should not be used anymore!'
-            @adapter, @session, @klass, @options = adapter, session, klass, options
+          def initialize(adapter, session, primary_class, options = {})
+            @adapter, @session, @primary_class = adapter, session, primary_class
+            
+            @options, conditions_hash = partition_options(options)
+            
+            @instance_ids = conditions_hash[:id]
+            @load_by_id = @instance_ids && conditions_hash.size == 1
             
             @order = @options[:order]
             @limit = @options[:limit]
+            @offset = @options[:offset]
             @reload = @options[:reload]
             @instance_id = @options[:id]
-            @conditions = Conditions.new(@adapter, self)
+            @conditions = Conditions.new(@adapter, self, conditions_hash)
+            @loaders = Hash.new { |h,k| h[k] = Loader.new(self, k) }
           end
           
+          # Display an overview of load options at a glance.          
+          def inspect
+            <<-EOS.compress_lines % (object_id * 2)
+              #<#{self.class.name}:0x%x
+                @database=#{@adapter.name}
+                @reload=#{@reload.inspect}
+                @load_by_id=#{@load_by_id.inspect}
+                @order=#{@order.inspect}
+                @limit=#{@limit.inspect}
+                @offset=#{@offset.inspect}
+                @options=#{@options.inspect}>
+            EOS
+          end
+                              
+          # Access the Conditions instance
+          def conditions
+            @conditions
+          end
+          
+          # If +true+ then force the command to reload any objects
+          # already existing in the IdentityMap when executing.
           def reload?
             @reload
           end
-
-          def escape(conditions)
-            @adapter.escape(conditions)
-          end
-      
-          def inspect
-            @options.inspect
-          end
-      
-          def include?(association_name)
-            return false if includes.empty?
-            includes.include?(association_name)
-          end
-      
-          def includes
-            @includes || @includes = begin
-              list = @options[:include] || []
-              list.kind_of?(Array) ? list : [list]
-              list
-            end
-          end
-      
-          def select
-            @select_columns || @select_columns = begin
-              select_columns = @options[:select]
-              unless select_columns.nil?
-                select_columns = select_columns.kind_of?(Array) ? select_columns : [select_columns]
-                select_columns.map { |column| @adapter.quote_column_name(column.to_s) }
-              else
-                @options[:select] = @adapter.table(klass).columns.select do |column|
-                  include?(column.name) || !column.lazy?
-                end.map { |column| column.to_sql }
-              end
-            end
-          end
-      
-          def table_name
-            @table_name || @table_name = if @options.has_key?(:table)
-              @adapter.quote_table_name(@options[:table])
-            else
-              @adapter.table(klass).to_sql
-            end
+          
+          # Determine if there is a limitation on the number of
+          # instances returned in the results. If +nil+, no limit
+          # is set. Can be used in conjunction with #offset for
+          # paging through a set of results.
+          def limit
+            @limit
           end
           
-          def to_sql            
-            sql = 'SELECT ' << select.join(', ') << ' FROM ' << table_name
-        
-            where = []
-        
-            where += conditions.to_a unless conditions.empty?
-        
-            unless where.empty?
-              sql << ' WHERE (' << where.join(') AND (') << ')'
-            end
-        
-            unless order.nil?
-              sql << ' ORDER BY ' << order.to_s
-            end
-        
-            unless limit.nil?
-              sql << ' LIMIT ' << limit.to_s
-            end
-        
-            return sql
+          # Used in conjunction with #limit to page through a set
+          # of results.
+          def offset
+            @offset
           end
           
-          def call            
-            if instance_id && !reload?
-              if instance_id.kind_of?(Array)
-                instances = instance_id.map do |id|
-                  @session.identity_map.get(klass, id)
-                end.compact
+          def load_by_id?
+            @load_by_id
+          end
+          
+          def call
+            
+            results = []
+            
+            # Check to see if the query is for a specific id (or set of ids)
+            # and return them if found.
+            if load_by_id? && !reload?
               
-                return instances if instances.size == instance_id.size
+              # Return as many of the id's from the Array as possible.
+              # Query for the remainder. If the size of the Array and
+              # the size of the found objects match, just return.
+              if @instance_ids.kind_of?(Array)
+                found_ids = []
+                
+                @instance_ids.each do |id|
+                  if instance = @session.identity_map.get(@primary_class, id)
+                    # Because we need to negate the found ids from
+                    # the id options, and because the key of the instance
+                    # is type-cast, and may be unequal to the original type,
+                    # we track the found ids in another array.
+                    found_ids << id
+                    results << instance 
+                  end
+                end
+                
+                # If all instances were found, then return immediately.
+                return results if results.size == @instance_ids.size
+                
+                # If only some instances were found, then remove the
+                # ids that were found from the list.
+                @instance_ids.reject! { |entry| found_ids.include?(entry) }
               else
-                instance = @session.identity_map.get(klass, instance_id)
-                return instance unless instance.nil?
+                # If the id is for only a single record, attempt to find it.
+                if instance = @session.identity_map.get(@primary_class, @instance_ids)
+                  return instance
+                end
               end
             end
-          
-            reader = execute(to_sql)
-          
-            results = if eof?(reader)
-              nil
-            elsif limit == 1 || ( instance_id && !instance_id.kind_of?(Array) )
-              fetch_one(reader)
-            else
-              fetch_all(reader)
+            
+            # Execute the statement and load the objects.
+            @adapter.execute(*to_parameterized_sql) do |reader, num_rows|
+              if @options.has_key?(:intercept_load)
+                load(reader, &@options[:intercept_load])
+              else
+                load(reader)
+              end
             end
             
-            close_reader(reader)
+            results += @loaders[@primary_class].loaded_set
             
-            return results
+            if @limit == 1 || (@load_by_id && !@instance_ids.kind_of?(Array))
+              results.first
+            else
+              results
+            end
           end
-
-          def load(hash, set = [])
-
-            instance_class = unless hash['type'].nil?
-              Kernel::const_get(hash['type'])
+          
+          def load(reader)
+            # The following blocks are identical aside from the yield.
+            # It's written this way to avoid a conditional within each
+            # iterator, and to take advantage of the performance of
+            # yield vs. Proc#call.            
+            if block_given?
+              reader.each do |row|
+                @loaders.each_pair do |klass,loader|
+                  yield(loader.materialize(row), @columns, row)
+                end
+              end
             else
-              klass
+              reader.each do |row|
+                @loaders.each_pair do |klass,loader|
+                  loader.materialize(row)
+                end
+              end
             end
-
-            mapping = @adapter.table(instance_class)
-
-            instance_id = mapping.key.type_cast_value(hash['id'])   
-            instance = @session.identity_map.get(instance_class, instance_id)
-
-            if instance.nil? || reload?
-              instance ||= instance_class.new
-              instance.class.callbacks.execute(:before_materialize, instance)
-
-              instance.instance_variable_set(:@new_record, false)
-              hash.each_pair do |name_as_string,raw_value|
-                name = name_as_string.to_sym
-                if column = mapping.find_by_column_name(name)
-                  value = column.type_cast_value(raw_value)
-                  instance.instance_variable_set(column.instance_variable_name, value)
+          end
+          
+          # Generate a select statement based on the initialization
+          # arguments.
+          def to_parameterized_sql
+            parameters = []
+            
+            sql = 'SELECT ' << columns_for_select.join(', ')
+            sql << ' FROM ' << from_table_name            
+            
+            included_associations.each do |association|
+              sql << ' ' << association.to_sql
+            end
+            
+            shallow_included_associations.each do |association|
+              sql << ' ' << association.to_shallow_sql
+            end
+            
+            unless conditions.empty?
+              where_clause, *parameters = conditions.to_parameterized_sql
+              sql << ' WHERE ' << where_clause
+            end
+            
+            unless @order.nil?
+              sql << ' ORDER BY ' << @order.to_s
+            end
+        
+            unless @limit.nil?
+              sql << ' LIMIT ' << @limit.to_s
+            end
+            
+            unless @offset.nil?
+              sql << ' OFFSET ' << @offset.to_s
+            end
+            
+            parameters.unshift(sql)
+          end
+          
+          def qualify_columns?
+            return @qualify_columns unless @qualify_columns.nil?
+            @qualify_columns = !(included_associations.empty? && shallow_included_associations.empty?)
+          end
+          
+          private            
+            # Return the Sql-escaped columns names to be selected in the results.
+            def columns_for_select
+              @columns_for_select || begin
+                qualify_columns = qualify_columns?
+                @columns_for_select = []
+                
+                columns.each_with_index do |column,i|
+                  class_for_loader = column.table.klass
+                  @loaders[class_for_loader].add_column(column, i) if class_for_loader
+                  @columns_for_select << column.to_sql(qualify_columns)
+                end
+                
+                @columns_for_select
+              end
+              
+            end
+            
+            # Returns the DataMapper::Adapters::Sql::Mappings::Column instances to
+            # be selected in the results.
+            def columns
+              @columns || begin
+                @columns = primary_class_columns
+                @columns += included_columns
+                
+                included_associations.each do |assoc|
+                  @columns += assoc.association_columns
+                end
+                
+                shallow_included_associations.each do |assoc|
+                  @columns += assoc.join_columns
+                end
+                
+                @columns
+              end
+            end
+            
+            # Returns the default columns for the primary_class_table,
+            # or maps symbols specified in a +:select+ option to columns
+            # in the primary_class_table.
+            def primary_class_columns
+              @primary_class_columns || @primary_class_columns = begin
+                if @options.has_key?(:select)
+                  case x = @options[:select]
+                  when Array then x
+                  when Symbol then [x]
+                  else raise ':select option must be a Symbol, or an Array of Symbols'
+                  end.map { |name| primary_class_table[name] }
                 else
-                  instance.instance_variable_set("@#{name}", value)
+                  primary_class_table.columns.reject { |column| column.lazy? }
                 end
-                instance.original_hashes[name] = value.hash
               end
-              
-              instance.instance_variable_set(:@__key, instance_id)
-              
-              instance.class.callbacks.execute(:after_materialize, instance)
-
-              @session.identity_map.set(instance)
-            end
-
-            instance.instance_variable_set(:@loaded_set, set)
-            instance.session = @session
-            set << instance
-            return instance
-          end
-          
-          def load_instances(fields, rows)            
-            table = @adapter.table(klass)
-            
-            set = []
-            columns = {}
-            key_ordinal = nil
-            key_column = table.key
-            type_ordinal = nil
-            type_column = nil
-            
-            fields.each_with_index do |field, i|
-              column = table.find_by_column_name(field.to_sym)
-              key_ordinal = i if column.key?
-              type_ordinal, type_column = i, column if column.name == :type
-              columns[column] = i
             end
             
-            if type_ordinal
-              
-              tables = Hash.new() do |h,k|
-                
-                table_for_row = @adapter.table(k.blank? ? klass : type_column.type_cast_value(k))
-                key_ordinal_for_row = nil
-                columns_for_row = {}
-                
-                fields.each_with_index do |field, i|
-                  column = table_for_row.find_by_column_name(field.to_sym)
-                  key_ordinal_for_row = i if column.key?
-                  columns_for_row[column] = i
+            def included_associations
+              @included_associations || @included_associations = begin
+                associations = primary_class_table.associations
+                include_options.map do |name|
+                  associations[name]
+                end.compact
+              end
+            end
+            
+            def shallow_included_associations
+              @shallow_included_associations || @shallow_included_associations = begin
+                associations = primary_class_table.associations
+                shallow_include_options.map do |name|
+                  associations[name]
+                end.compact
+              end
+            end
+            
+            def included_columns
+              @included_columns || @included_columns = begin
+                include_options.map do |name|
+                  primary_class_table[name]
+                end.compact
+              end
+            end
+            
+            def include_options
+              @include_options || @include_options = begin
+                case x = @options[:include]
+                when Array then x
+                when Symbol then [x]
+                else []
                 end
-                
-                h[k] = [ table_for_row.klass, table_for_row.key, key_ordinal_for_row, columns_for_row ]
+              end
+            end
+            
+            def shallow_include_options
+              @shallow_include_options || @shallow_include_options = begin
+                case x = @options[:shallow_include]
+                when Array then x
+                when Symbol then [x]
+                else []
+                end
+              end
+            end
+            
+            # Determine if a Column should be included based on the
+            # value of the +:include+ option.
+            def include_column?(name)
+              !primary_class_table[name].lazy? || include_options.includes?(name)
+            end
+
+            # Return the Sql-escaped table name of the +primary_class+.
+            def from_table_name
+              @from_table_name || (@from_table_name = @adapter.table(@primary_class).to_sql)
+            end
+            
+            # Returns the DataMapper::Adapters::Sql::Mappings::Table for the +primary_class+.
+            def primary_class_table
+              @primary_class_table || (@primary_class_table = @adapter.table(@primary_class))
+            end
+            
+            def partition_options(options)
+              find_options = @adapter.class::FIND_OPTIONS
+              conditions_hash = {}
+              options_hash = {}
+              options.each do |key,value|
+                if key != :conditions && find_options.include?(key)
+                  options_hash[key] = value
+                else
+                  conditions_hash[key] = value
+                end
               end
               
-              rows.each do |row|
-                klass_for_row, key_column_for_row, key_ordinal_for_row, columns_for_row = *tables[row[type_ordinal]]
-                
-                load_instance(
-                  create_instance(
-                    klass_for_row,
-                    key_column_for_row.type_cast_value(row[key_ordinal_for_row])
-                  ),
-                  columns_for_row,
-                  row,
-                  set
-                )
-              end
-            else
-              rows.each do |row|
-                load_instance(
-                  create_instance(
-                    klass,
-                    key_column.type_cast_value(row[key_ordinal])
-                  ),
-                  columns,
-                  row,
-                  set
-                )
-              end
+              [ options_hash, conditions_hash ]
             end
-            
-            set.dup
-          end
-          
-          # Create an instance for the specified Class and id in
-          # preparation for loading. This method first checks to
-          # see if the instance is in the IdentityMap.
-          # If not, then a new class is created, it's marked as
-          # not-new, the key is set and it's added to the IdentityMap.
-          # Afterwards the instance's Session is updated to the current
-          # session, and the instance returned.
-          def create_instance(instance_class, instance_id)
-            instance = @session.identity_map.get(instance_class, instance_id)
-            
-            if instance.nil? || reload?
-              instance = instance_class.new()
-              instance.instance_variable_set(:@__key, instance_id)
-              instance.instance_variable_set(:@new_record, false)
-              @session.identity_map.set(instance)
-            end
-            
-            instance.session = @session
-            
-            return instance
-          end
-          
-          def load_instance(instance, columns, values, set = [])
-            
-            instance.class.callbacks.execute(:before_materialize, instance)
-            
-            hashes = {}
-            
-            columns.each_pair do |column, i|
-              hashes[column.name] = instance.instance_variable_set(
-                column.instance_variable_name,
-                column.type_cast_value(values[i])
-              ).hash
-            end
-            
-            instance.instance_variable_set(:@original_hashes, hashes)
-            
-            instance.instance_variable_set(:@loaded_set, set)
-            set << instance
-            
-            instance.class.callbacks.execute(:after_materialize, instance)
-            
-            return instance
-          end
-
-          protected
-          def count_rows(reader)
-            raise NotImplementedError.new
-          end
-
-          def close_reader(reader)
-            raise NotImplementedError.new
-          end
-
-          def execute(sql)
-            raise NotImplementedError.new
-          end
-
-          def fetch_one(reader)
-            raise NotImplementedError.new
-          end
-
-          def fetch_all(reader)
-            raise NotImplementedError.new
-          end
           
         end # class LoadCommand
       end # module Commands
