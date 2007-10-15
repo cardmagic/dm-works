@@ -1,39 +1,8 @@
 require 'data_mapper/adapters/sql_adapter'
-require 'data_mapper/support/connection_pool'
-
-begin
-  require 'postgres'
-rescue LoadError
-  STDERR.puts <<-EOS.gsub(/^(\s+)/, '')
-    This adapter currently depends on the \"postgres\" gem.
-    If some kind soul would like to make it work with
-    a pure-ruby version that'd be super spiffy.
-  EOS
-  
-  raise
-end
+require 'postgres'
 
 module DataMapper
   module Adapters
-    module Sql
-      module Mappings
-        class Table
-
-          def sequence_sql
-            @sequence_sql ||= quote_table("_id_seq").freeze
-          end
-          
-          private 
-          
-          def quote_table(table_suffix = nil)
-            parts = name.split('.')
-            parts.last << table_suffix if table_suffix
-            parts.map { |part|
-              @adapter.quote_table_name(part) }.join('.')
-          end
-        end
-      end
-    end
     
     class PostgresqlAdapter < SqlAdapter
       
@@ -91,24 +60,6 @@ module DataMapper
       TABLE_QUOTING_CHARACTER = '"'.freeze
       COLUMN_QUOTING_CHARACTER = '"'.freeze
       
-      def type_cast_boolean(value)
-        case value
-          when TrueClass, FalseClass then value
-          when "t", "true", "TRUE" then true
-          when "f", nil then false
-          else "Can't type-cast #{value.inspect} to a boolean"
-        end
-      end
-
-      def type_cast_datetime(value)
-        case value
-          when DateTime then value
-          when Date then DateTime.new(value)
-          when String then DateTime::parse(value)
-          else "Can't type-cast #{value.inspect} to a datetime"
-        end
-      end
-      
       TYPES.merge!({
         :integer => 'integer'.freeze,
         :string => 'varchar'.freeze,
@@ -117,51 +68,34 @@ module DataMapper
         :datetime => 'timestamp with time zone'.freeze
       })
 
-      module Commands
-        
-        class DeleteCommand
-          
-          # I don't know why the default one doesn't work
-          def execute(sql)
-            @adapter.execute(sql) do |reader, row_count|
-              reader.status == PGresult::COMMAND_OK
-            end
-          end
-
-          # this should be replaced with drop/rebuild
-          def to_truncate_sql
-            sequence = @table.sequence_sql
-            # truncate the table and reset the sequence value
-            sql = "DELETE FROM " << @table.to_sql
-            if @table.key.auto_increment?
-              sql << <<-EOS.compress_lines
-                ; SELECT setval('#{sequence}',
-                  (SELECT COALESCE( MAX(id) + (SELECT increment_by FROM #{sequence} ),
-                  (SELECT min_value FROM #{sequence})
-                ) FROM #{@table.to_sql}), false)
-              EOS
-            end
-            return sql
-          end
-
+      def insert(*args)
+        connection do |db|
+          sql = escape_sql(*args)
+          log.debug { sql }
+          db.query(sql)
+          yield(db.last_insert_row_id)
         end
+      end
+      
+      def insert(*args)
+        connection do |db|
+          sql = escape_sql(*args)
+          log.debug { sql }
+          db.exec(sql)
+          # Current id or latest value read from sequence in this session
+          # See: http://www.postgresql.org/docs/8.1/interactive/functions-sequence.html
+          db.exec("SELECT last_value from #{@table.sequence_sql}")[0][0]
+        end
+      end
         
-        class SaveCommand
-          
-          # Fix this to use the RETURNING hack
-          def execute_insert(sql)
-            @adapter.connection do |db|
-              @adapter.log.debug { sql }
-              db.exec(sql)
-              # Current id or latest value read from sequence in this session
-              # See: http://www.postgresql.org/docs/8.1/interactive/functions-sequence.html
-              @instance.key || db.exec("SELECT last_value from #{@table.sequence_sql}")[0][0]
-            end
+      module Mappings
+        class Table
+          def sequence_sql
+            @sequence_sql ||= quote_table("_id_seq").freeze
           end
           
-          # This needs to be special-cased because of the possibility of creating a new schema... still it should be refactored
           def to_create_table_sql
-            schema_name = @table.name.index('.') ? @table.name.split('.').first : nil
+            schema_name = name.index('.') ? name.split('.').first : nil
             schema_list = @adapter.connection { |db| db.exec('SELECT nspname FROM pg_namespace').result.collect { |r| r[0] }.join(',') }
           
             sql = if schema_name and !schema_list.include?(schema_name)
@@ -170,31 +104,35 @@ module DataMapper
               ''
             end
             
-            sql << "CREATE TABLE " << @table.to_sql
+            sql << "CREATE TABLE " << to_sql
           
-            sql << " (" << @table.columns.map do |column|
-              column_long_form(column)
+            sql << " (" << columns.map do |column|
+              column.to_long_form
             end.join(', ') << ")"
           
             return sql
           end
-
-          # could we just make this the default?
-          def column_long_form(column)
-            
-            long_form = if column.key? 
-              "#{column.to_sql} serial primary key"
-            else
-              "#{column.to_sql} #{@adapter.class::TYPES[column.type] || column.type}"
-            end  
-            long_form << " NOT NULL" unless column.nullable?
-            long_form << " default #{column.options[:default]}" if column.options.has_key?(:default)
-
-            return long_form
+          
+          private 
+          
+          def quote_table(table_suffix = nil)
+            parts = name.split('.')
+            parts.last << table_suffix if table_suffix
+            parts.map { |part|
+              @adapter.quote_table_name(part) }.join('.')
           end
-        end
+        end # class Table
         
-      end
+        class Column
+          def serial_declaration
+            "SERIAL"
+          end
+          
+          def size
+            nil
+          end
+        end # class Column
+      end # module Mappings
       
     end # class PostgresqlAdapter
     
