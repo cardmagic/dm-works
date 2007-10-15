@@ -1,5 +1,4 @@
 require 'data_mapper/adapters/do_adapter'
-require 'mysql'
 
 module DataMapper
   module Adapters

@@ -133,14 +133,14 @@ module DataMapper
       def query(*args)
         execute(*args) do |reader|
           fields = reader.fields.map { |field| Inflector.underscore(field).to_sym }
-p fields
+
           results = []
           
           if fields.size > 1
             struct = Struct.new(*fields)
             
             indexes = (0...fields.size).to_a
-            p indexes
+
             reader.each do
               results << struct.new(*indexes.map { |i| reader.item(i) })
             end
