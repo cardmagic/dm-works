@@ -33,14 +33,16 @@ module DataMapper
       def valid?(context = :general)
         return false unless self.class.callbacks.execute(:before_validation, self)
         return false unless self.class.validations.execute(context, self)
-        return false unless instance_variables.all? do |ivar_name|
-          ivar = instance_variable_get(ivar_name)
-          if ivar && ivar.respond_to?(:valid?)
-            ivar.send(:valid?, context)
-          else
-            true
+        if self.respond_to?(:loaded_associations)
+          return false unless self.loaded_associations.all? do |association|
+            if association.respond_to?(:valid?)
+              association.valid? context
+            else
+              true
+            end
           end
-        end        
+        end
+
         return false unless self.class.callbacks.execute(:after_validation, self)
         return true
       end
