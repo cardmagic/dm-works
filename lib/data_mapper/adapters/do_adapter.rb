@@ -139,10 +139,8 @@ module DataMapper
           if fields.size > 1
             struct = Struct.new(*fields)
             
-            indexes = (0...fields.size).to_a
-
             reader.each do
-              results << struct.new(*indexes.map { |i| reader.item(i) })
+              results << struct.new(*reader.current_row)
             end
           else
             reader.each do
