@@ -1,4 +1,3 @@
-require 'data_mapper/unit_of_work'
 require 'data_mapper/support/active_record_impersonation'
 require 'data_mapper/validations/validation_helper'
 require 'data_mapper/associations'
@@ -17,7 +16,6 @@ module DataMapper
     # This probably needs to be protected
     attr_accessor :loaded_set
     
-    include UnitOfWork
     include CallbacksHelper
     include Support::ActiveRecordImpersonation
     include Validations::ValidationHelper
@@ -175,13 +173,30 @@ module DataMapper
       end
       
     end
-        
-    def attributes
-      session.schema[self.class].columns.inject({}) do |values, column|
-        lazy_load!(column.name) if column.lazy?
-        values[column.name] = instance_variable_get(column.instance_variable_name)
-        values
+    
+    def new_record?
+      @new_record.nil? || @new_record
+    end
+    
+    def loaded_attributes
+      pairs = {}
+      
+      session.table(self).columns.each do |column|
+        pairs[column.name] = instance_variable_get(column.instance_variable_name)
       end
+      
+      pairs
+    end
+    
+    def attributes
+      pairs = {}
+      
+      session.table(self).columns.each do |column|
+        lazy_load!(column.name) if column.lazy?
+        pairs[column.name] = instance_variable_get(column.instance_variable_name)
+      end
+      
+      pairs
     end
     
     # Mass-assign mapped fields.
@@ -198,7 +213,42 @@ module DataMapper
         end
       end
     end
-        
+    
+    def dirty?(name = nil)
+      if name.nil?
+        session.table(self).columns.any? do |column|
+          self.instance_variable_get(column.instance_variable_name).hash != original_hashes[column.name]
+        end
+      else
+        key = name.kind_of?(Symbol) ? name : name.to_sym
+        self.instance_variable_get("@#{name}").hash != original_hashes[key]
+      end
+    end
+
+    def dirty_attributes
+      pairs = {}
+      
+      if new_record?
+        session.table(self).columns.each do |column|
+          unless (value = instance_variable_get(column.instance_variable_name)).nil?
+            pairs[column.name] = value
+          end
+        end
+      else
+        session.table(self).columns.each do |column|
+          if (value = instance_variable_get(column.instance_variable_name)).hash != original_hashes[column.name]
+            pairs[column.name] = value
+          end
+        end
+      end
+      
+      pairs
+    end
+    
+    def original_hashes
+      @original_hashes || (@original_hashes = {})
+    end
+    
     def protected_attribute?(key)
       self.class.protected_attributes.include?(key.kind_of?(Symbol) ? key : key.to_sym)
     end

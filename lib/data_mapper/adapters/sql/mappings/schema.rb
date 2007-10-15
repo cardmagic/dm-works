@@ -12,7 +12,7 @@ module DataMapper
           def initialize(adapter, database_name)
             @name = database_name
             @adapter = adapter
-            @tables = Hash.new { |h,k| h[k] = Table.new(@adapter, k) }
+            @tables = Hash.new { |h,k| h[k] = adapter.class::Mappings::Table.new(@adapter, k) }
           end
           
           def [](klass)

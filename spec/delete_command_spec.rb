@@ -1,4 +1,4 @@
-describe DataMapper::Adapters::Sql::Commands::DeleteCommand do
+describe "Delete Command" do
   
   it "should drop and create the table" do
     database.schema[Zoo].drop!.should == true

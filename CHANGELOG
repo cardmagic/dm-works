@@ -89,3 +89,9 @@
 * Save chaining should work for has_many associations
 * Added benchmarks for in-session performance to performance.rb
 * Removed block conditions; They're slower and don't offer any real advantages
+* Removed DeleteCommand
+* Removed SaveCommand
+* Removed TableExistsCommand
+* Session renamed to Context
+* Most command implementations moved to methods in SqlAdapter
+* Removed UnitOfWork module, instead moving a slightly refactored implementation into Base

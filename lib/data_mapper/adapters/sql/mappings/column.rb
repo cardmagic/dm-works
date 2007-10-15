@@ -15,9 +15,10 @@ module DataMapper
             @name, @type, @options = name.to_sym, type, options
             
             @key = (@options[:key] == true)
-            @nullable = @options.has_key?(:nullable) ? @options[:nullable] : true
+            @nullable = @options.has_key?(:nullable) ? @options[:nullable] : !@key
             @lazy = @options.has_key?(:lazy) ? @options[:lazy] : @type == :text
-            @auto_increment = (@key == true && @type == :integer && @options[:auto_increment] != false)
+            @serial = (@key == true && @type == :integer && @options[:serial] != false)
+            @default = @options[:default]
             
             (class << self; self end).class_eval <<-EOS
               def type_cast_value(value)
@@ -45,10 +46,14 @@ module DataMapper
             @key
           end
           
-          def auto_increment?
-            @auto_increment
+          def serial?
+            @serial
           end
-    
+          
+          def default
+            @default
+          end
+          
           def to_sym
             @name
           end
@@ -90,6 +95,54 @@ module DataMapper
       
           def inspect
             "#<%s:0x%x @name=%s, @type=%s, @options=%s>" % [self.class.name, (object_id * 2), to_sql, type.inspect, options.inspect]
+          end
+          
+          def to_long_form
+            @to_long_form || begin
+              @to_long_form = "#{to_sql} #{type_declaration}"
+              
+              unless nullable? || not_null_declaration.blank?
+                @to_long_form << " #{not_null_declaration}"
+              end
+              
+              if key? && !primary_key_declaration.blank?
+                @to_long_form << " #{primary_key_declaration}"
+              end
+              
+              if serial? && !serial_declaration.blank?
+                @to_long_form << " #{serial_declaration}"
+              end
+              
+              if default && !default_declaration.blank?
+                @to_long_form << " #{default_declaration}"
+              end
+        
+              @to_long_form
+            end
+          end
+          
+          private
+          
+          def primary_key_declaration
+            "PRIMARY KEY"
+          end
+          
+          def type_declaration
+            sql = "#{@adapter.class::TYPES[type] || type}"
+            sql << "(#{size})" unless size.nil?
+            sql
+          end
+          
+          def not_null_declaration
+            "NOT NULL"
+          end
+          
+          def serial_declaration
+            "AUTO_INCREMENT"
+          end
+          
+          def default_declaration
+            "DEFAULT #{default}"
           end
       
         end

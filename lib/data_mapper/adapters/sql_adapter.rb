@@ -1,8 +1,5 @@
 require 'data_mapper/adapters/abstract_adapter'
 require 'data_mapper/adapters/sql/commands/load_command'
-require 'data_mapper/adapters/sql/commands/save_command'
-require 'data_mapper/adapters/sql/commands/delete_command'
-require 'data_mapper/adapters/sql/commands/table_exists_command'
 require 'data_mapper/adapters/sql/coersion'
 require 'data_mapper/adapters/sql/quoting'
 require 'data_mapper/adapters/sql/mappings/schema'
@@ -21,10 +18,6 @@ module DataMapper
   # We can set a SelectStatement#limit field then, and allow
   # the adapter to override the underlying SQL generated.
   # Refer to DataMapper::Queries.
-  # 
-  # The second type provided by the Adapter is a DataMapper::Connection.
-  # This allows us to execute queries and return results in a clear and
-  # uniform manner we can use throughout the DataMapper.
   #
   # The final type provided is a DataMapper::Transaction.
   # Transactions are duck-typed Connections that span multiple queries.
@@ -116,16 +109,12 @@ module DataMapper
           sql = escape_sql(*args)
           log.debug { sql }
           reader = query_returning_reader(db, sql)
-          result = yield(reader, count_rows(db, reader))
+          result = block_given? ? yield(reader, count_rows(db, reader)) : nil
           free_reader(reader)
           result
         end
       rescue => e
         handle_error(e)
-      end
-      
-      def insert(*args)
-        raise NotImplementedError.new
       end
       
       # Must implement! Passes in the result of a query execution and
@@ -165,15 +154,105 @@ module DataMapper
       end
       
       def table_exists?(name)
-        self.class::Commands::TableExistsCommand.new(self, name).call
+        query(table(name).to_exists_sql).size > 0
       end
       
-      def delete(klass_or_instance, options = nil)
-        self.class::Commands::DeleteCommand.new(self, klass_or_instance, options).call
+      def truncate(session, name)
+        execute("TRUNCATE TABLE #{table(name).to_sql}")
+        session.identity_map.clear!(name)
+        true
+      end
+      
+      def drop(session, name)
+        execute("DROP TABLE #{table(name).to_sql}")
+        session.identity_map.clear!(name)
+        true
+      end
+      
+      def create_table(name)
+        execute(table(name).to_create_table_sql); true
+      end
+      
+      def delete(session, instance)
+        table = self.table(instance)
+        
+        if instance.is_a?(Class)
+          execute("DELETE FROM #{table.to_sql}") do |reader, row_count|
+            session.identity_map.clear!(instance)
+          end
+        else
+          callback(instance, :before_destroy)
+          
+          execute("DELETE FROM #{table.to_sql} WHERE #{table.key.to_sql} = #{quote_value(instance.key)}") do |reader, row_count|
+            if row_count > 0
+              instance.instance_variable_set(:@new_record, true)
+              instance.session = session
+              instance.original_hashes.clear
+              session.identity_map.delete(instance)
+              callback(instance, :after_destroy)
+            end
+          end          
+        end
       end
       
       def save(session, instance)
-        self.class::Commands::SaveCommand.new(self, session, instance).call
+        case instance
+        when Class, Mappings::Table then create_table(instance)
+        when DataMapper::Base then
+          return false unless instance.dirty? || !instance.valid?
+          
+          callback(instance, :before_save)
+          
+          table = self.table(instance)
+          attributes = instance.dirty_attributes
+          attributes[:type] = instance.class.name if table.multi_class?
+          
+          result = if instance.new_record?
+            callback(instance, :before_create)
+
+            keys = []
+            values = []
+            attributes.each_pair do |key, value|
+              keys << table[key].to_sql
+              values << value
+            end
+            
+            # Formatting is a bit off here, but it looks nicer in the log this way.
+            insert("INSERT INTO #{table.to_sql} (#{keys.join(', ')}) VALUES (#{values.map { |v| quote_value(v) }.join(', ')})") do |insert_id|
+              instance.instance_variable_set(:@new_record, false)
+              instance.key = insert_id if table.key.serial?
+              session.identity_map.set(instance)
+              callback(instance, :after_create)
+            end
+          else            
+            callback(instance, :before_update)
+            
+            sql = "UPDATE " << table.to_sql << " SET "
+        
+            sql << attributes.map do |key, value|
+              "#{table[key].to_sql} = #{quote_value(value)}"
+            end.join(', ')
+        
+            sql << " WHERE #{table.key.to_sql} = " << quote_value(instance.key)
+            
+            execute(sql) { |reader, row_count| row_count > 0 } && callback(instance, :after_update)
+          end
+          
+          instance.attributes.each_pair do |name, value|
+            instance.original_hashes[name] = value.hash
+          end
+          
+          instance.loaded_associations.each do |association|
+            association.save if association.respond_to?(:save)
+          end
+          
+          instance.session = session
+          callback(instance, :after_save)
+          result
+        end
+      rescue => error
+        log.error(error)
+        raise error
       end
       
       def load(session, klass, options)
@@ -191,6 +270,10 @@ module DataMapper
         when Class, String then schema[instance]
         else raise "Don't know how to map #{instance.inspect} to a table."
         end
+      end
+      
+      def callback(instance, callback_name)
+        instance.class.callbacks.execute(callback_name, instance)
       end
       
       # Escape a string of SQL with a set of arguments.
@@ -262,6 +345,12 @@ module DataMapper
       include Sql
       include Quoting
       include Coersion
+      
+      private
+            
+      def insert(*args)
+        raise NotImplementedError.new
+      end
       
     end # class SqlAdapter
     

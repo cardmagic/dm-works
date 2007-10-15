@@ -1,16 +1,5 @@
 require 'data_mapper/adapters/sql_adapter'
-
-begin
-  require 'mysql'
-rescue LoadError
-  STDERR.puts <<-EOS.gsub(/^(\s+)/, '')
-    This adapter currently depends on the \"mysql\" gem.
-    If some kind soul would like to make it work with
-    a pure-ruby version that'd be super spiffy.
-  EOS
-  
-  raise
-end
+require 'mysql'
 
 module DataMapper
   module Adapters
@@ -46,50 +35,16 @@ module DataMapper
         reader.fetch_fields.map { |field| Inflector.underscore(field.name).to_sym }
       end
       
-      def reflect_columns(table)
-        query("SHOW COLUMNS IN ?", table)
-      end
-      
       TABLE_QUOTING_CHARACTER = '`'.freeze
       COLUMN_QUOTING_CHARACTER = '`'.freeze
       
-      TRUE_ALIASES.unshift('1'.freeze)
-      FALSE_ALIASES.unshift('0'.freeze)
-      
-      module Commands
-        
-        class TableExistsCommand
-          def to_sql
-            "select table_name from information_schema.tables where table_name = #{table_name} and table_schema = '#{@adapter.schema.name}'"
-          end
+      def insert(*args)
+        connection do |db|
+          sql = escape_sql(*args)
+          log.debug { sql }
+          db.query(sql)
+          yield(db.insert_id)
         end
-        
-        class SaveCommand
-          
-          def execute_insert(sql)
-            @adapter.connection do |db|
-              @adapter.log.debug { sql }
-              db.query(sql)
-              db.insert_id
-            end
-          end
-          
-          def execute_update(sql)
-            @adapter.connection do |db|
-              @adapter.log.debug { sql }
-              db.query(sql)
-              db.affected_rows > 0
-            end
-          end
-          
-          def execute_create_table(sql)
-            @adapter.log.debug { sql }
-            @adapter.connection { |db| db.query(sql) }
-            true
-          end
-          
-        end
-        
       end
       
     end # class MysqlAdapter

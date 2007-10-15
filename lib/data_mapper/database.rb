@@ -1,5 +1,5 @@
 require 'logger'
-require 'data_mapper/session'
+require 'data_mapper/context'
 require 'data_mapper/adapters/abstract_adapter'
 
 # Delegates to DataMapper::database.
@@ -25,9 +25,9 @@ module DataMapper
   #   current_database = DataMapper.database
   def self.database(name = :default) # :yields: current_context
     unless block_given?
-      Database.context.last || Session.new(Database[name].adapter)
+      Database.context.last || Context.new(Database[name].adapter)
     else
-      Database.context.push(Session.new(Database[name].adapter))
+      Database.context.push(Context.new(Database[name].adapter))
       result = yield(Database.context.last)
       Database.context.pop
       result

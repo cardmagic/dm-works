@@ -30,7 +30,7 @@ DataMapper::Database.setup({
 class DMAnimal < DataMapper::Base
   set_table_name 'animals'
   property :name, :string
-  property :notes, :string, :lazy => true
+  property :notes, :string
 end
 
 class DMPerson < DataMapper::Base
@@ -38,7 +38,7 @@ class DMPerson < DataMapper::Base
   property :name, :string
   property :age, :integer
   property :occupation, :string
-  property :notes, :text, :lazy => true
+  property :notes, :text
   property :street, :string
   property :city, :string
   property :state, :string, :size => 2

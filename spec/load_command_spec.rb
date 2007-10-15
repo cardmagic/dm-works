@@ -4,31 +4,16 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
     fixtures(:zoos)
   end
   
-  it "should return a Struct for custom queries" do
-    results = database.query("SELECT * FROM zoos WHERE name = ?", 'Galveston')
-    zoo = results.first
-    zoo.class.superclass.should == Struct
-    zoo.name.should == "Galveston"
-  end
-  
-end
-  
-describe DataMapper::Adapters::Sql::Commands::LoadCommand do
-
-  before(:all) do
-    fixtures(:zoos)
-  end
-  
-  it "should return a Struct for custom queries" do
-    results = database.query("SELECT * FROM zoos WHERE name = ?", 'Galveston')
-    zoo = results.first
-    zoo.class.superclass.should == Struct
-    zoo.name.should == "Galveston"
-  end
-  
   def loader_for(klass, options = {})
     session = database(:mock)
     DataMapper::Adapters::Sql::Commands::LoadCommand.new(session.adapter, session, klass, options)
+  end
+  
+  it "should return a Struct for custom queries" do
+    results = database.query("SELECT * FROM zoos WHERE name = ?", 'Galveston')
+    zoo = results.first
+    zoo.class.superclass.should == Struct
+    zoo.name.should == "Galveston"
   end
 
   it "should return a simple select statement for a given class" do
@@ -157,6 +142,15 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
      end
    end
 
+   it "should only query once" do
+     database do
+       
+       zoo = Zoo.first
+       same_zoo = Zoo[zoo.id]
+       
+       zoo.should == same_zoo
+     end
+   end
 end
 
 =begin

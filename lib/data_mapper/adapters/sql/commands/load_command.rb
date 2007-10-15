@@ -15,14 +15,11 @@ module DataMapper
             
             @options, conditions_hash = partition_options(options)
             
-            @instance_ids = conditions_hash[:id]
-            @load_by_id = @instance_ids && conditions_hash.size == 1
-            
             @order = @options[:order]
             @limit = @options[:limit]
             @offset = @options[:offset]
             @reload = @options[:reload]
-            @instance_id = @options[:id]
+            @instance_id = conditions_hash[:id]
             @conditions = Conditions.new(@adapter, self, conditions_hash)
             @loaders = Hash.new { |h,k| h[k] = Loader.new(self, k) }
           end
@@ -33,7 +30,6 @@ module DataMapper
               #<#{self.class.name}:0x%x
                 @database=#{@adapter.name}
                 @reload=#{@reload.inspect}
-                @load_by_id=#{@load_by_id.inspect}
                 @order=#{@order.inspect}
                 @limit=#{@limit.inspect}
                 @offset=#{@offset.inspect}
@@ -66,48 +62,24 @@ module DataMapper
             @offset
           end
           
-          def load_by_id?
-            @load_by_id
-          end
-          
           def call
             
-            results = []
-            
-            # Check to see if the query is for a specific id (or set of ids)
-            # and return them if found.
-            if load_by_id? && !reload?
-              
-              # Return as many of the id's from the Array as possible.
-              # Query for the remainder. If the size of the Array and
-              # the size of the found objects match, just return.
-              if @instance_ids.kind_of?(Array)
-                found_ids = []
-                
-                @instance_ids.each do |id|
-                  if instance = @session.identity_map.get(@primary_class, id)
-                    # Because we need to negate the found ids from
-                    # the id options, and because the key of the instance
-                    # is type-cast, and may be unequal to the original type,
-                    # we track the found ids in another array.
-                    found_ids << id
-                    results << instance 
-                  end
-                end
-                
-                # If all instances were found, then return immediately.
-                return results if results.size == @instance_ids.size
-                
-                # If only some instances were found, then remove the
-                # ids that were found from the list.
-                @instance_ids.reject! { |entry| found_ids.include?(entry) }
-              else
-                # If the id is for only a single record, attempt to find it.
-                if instance = @session.identity_map.get(@primary_class, @instance_ids)
-                  return instance
-                end
+            # Check to see if the query is for a specific id and return if found
+            #
+            # NOTE: If the :id option is an Array:
+            # We could search for loaded instance ids and reject from
+            # the Array for already loaded instances, but working under the
+            # assumption that we'll probably have to issue a query to find
+            # at-least some of the instances we're looking for, it's faster to
+            # just skip that and go straight for the query.
+            unless reload? || @instance_id.blank? || @instance_id.is_a?(Array)
+              # If the id is for only a single record, attempt to find it.
+              if instance = @session.identity_map.get(@primary_class, @instance_id)
+                return instance
               end
             end
+            
+            results = []
             
             # Execute the statement and load the objects.
             @adapter.execute(*to_parameterized_sql) do |reader, num_rows|
@@ -120,7 +92,7 @@ module DataMapper
             
             results += @loaders[@primary_class].loaded_set
             
-            if @limit == 1 || (@load_by_id && !@instance_ids.kind_of?(Array))
+            if @limit == 1 || (@instance_id && !@instance_id.is_a?(Array))
               results.first
             else
               results

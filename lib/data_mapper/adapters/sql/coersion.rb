@@ -11,8 +11,8 @@ module DataMapper
       # it.
       module Coersion
         
-        TRUE_ALIASES = ['true'.freeze, 'TRUE'.freeze]
-        FALSE_ALIASES = [nil]
+        TRUE_ALIASES = ['true'.freeze, 'TRUE'.freeze, '1'.freeze]
+        FALSE_ALIASES = [nil, '0'.freeze]
         
         def self.included(base)
           base.const_set('TRUE_ALIASES', TRUE_ALIASES.dup)
