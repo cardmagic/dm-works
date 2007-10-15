@@ -62,20 +62,8 @@ module DataMapper
       
       TYPES.merge!({
         :integer => 'integer'.freeze,
-        :string => 'varchar'.freeze,
-        :text => 'text'.freeze,
-        :class => 'varchar'.freeze,
         :datetime => 'timestamp with time zone'.freeze
       })
-
-      def insert(*args)
-        connection do |db|
-          sql = escape_sql(*args)
-          log.debug { sql }
-          db.query(sql)
-          yield(db.last_insert_row_id)
-        end
-      end
       
       def insert(*args)
         connection do |db|
