@@ -24,8 +24,6 @@ case adapter
     configuration_options[:username] = 'root'
   when 'sqlite3' then
     configuration_options[:database] << '.db'
-  else
-    raise "Unsupported Adapter => #{adapter.inspect}"
 end
 
 def load_models

@@ -12,6 +12,9 @@
 
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 
+require 'pathname'
+DM_PLUGINS_ROOT = Pathname.new(File.dirname(__FILE__) + '/../plugins').realpath.to_s
+
 # Require the basics...
 require 'set'
 require 'fastthread'

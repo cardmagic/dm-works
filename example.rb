@@ -18,8 +18,6 @@ case adapter
     configuration_options[:username] = 'root'
   when 'sqlite3' then
     configuration_options[:database] << '.db'
-  else
-    raise "Unsupported Adapter => #{adapter.inspect}"
 end
 
 DataMapper::Database.setup(configuration_options)
