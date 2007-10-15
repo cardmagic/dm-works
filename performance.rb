@@ -1,3 +1,4 @@
+require 'benchmark'
 require 'active_record'
 
 ActiveRecord::Base.establish_connection :adapter => 'mysql',
@@ -5,7 +6,7 @@ ActiveRecord::Base.establish_connection :adapter => 'mysql',
   :username => 'root',
   :password => '',
   :database => 'data_mapper_1'
-      
+
 class ARAnimal < ActiveRecord::Base
   set_table_name 'animals'
 end
@@ -15,11 +16,6 @@ class ARPerson < ActiveRecord::Base
 end
 
 require 'lib/data_mapper'
-
-log_path = File.dirname(__FILE__) + '/development.log'
-
-require 'fileutils'
-FileUtils::rm log_path if File.exists?(log_path)
 
 DataMapper::Database.setup({
   :adapter => 'mysql',

@@ -119,7 +119,7 @@ module DataMapper
           if block_given?
             reader = command.execute_reader
             result = yield(reader)
-            reader.close
+            # reader.close
           else
             result = command.execute_non_query
           end
