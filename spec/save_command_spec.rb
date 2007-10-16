@@ -60,4 +60,10 @@ describe "Save Commands" do
     bob.should be_dirty
   end
   
+  it "should not persist invalid objects" do
+    zoo = Zoo.create(:notes => "I'm invalid!")
+    zoo.should_not be_valid
+    zoo.should be_new_record
+  end
+  
 end

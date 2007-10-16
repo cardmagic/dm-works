@@ -199,7 +199,7 @@ module DataMapper
         case instance
         when Class, Mappings::Table then create_table(instance)
         when DataMapper::Base then
-          return false unless instance.dirty? || !instance.valid?
+          return false unless instance.dirty? && instance.valid?
           
           callback(instance, :before_save)
           
