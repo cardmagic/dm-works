@@ -23,7 +23,7 @@ module DataMapper
         include Enumerable
         
         def dirty?
-          @items && @items.any? { |item| item.dirty? }
+          @items && @items.any? { |item| item != @instance && item.dirty? }
         end
         
         def valid?(context)
