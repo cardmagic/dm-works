@@ -217,7 +217,17 @@ module DataMapper
     def dirty?(name = nil)
       if name.nil?
         session.table(self).columns.any? do |column|
-          self.instance_variable_get(column.instance_variable_name).hash != original_hashes[column.name]
+          if value = self.instance_variable_get(column.instance_variable_name)
+            value.hash != original_hashes[column.name]
+          else
+            false
+          end
+        end || loaded_associations.any? do |loaded_association|
+          if loaded_association.respond_to?(:dirty?)
+            loaded_association.dirty?
+          else
+            false
+          end
         end
       else
         key = name.kind_of?(Symbol) ? name : name.to_sym

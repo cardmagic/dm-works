@@ -22,6 +22,10 @@ module DataMapper
         
         include Enumerable
         
+        def dirty?
+          @items && @items.any? { |item| item.dirty? }
+        end
+        
         def valid?(context)
           @items.nil? || @items.empty? ? true : @items.all? { |item| item.valid?(context) }
         end
