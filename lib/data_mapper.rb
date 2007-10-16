@@ -13,7 +13,7 @@
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 
 require 'pathname'
-DM_PLUGINS_ROOT = Pathname.new(File.dirname(__FILE__) + '/../plugins').realpath.to_s
+DM_PLUGINS_ROOT = (File.dirname(__FILE__) + '/../plugins')
 
 # Require the basics...
 require 'set'

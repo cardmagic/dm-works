@@ -52,4 +52,12 @@ describe "Save Commands" do
     end
   end
   
+  it "should not be dirty if there are no attributes to update" do
+    bob = Animal.new
+    bob.should_not be_dirty
+    bob.name = 'bob'
+    bob.dirty_attributes.should == { :name => 'bob' }
+    bob.should be_dirty
+  end
+  
 end
