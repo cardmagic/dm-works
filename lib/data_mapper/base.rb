@@ -126,8 +126,8 @@ module DataMapper
     MAGIC_PROPERTIES = {
       :updated_at => lambda { before_save { |x| x.updated_at = Time::now } },
       :updated_on => lambda { before_save { |x| x.updated_on = Date::today } },
-      :created_at => lambda { before_create { |x| x.updated_on = Date::now } },
-      :created_on => lambda { before_create { |x| x.updated_on = Date::today } }
+      :created_at => lambda { before_create { |x| x.created_at = Date::now } },
+      :created_on => lambda { before_create { |x| x.created_on = Date::today } }
     }
     
     def self.embed(class_or_name, &block)
