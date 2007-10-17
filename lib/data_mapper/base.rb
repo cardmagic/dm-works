@@ -115,8 +115,17 @@ module DataMapper
       mapping = database.schema[self].add_column(name, type, options)
       property_getter(name, mapping)
       property_setter(name, mapping)
+      
+      if MAGIC_PROPERTIES.has_key?(name)
+        class_eval(&MAGIC_PROPERTIES[name])
+      end
+      
       return name
     end
+    
+    MAGIC_PROPERTIES = {
+      :updated_at => lambda { before_save { |x| x.updated_at = Time::now } }
+    }
     
     def self.embed(class_or_name, &block)
       EmbeddedValue::define(self, class_or_name, &block)
