@@ -23,7 +23,7 @@ case adapter
   when 'mysql' then
     configuration_options[:username] = 'root'
   when 'sqlite3' then
-    configuration_options[:database] << '.db'
+    configuration_options[:database] << '.db' if configuration_options[:database] != ':memory:'
 end
 
 def load_models
