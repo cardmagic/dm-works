@@ -17,7 +17,7 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
   end
 
   it "should return a simple select statement for a given class" do
-    loader_for(Zoo).to_parameterized_sql.first.should == 'SELECT `id`, `name` FROM `zoos`'
+    loader_for(Zoo).to_parameterized_sql.first.should == 'SELECT `id`, `name`, `updated_at` FROM `zoos`'
   end
 
   it "should include only the columns specified in the statement" do
@@ -25,12 +25,12 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
   end
 
   it "should optionally include lazy-loaded columns in the statement" do
-    loader_for(Zoo, :include => :notes).to_parameterized_sql.first.should == 'SELECT `id`, `name`, `notes` FROM `zoos`'
+    loader_for(Zoo, :include => :notes).to_parameterized_sql.first.should == 'SELECT `id`, `name`, `updated_at`, `notes` FROM `zoos`'
   end
 
   it "should join associations in the statement" do
     loader_for(Zoo, :include => :exhibits).to_parameterized_sql.first.should == <<-EOS.compress_lines
-      SELECT `zoos`.`id`, `zoos`.`name`,
+      SELECT `zoos`.`id`, `zoos`.`name`, `zoos`.`updated_at`,
         `exhibits`.`id`, `exhibits`.`name`, `exhibits`.`zoo_id`
       FROM `zoos`
       JOIN `exhibits` ON `exhibits`.`zoo_id` = `zoos`.`id`

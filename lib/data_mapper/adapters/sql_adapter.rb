@@ -207,9 +207,10 @@ module DataMapper
           attributes = instance.dirty_attributes
           attributes[:type] = instance.class.name if table.multi_class?
           
+          # INSERT
           result = if instance.new_record?
             callback(instance, :before_create)
-
+            
             keys = []
             values = []
             attributes.each_pair do |key, value|
@@ -224,6 +225,7 @@ module DataMapper
               session.identity_map.set(instance)
               callback(instance, :after_create)
             end
+          # UPDATE
           else            
             callback(instance, :before_update)
             
