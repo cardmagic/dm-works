@@ -205,39 +205,42 @@ module DataMapper
           
           table = self.table(instance)
           attributes = instance.dirty_attributes
-          attributes[:type] = instance.class.name if table.multi_class?
           
-          # INSERT
-          result = if instance.new_record?
-            callback(instance, :before_create)
+          unless attributes.empty?
+            attributes[:type] = instance.class.name if table.multi_class?
+          
+            # INSERT
+            result = if instance.new_record?
+              callback(instance, :before_create)
             
-            keys = []
-            values = []
-            attributes.each_pair do |key, value|
-              keys << table[key].to_sql
-              values << value
-            end
+              keys = []
+              values = []
+              attributes.each_pair do |key, value|
+                keys << table[key].to_sql
+                values << value
+              end
             
-            # Formatting is a bit off here, but it looks nicer in the log this way.
-            insert("INSERT INTO #{table.to_sql} (#{keys.join(', ')}) VALUES (#{values.map { |v| quote_value(v) }.join(', ')})") do |insert_id|
-              instance.instance_variable_set(:@new_record, false)
-              instance.key = insert_id if table.key.serial?
-              session.identity_map.set(instance)
-              callback(instance, :after_create)
-            end
-          # UPDATE
-          else            
-            callback(instance, :before_update)
+              # Formatting is a bit off here, but it looks nicer in the log this way.
+              insert("INSERT INTO #{table.to_sql} (#{keys.join(', ')}) VALUES (#{values.map { |v| quote_value(v) }.join(', ')})") do |insert_id|
+                instance.instance_variable_set(:@new_record, false)
+                instance.key = insert_id if table.key.serial?
+                session.identity_map.set(instance)
+                callback(instance, :after_create)
+              end
+            # UPDATE
+            else            
+              callback(instance, :before_update)
             
-            sql = "UPDATE " << table.to_sql << " SET "
+              sql = "UPDATE " << table.to_sql << " SET "
         
-            sql << attributes.map do |key, value|
-              "#{table[key].to_sql} = #{quote_value(value)}"
-            end.join(', ')
+              sql << attributes.map do |key, value|
+                "#{table[key].to_sql} = #{quote_value(value)}"
+              end.join(', ')
         
-            sql << " WHERE #{table.key.to_sql} = " << quote_value(instance.key)
+              sql << " WHERE #{table.key.to_sql} = " << quote_value(instance.key)
             
-            execute(sql) { |reader, row_count| row_count > 0 } && callback(instance, :after_update)
+              execute(sql) { |reader, row_count| row_count > 0 } && callback(instance, :after_update)
+            end
           end
           
           instance.attributes.each_pair do |name, value|

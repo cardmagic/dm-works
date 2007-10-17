@@ -13,7 +13,7 @@ configuration_options = {
   :adapter => adapter,
   :log_stream => 'spec.log',
   :log_level => Logger::DEBUG,
-  :database =>  ENV['DATABASE'] || 'data_mapper_1',
+  :database =>  ENV['DATABASE'] || (adapter == 'sqlite3' ? ':memory:' : 'data_mapper_1'),
   :single_threaded => false
 }
 
