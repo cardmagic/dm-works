@@ -26,8 +26,8 @@ module DataMapper
           @items && @items.any? { |item| item != @instance && item.dirty? }
         end
         
-        def valid?(context)
-          @items.nil? || @items.empty? ? true : @items.all? { |item| item.valid?(context) }
+        def validate_excluding_association(associated, context)
+          @items.blank? || @items.all? { |item| item.validate_excluding_association(associated, context) }
         end
         
         def save
@@ -47,6 +47,14 @@ module DataMapper
         
         def <<(associated_item)
           items << associated_item
+          
+          # TODO: Optimize!
+          fk = association.foreign_key
+          if foreign_association = association.association_table.associations.find { |mapping| mapping.foreign_key == fk }
+            associated_item.send("#{foreign_association.name}=", @instance)
+          end
+          
+          return @items
         end
 
         def size

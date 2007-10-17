@@ -51,6 +51,21 @@ end
 
 describe DataMapper::Associations::HasManyAssociation do
   
+  before(:each) do
+    @zoo = Zoo.new(:name => "ZOO")
+    @zoo.save 
+  end
+  
+  after(:each) do
+    @zoo.destroy!
+  end
+  
+  it "should have a valid zoo setup for testing" do
+    @zoo.should be_valid
+    @zoo.should_not be_a_new_record
+    @zoo.id.should_not be_nil
+  end  
+  
   it "should generate the SQL for a join statement" do
     exhibits_association = database(:mock).schema[Zoo].associations.find { |a| a.name == :exhibits }
   
@@ -58,7 +73,57 @@ describe DataMapper::Associations::HasManyAssociation do
       JOIN `exhibits` ON `exhibits`.`zoo_id` = `zoos`.`id`
     EOS
   end
+  
+  it "should add an item to an association" do
+    bear = Exhibit.new( :name => "Bear")
+    @zoo.exhibits << bear
+    @zoo.exhibits.should include(bear)
+  end
 
+  
+  it "should set the association to a saved target when added with <<" do    
+    pirahna = Exhibit.new(:name => "Pirahna")
+    pirahna.zoo_id.should be_nil
+    
+    @zoo.exhibits << pirahna
+    pirahna.zoo.should == @zoo
+  end
+  
+  it "should set the association to a non-saved target when added with <<" do
+    zoo = Zoo.new(:name => "My Zoo")
+    kangaroo = Exhibit.new(:name => "Kangaroo")
+    zoo.exhibits << kangaroo
+    kangaroo.zoo.should == zoo
+  end
+  
+  it "should set the id of the exhibit when the associated zoo is saved" do
+    snake = Exhibit.new(:name => "Snake")
+    @zoo.exhibits << snake
+    @zoo.save
+    @zoo.id.should == snake.zoo_id
+  end
+  
+  it "should set the id of an already saved exibit if it's added to a different zoo" do
+    beaver = Exhibit.new(:name => "Beaver")
+    beaver.save
+    beaver.should_not be_a_new_record
+    @zoo.exhibits << beaver
+    @zoo.save
+    beaver.zoo.should == @zoo
+    beaver.zoo_id.should == @zoo.id    
+  end
+  
+  it "should set the size of the assocation" do
+    @zoo.exhibits << Exhibit.new(:name => "anonymous")
+    @zoo.exhibits.size.should == 1
+  end
+  
+  it "should give the association when an inspect is done on it" do
+    whale = Exhibit.new(:name => "Whale")
+    @zoo.exhibits << whale
+    @zoo.exhibits.should_not == "nil"
+    @zoo.exhibits.inspect.should_not be_nil
+  end
 end
 
 describe DataMapper::Associations::HasOneAssociation do

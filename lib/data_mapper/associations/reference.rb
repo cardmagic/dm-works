@@ -38,7 +38,7 @@ module DataMapper
       # #association provides lazily initialized access to the declared
       # Association.
       def association
-        @association || (@association = @instance.session.schema[@instance.class].associations[@association_name])
+        @association || (@association = @instance.session.table(@instance.class).associations[@association_name])
       end
   
     end
