@@ -1,7 +1,12 @@
 - name: Sam
   age: 29
   occupation: Programmer
-  type: 
+  type: Person
+  street: 1337 Duck Way
+  city: Galveston
+  state: TX
+  zip_code: "75000"
+  notes: 
 - name: Amy
   age: 28
   occupation: Business Analyst Manager

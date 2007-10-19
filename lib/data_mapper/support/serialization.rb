@@ -5,7 +5,9 @@ module DataMapper
     module Serialization
       
       def to_yaml
-        
+        document = {}
+        attributes.each_pair { |k,v| document[k.to_s] = v }
+        document.to_yaml
       end
       
     end
