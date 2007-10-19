@@ -1,4 +1,5 @@
 require 'data_mapper/support/active_record_impersonation'
+require 'data_mapper/support/serialization'
 require 'data_mapper/validations/validation_helper'
 require 'data_mapper/associations'
 require 'data_mapper/callbacks'
@@ -18,6 +19,7 @@ module DataMapper
     
     include CallbacksHelper
     include Support::ActiveRecordImpersonation
+    include Support::Serialization
     include Validations::ValidationHelper
     include Associations
     
