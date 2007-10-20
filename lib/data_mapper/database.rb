@@ -200,6 +200,8 @@ module DataMapper
       
       if value.is_a?(DataMapper::Adapters::AbstractAdapter)
         @adapter = value
+      elsif value.is_a?(Class)
+        @adapter = value.new(self)
       else
         begin
           require "data_mapper/adapters/#{Inflector.underscore(value)}_adapter"

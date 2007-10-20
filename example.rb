@@ -1,32 +1,7 @@
 #!/usr/bin/env ruby
 
-require 'irb'
-require 'lib/data_mapper'
-
-adapter = ENV['ADAPTER'] || 'sqlite3'
-configuration_options = {
-  :adapter => adapter,
-  :log_stream => 'example.log',
-  :log_level => Logger::DEBUG,
-  :database => 'data_mapper_1'
-}
-
-case adapter
-  when 'postgresql' then
-    configuration_options[:username] = 'postgres'
-  when 'mysql' then
-    configuration_options[:username] = 'root'
-  when 'sqlite3' then
-    configuration_options[:database] << '.db'
-end
-
-DataMapper::Database.setup(configuration_options)
-
-Dir[File.dirname(__FILE__) + '/spec/models/*.rb'].each do |path|
-  load path
-end
-
-DataMapper::Base::auto_migrate!
+ENV['LOG_NAME'] = 'example'
+require 'environment'
 
 # Define a fixtures helper method to load up our test data.
 def fixtures(name, force = false)
@@ -49,6 +24,7 @@ Dir[File.dirname(__FILE__) + "/spec/fixtures/*.yaml"].each do |path|
   fixtures(File::basename(path).sub(/\.yaml$/, ''), true)
 end
 
+require 'irb'
 IRB::start
 
 if false

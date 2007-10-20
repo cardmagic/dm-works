@@ -50,9 +50,11 @@ module DataMapper
           
           # TODO: Optimize!
           fk = association.foreign_key
-          if foreign_association = association.association_table.associations.find { |mapping| mapping.foreign_key == fk }
-            associated_item.send("#{foreign_association.name}=", @instance)
+          foreign_association = association.association_table.associations.find do |mapping|
+            mapping.is_a?(BelongsToAssociation) && mapping.foreign_key == fk
           end
+          
+          associated_item.send("#{foreign_association.name}=", @instance) if foreign_association
           
           return @items
         end

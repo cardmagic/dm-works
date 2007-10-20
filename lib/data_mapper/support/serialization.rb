@@ -1,5 +1,3 @@
-require 'yaml'
-
 module DataMapper
   module Support
     module Serialization
