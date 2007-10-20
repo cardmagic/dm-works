@@ -51,6 +51,11 @@ end
 
 describe DataMapper::Associations::HasManyAssociation do
   
+  before(:all) do
+    fixtures(:zoos)
+    fixtures(:exhibits)
+  end
+
   before(:each) do
     @zoo = Zoo.new(:name => "ZOO")
     @zoo.save 
@@ -58,6 +63,25 @@ describe DataMapper::Associations::HasManyAssociation do
   
   after(:each) do
     @zoo.destroy!
+  end
+  
+  it 'should lazily-load the association when Enumerable methods are called' do
+    database do |db|
+      san_diego = Zoo[:name => 'San Diego']
+      san_diego.exhibits.size.should == 2
+      san_diego.exhibits.should include(Exhibit[:name => 'Monkey Mayhem'])
+    end
+  end
+  
+  it 'should eager-load associations for an entire set' do
+    database do
+      zoos = Zoo.all
+      zoos.each do |zoo|
+        zoo.exhibits.each do |exhibit|
+          exhibit.zoo.should == zoo
+        end
+      end
+    end
   end
   
   it "should have a valid zoo setup for testing" do
