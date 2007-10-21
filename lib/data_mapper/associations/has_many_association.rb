@@ -1,9 +1,11 @@
 require 'data_mapper/associations/has_n_association'
+# require 'forwardable'
 
 module DataMapper
   module Associations
     
     class HasManyAssociation < HasNAssociation
+      # extend Forwardable
       
       # Define the association instance method (i.e. Project#tasks)
       def define_accessor(klass)
@@ -83,7 +85,7 @@ module DataMapper
             else
               fk = association.foreign_key.to_sym
               
-              finder_options = association.foreign_key.to_sym => @instance.loaded_set.map { |item| item.key }
+              finder_options = { association.foreign_key.to_sym => @instance.loaded_set.map { |item| item.key } }
               finder_options.merge!(association.options) if association.options.is_a?(Hash)
               
               associated_items = @instance.session.all(
