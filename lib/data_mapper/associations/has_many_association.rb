@@ -1,11 +1,9 @@
 require 'data_mapper/associations/has_n_association'
-# require 'forwardable'
 
 module DataMapper
   module Associations
     
     class HasManyAssociation < HasNAssociation
-      # extend Forwardable
       
       # Define the association instance method (i.e. Project#tasks)
       def define_accessor(klass)
@@ -60,7 +58,7 @@ module DataMapper
           
           return @items
         end
-
+        
         def size
           items.size
         end

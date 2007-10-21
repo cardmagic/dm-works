@@ -58,7 +58,7 @@ module DataMapper
         end
                 
         def type_cast_float(raw_value)
-          retrn nil if raw_value.blank?
+          return nil if raw_value.blank?
           raw_value.to_f
         end
         
