@@ -344,7 +344,8 @@ module DataMapper
         :string => 'varchar'.freeze,
         :text => 'text'.freeze,
         :class => 'varchar'.freeze,
-        :decimal => 'decimal'.freeze
+        :decimal => 'decimal'.freeze,
+        :float => 'float'.freeze
       }
 
       include Sql

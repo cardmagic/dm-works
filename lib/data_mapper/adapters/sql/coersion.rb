@@ -56,6 +56,11 @@ module DataMapper
         rescue ArgumentError 
           nil 
         end
+                
+        def type_cast_float(raw_value)
+          retrn nil if raw_value.blank?
+          raw_value.to_f
+        end
         
         def type_cast_datetime(raw_value)
           return nil if raw_value.blank?
