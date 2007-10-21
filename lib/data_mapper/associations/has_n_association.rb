@@ -3,7 +3,7 @@ module DataMapper
     
     class HasNAssociation
       
-      attr_reader :adapter, :table
+      attr_reader :adapter, :table, :options
       
       def initialize(klass, association_name, options)
         @adapter = database.adapter
