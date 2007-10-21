@@ -34,6 +34,24 @@ module DataMapper
           
           private
             
+            class ConditionsError < StandardError
+              
+              attr_reader :inner_error
+              
+              def initialize(clause, value, inner_error)
+                @clause, @value, @inner_error = clause, value, inner_error
+              end
+              
+              def message
+                "Conditions (:clause => #{@clause.inspect}, :value => #{@value.inspect}) failed: #{@inner_error}"
+              end
+              
+              def backtrace
+                @inner_error.backtrace
+              end              
+              
+            end
+            
             def expression_to_sql(clause, value, collector)
               qualify_columns = @loader.qualify_columns?
               
@@ -59,7 +77,8 @@ module DataMapper
                 collector << ["#{clause.to_sql(qualify_columns)} #{equality_operator(value)} ?", value]
               else raise "CAN HAS CRASH? #{clause.inspect}"
               end
-              
+            rescue => e
+              raise ConditionsError.new(clause, value, e)
             end
             
             def equality_operator(value, default = '=')
