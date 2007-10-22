@@ -70,6 +70,7 @@ describe "Save Commands" do
     database do
       project = Project::create(:title => 'Test')
       project.sections.first.should == Section.first
+      project.sections.first.should be_a_kind_of(Section)
     end
   end
   
