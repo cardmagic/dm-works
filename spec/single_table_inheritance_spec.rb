@@ -16,4 +16,12 @@ describe 'Single Table Inheritance' do
     end
   end
   
+  it "secondary database should inherit the same attributes" do
+    
+    database(:mock) do |db|
+      db.table(SalesPerson)[:name].should_not be_nil
+    end
+    
+  end
+  
 end

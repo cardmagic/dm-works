@@ -24,6 +24,12 @@ module DataMapper
             @associations = AssociationsSet.new
             
             @multi_class = false
+            
+            if @klass && @klass.ancestors.include?(DataMapper::Base) && @klass.superclass != DataMapper::Base
+              @adapter.table(@klass.superclass).columns.each do |column|
+                self.add_column(column.name, column.type, column.options)
+              end
+            end
           end
           
           def multi_class?

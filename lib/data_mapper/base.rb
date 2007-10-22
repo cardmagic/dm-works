@@ -67,15 +67,7 @@ module DataMapper
         end
         
         def self.inherited(subclass)
-          
           self::subclasses << subclass
-          
-          database.table(self).columns.each do |c|
-            subclass.property(c.name, c.type, c.options)
-            subclass.before_create do
-              @type = self.class
-            end if c.name == :type
-          end          
         end
       end
     end
