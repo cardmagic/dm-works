@@ -83,6 +83,12 @@ describe DataMapper::Associations::HasManyAssociation do
     end
   end
   
+  it "should be dirty even when clean objects are associated" do
+    zoo = Zoo[:name => 'New York']
+    zoo.exhibits << Exhibit.first
+    zoo.should be_dirty
+  end
+  
   it "should have a valid zoo setup for testing" do
     @zoo.should be_valid
     @zoo.should_not be_a_new_record
