@@ -150,6 +150,12 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
        zoo.should == same_zoo
      end
    end
+   
+   it "should return a single object" do
+     Zoo.first.should be_a_kind_of(Zoo)
+     Zoo[1].should be_a_kind_of(Zoo)
+     Zoo.find(1).should be_a_kind_of(Zoo)
+   end
 end
 
 =begin
