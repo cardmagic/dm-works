@@ -2,10 +2,11 @@ require 'benchmark'
 require 'active_record'
 
 ActiveRecord::Base.establish_connection :adapter => 'mysql',
-  :host     => 'localhost',
   :username => 'root',
   :password => '',
   :database => 'data_mapper_1'
+
+ActiveRecord::Base.find_by_sql('SELECT 1')
 
 class ARAnimal < ActiveRecord::Base
   set_table_name 'animals'
