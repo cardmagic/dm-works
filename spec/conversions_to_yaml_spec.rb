@@ -8,7 +8,7 @@ describe "Conversion to YAML" do
     it "the first #{klass} converted to YAML should match the YAML in the fixture" do
 
       YAML::load(klass.first.to_yaml).to_a.reject do |pair|
-        pair.first == "updated_at"
+        pair.first == "updated_at" || pair.first == "id"
       end.sort.should == YAML::load_file("./spec/fixtures/#{name}.yaml")[0].to_a.sort
       
     end

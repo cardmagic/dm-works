@@ -1,4 +1,5 @@
 require 'data_mapper/adapters/data_object_adapter'
+require 'do_postgres'
 
 module DataMapper
   module Adapters
@@ -18,42 +19,15 @@ module DataMapper
       end
       
       def create_connection
-        connection = PGconn.connect(
-          @configuration.host,
-          5432,
-          "",
-          "",
-          @configuration.database,
-          @configuration.username,
-          @configuration.password
-        )
-     
+        conn = DataObject::Postgres::Connection.new("dbname=#{@configuration.database}")
+        conn.open
+        return conn
+             
         unless schema_search_path.empty?
-          connection.exec("SET search_path TO #{schema_search_path}")
+          execute("SET search_path TO #{schema_search_path}")
         end
         
         return connection
-      end
-
-      def close_connection(conn)
-        conn.close
-      end
-
-      def query_returning_reader(db, sql)
-        db.exec(sql)
-      end
-      
-      def count_rows(db, reader)
-        return reader.entries.size if reader.entries.is_a?(Array) && reader.entries.size != 0
-        reader.cmdstatus.split(' ').last.to_i            
-      end
-      
-      def free_reader(reader)
-        reader.clear
-      end
-      
-      def fetch_fields(reader)
-        reader.fields.map { |field| Inflector.underscore(field).to_sym }
       end
             
       TABLE_QUOTING_CHARACTER = '"'.freeze
@@ -63,17 +37,6 @@ module DataMapper
         :integer => 'integer'.freeze,
         :datetime => 'timestamp with time zone'.freeze
       })
-      
-      def insert(*args)
-        connection do |db|
-          sql = escape_sql(*args)
-          log.debug { sql }
-          db.exec(sql)
-          # Current id or latest value read from sequence in this session
-          # See: http://www.postgresql.org/docs/8.1/interactive/functions-sequence.html
-          db.exec("SELECT last_value from #{@table.sequence_sql}")[0][0]
-        end
-      end
         
       module Mappings
         class Table
@@ -83,7 +46,7 @@ module DataMapper
           
           def to_create_table_sql
             schema_name = name.index('.') ? name.split('.').first : nil
-            schema_list = @adapter.connection { |db| db.exec('SELECT nspname FROM pg_namespace').result.collect { |r| r[0] }.join(',') }
+            schema_list = @adapter.query('SELECT nspname FROM pg_namespace').join(',')
           
             sql = if schema_name and !schema_list.include?(schema_name)
                 "CREATE SCHEMA #{@adapter.quote_table_name(schema_name)}; " 
@@ -100,6 +63,15 @@ module DataMapper
             return sql
           end
           
+          def to_exists_sql
+            @to_exists_sql || @to_exists_sql = <<-EOS.compress_lines
+              SELECT TABLE_NAME
+              FROM INFORMATION_SCHEMA.TABLES
+              WHERE TABLE_NAME = #{@adapter.quote_value(name)}
+                AND TABLE_CATALOG = #{@adapter.quote_value(@adapter.schema.name)}
+            EOS
+          end
+          
           private 
           
           def quote_table(table_suffix = nil)
@@ -113,6 +85,32 @@ module DataMapper
         class Column
           def serial_declaration
             "SERIAL"
+          end
+          
+          def to_long_form
+            @to_long_form || begin
+              @to_long_form = "#{to_sql}"
+              
+              if serial? && !serial_declaration.blank?
+                @to_long_form << " #{serial_declaration}"
+              else
+                @to_long_form << " #{type_declaration}"
+                
+                unless nullable? || not_null_declaration.blank?
+                  @to_long_form << " #{not_null_declaration}"
+                end
+                
+                if key? && !primary_key_declaration.blank?
+                  @to_long_form << " #{primary_key_declaration}"
+                end
+
+                if default && !default_declaration.blank?
+                  @to_long_form << " #{default_declaration}"
+                end
+              end
+                      
+              @to_long_form
+            end
           end
           
           def size

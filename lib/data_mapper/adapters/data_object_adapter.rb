@@ -224,7 +224,7 @@ module DataMapper
               # Formatting is a bit off here, but it looks nicer in the log this way.
               insert_id = execute("INSERT INTO #{table.to_sql} (#{keys.join(', ')}) VALUES (#{values.map { |v| quote_value(v) }.join(', ')})").last_insert_row
               instance.instance_variable_set(:@new_record, false)
-              instance.key = insert_id if table.key.serial?
+              instance.key = insert_id if table.key.serial? && !attributes.include?(table.key.name)
               session.identity_map.set(instance)
               callback(instance, :after_create)
             # UPDATE

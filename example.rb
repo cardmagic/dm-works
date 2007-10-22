@@ -25,7 +25,8 @@ Dir[File.dirname(__FILE__) + "/spec/fixtures/*.yaml"].each do |path|
 end
 
 require 'irb'
-IRB::start
+
+database { IRB::start }
 
 if false
 

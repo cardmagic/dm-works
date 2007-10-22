@@ -206,11 +206,9 @@ module DataMapper
       pairs = {}
       
       session.table(self).columns.each do |column|
-        unless column.key? && column.serial?
-          lazy_load!(column.name) if column.lazy?
-          value = instance_variable_get(column.instance_variable_name)
-          pairs[column.name] = column.type == :class ? value.to_s : value
-        end
+        lazy_load!(column.name) if column.lazy?
+        value = instance_variable_get(column.instance_variable_name)
+        pairs[column.name] = column.type == :class ? value.to_s : value
       end
       
       pairs
