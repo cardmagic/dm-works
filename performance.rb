@@ -75,54 +75,54 @@ N = (ENV['N'] || 1000).to_i
 Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
   
   x.report('ActiveRecord:id') do
-    N.times { ARAnimal.find(1) }
+    N.times { ARAnimal.find(1).name }
   end
   
   x.report('DataMapper:id') do
-    N.times { DMAnimal[1] }
+    N.times { DMAnimal[1].name }
   end
   
   x.report('DataMapper:id:in-session') do
     database do
-      N.times { DMAnimal[1] }
+      N.times { DMAnimal[1].name }
     end
   end
   
   x.report('ActiveRecord:all') do
-    N.times { ARAnimal.find(:all) }
+    N.times { ARAnimal.find(:all).each { |a| a.name } }
   end
   
   x.report('DataMapper:all') do
-    N.times { DMAnimal.all }
+    N.times { DMAnimal.all.each { |a| a.name } }
   end
   
   x.report('DataMapper:all:in-session') do
     database do
-      N.times { DMAnimal.all }
+      N.times { DMAnimal.all.each { |a| a.name } }
     end
   end
   
   x.report('ActiveRecord:conditions') do
-    N.times { ARZoo.find(:first, :conditions => ['name = ?', 'Galveston']) }
+    N.times { ARZoo.find(:first, :conditions => ['name = ?', 'Galveston']).name }
   end
   
   x.report('DataMapper:conditions:short') do
-    N.times { Zoo[:name => 'Galveston'] }
+    N.times { Zoo[:name => 'Galveston'].name }
   end
   
   x.report('DataMapper:conditions:short:in-session') do
     database do
-      N.times { Zoo[:name => 'Galveston'] }
+      N.times { Zoo[:name => 'Galveston'].name }
     end
   end
   
   x.report('DataMapper:conditions:long') do
-    N.times { Zoo.find(:first, :conditions => ['name = ?', 'Galveston']) }
+    N.times { Zoo.find(:first, :conditions => ['name = ?', 'Galveston']).name }
   end
   
   x.report('DataMapper:conditions:long:in-session') do
     database do
-      N.times { Zoo.find(:first, :conditions => ['name = ?', 'Galveston']) }
+      N.times { Zoo.find(:first, :conditions => ['name = ?', 'Galveston']).name }
     end
   end
   
@@ -157,6 +157,7 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
   x.report('ActiveRecord:update') do
     N.times do
       bob = ARAnimal.find(:first, :conditions => ["name = ?", 'Elephant'])
+      bob.name
       bob.notes = 'Updated by ActiveRecord'
       bob.save
     end
@@ -165,6 +166,7 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
   x.report('DataMapper:update') do
     N.times do
       bob = DMAnimal.first(:name => 'Elephant')
+      bob.name
       bob.notes = 'Updated by DataMapper'
       bob.save
     end
@@ -173,40 +175,40 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
   x.report('ActiveRecord:associations:lazy') do
     N.times do
       zoos = ARZoo.find(:all)
-      zoos.each { |zoo| zoo.exhibits.entries }
+      zoos.each { |zoo| zoo.name; zoo.exhibits.entries }
     end
   end
   
   x.report('ActiveRecord:associations:included') do
     N.times do
       zoos = ARZoo.find(:all, :include => [:exhibits])
-      zoos.each { |zoo| zoo.exhibits.entries }
+      zoos.each { |zoo| zoo.name; zoo.exhibits.entries }
     end
   end
   
   x.report('DataMapper:associations') do
     N.times do
-      Zoo.all.each { |zoo| zoo.exhibits.entries }
+      Zoo.all.each { |zoo| zoo.name; zoo.exhibits.entries }
     end
   end
   
   x.report('DataMapper:associations:in-session') do
     database do
       N.times do
-        Zoo.all.each { |zoo| zoo.exhibits.entries }
+        Zoo.all.each { |zoo| zoo.name; zoo.exhibits.entries }
       end
     end
   end
   
   x.report('ActiveRecord:find_by_sql') do
     N.times do
-      ARZoo.find_by_sql("SELECT * FROM zoos")
+      ARZoo.find_by_sql("SELECT * FROM zoos").each { |z| z.name }
     end
   end
   
   x.report('DataMapper:find_by_sql') do
     N.times do
-      database.query("SELECT * FROM zoos")
+      database.query("SELECT * FROM zoos").each { |z| z.name }
     end
   end
   
