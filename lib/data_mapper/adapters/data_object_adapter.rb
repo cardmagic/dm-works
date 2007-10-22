@@ -36,10 +36,9 @@ module DataMapper
     # NOTE: By inheriting from DoAdapter, you get a copy of all the
     # standard sub-modules (Quoting, Coersion and Queries) in your own Adapter.
     # You can extend and overwrite these copies without affecting the originals.
-    class DoAdapter < AbstractAdapter
+    class DataObjectAdapter < AbstractAdapter
       
       $LOAD_PATH << (DM_PLUGINS_ROOT + '/dataobjects')
-      require 'do_mysql'
       
       FIND_OPTIONS = [
         :select, :offset, :limit, :class, :include, :shallow_include, :reload, :conditions, :order, :intercept_load
@@ -50,16 +49,14 @@ module DataMapper
       
       def initialize(configuration)
         super
-        
+
         unless @configuration.single_threaded?
           @connection_pool = Support::ConnectionPool.new { create_connection }
         end
       end
       
       def create_connection
-        conn = DataObject::Mysql::Connection.new("socket=/tmp/mysql.sock user=root dbname=data_mapper_1")
-        conn.open
-        return conn
+        raise NotImplementedError.new
       end
       
       # Yields an available connection. Flushes the connection-pool and reconnects
@@ -119,7 +116,7 @@ module DataMapper
           if block_given?
             reader = command.execute_reader
             result = yield(reader)
-            # reader.close
+            reader.close
           else
             result = command.execute_non_query
           end

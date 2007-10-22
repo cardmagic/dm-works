@@ -5,11 +5,17 @@ module DataMapper
       
       attr_reader :adapter, :table, :options
       
+      OPTIONS = [
+        :class,
+        :class_name,
+        :foreign_key
+      ]
+      
       def initialize(klass, association_name, options)
         @adapter = database.adapter
         @table = adapter.table(klass)
         @association_name = association_name.to_sym
-        @options = options
+        @options = options || Hash.new
         
         define_accessor(klass)
       end
@@ -47,6 +53,10 @@ module DataMapper
       
       def association_columns
         association_table.columns.reject { |column| column.lazy? }
+      end
+      
+      def finder_options
+        @finder_options || @finder_options = @options.reject { |k,v| self.class::OPTIONS.include?(k) }
       end
     end
     

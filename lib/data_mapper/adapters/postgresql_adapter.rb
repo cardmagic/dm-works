@@ -1,10 +1,9 @@
-require 'data_mapper/adapters/sql_adapter'
-require 'postgres'
+require 'data_mapper/adapters/data_object_adapter'
 
 module DataMapper
   module Adapters
     
-    class PostgresqlAdapter < SqlAdapter
+    class PostgresqlAdapter < DataObjectAdapter
       
       def schema_search_path
         @schema_search_path || @schema_search_path = begin

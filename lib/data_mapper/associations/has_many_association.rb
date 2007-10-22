@@ -84,7 +84,7 @@ module DataMapper
               fk = association.foreign_key.to_sym
               
               finder_options = { association.foreign_key.to_sym => @instance.loaded_set.map { |item| item.key } }
-              finder_options.merge!(association.options) if association.options.is_a?(Hash)
+              finder_options.merge!(association.finder_options)
               
               associated_items = @instance.session.all(
                 association.constant,

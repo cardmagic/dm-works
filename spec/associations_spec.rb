@@ -27,7 +27,6 @@ describe DataMapper::Associations::BelongsToAssociation do
       e.zoo.class == Zoo
       e.zoo.new_record?.should == true
       
-      # Need to get associations working properly before this works ....
       e.save
     end
   end

@@ -1,4 +1,4 @@
-describe DataMapper::Adapters::SqlAdapter do
+describe DataMapper::Adapters::AbstractAdapter do
     
   before(:all) do
     fixtures(:zoos)

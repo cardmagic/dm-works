@@ -144,7 +144,6 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
 
    it "should only query once" do
      database do
-       
        zoo = Zoo.first
        same_zoo = Zoo[zoo.id]
        

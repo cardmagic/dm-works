@@ -6,8 +6,8 @@ adapter = ENV['ADAPTER'] || 'sqlite3'
 
 configuration_options = {
   :adapter => adapter,
-  :log_level => Logger::DEBUG,
-  :database =>  ENV['DATABASE'] || (adapter == 'sqlite3' ? ':memory:' : 'data_mapper_1')
+  :database =>  (ENV['DATABASE'] || 'data_mapper_1').dup,
+  :single_threaded => true
 }
 
 # Prepare the log path, and remove the existing spec.log
@@ -36,7 +36,7 @@ load_models = lambda do
   Dir[File.dirname(__FILE__) + '/spec/models/*.rb'].sort.each { |path| load path }
 end
 
-DataMapper::Database.setup(:default, configuration_options)
+DataMapper::Database.setup(configuration_options)
 DataMapper::Database.setup(:mock, :adapter => MockAdapter)
 
 [:default, :mock].each { |name| database(name) { load_models.call } }
