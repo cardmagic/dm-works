@@ -66,4 +66,11 @@ describe "Save Commands" do
     zoo.should be_new_record
   end
   
+  it "should create a Project with a \"Main\" Section" do
+    database do
+      project = Project::create(:title => 'Test')
+      project.sections.first.should == Section.first
+    end
+  end
+  
 end

@@ -59,21 +59,20 @@ module DataMapper
           return @items
         end
         
-        def size
-          items.size
-        end
-        alias length size
-
-        def [](index)
-          items[index]
-        end
-
-        def empty?
-          items.empty?
-        end
-        
         def set(items)
           @items = items
+        end
+        
+        def method_missing(symbol, *args, &block)
+          if items.respond_to?(symbol)
+            items.send(symbol, *args, &block)
+          else
+            super
+          end
+        end
+        
+        def respond_to?(symbol)
+          items.respond_to?(symbol) || super
         end
 
         def items
