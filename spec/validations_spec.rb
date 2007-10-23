@@ -76,7 +76,6 @@ describe DataMapper::Validations do
     o = VPOTest.new
     o.should_not be_valid
     o.errors.should have(1).full_messages
-    p o.errors.full_messages
   end
   
 end
