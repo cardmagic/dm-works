@@ -158,8 +158,8 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
    end
    
    it "should be able to search on UTF-8 strings" do
-     Zoo.create(:name => 'Danish Vowel: Sm\303\203\302\270\303\203\302\270t!')
-     Zoo.first(:name.like => '%ø').should be_a_kind_of(Zoo)
+     Zoo.create(:name => 'Danish Vowels: Smøøt!')
+     Zoo.first(:name.like => '%Smøøt%').should be_a_kind_of(Zoo)
    end
 end
 

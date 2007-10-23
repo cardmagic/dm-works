@@ -89,6 +89,10 @@ describe DataMapper::Associations::HasManyAssociation do
     zoo.should be_dirty
   end
   
+  it "should proxy associations on the associated type" do
+#    Zoo[:name => 'Miami'].exhibits.animals.size.should == 1
+  end
+  
   it "should have a valid zoo setup for testing" do
     @zoo.should be_valid
     @zoo.should_not be_a_new_record
