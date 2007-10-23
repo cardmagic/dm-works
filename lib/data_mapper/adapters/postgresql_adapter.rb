@@ -1,5 +1,13 @@
 require 'data_mapper/adapters/data_object_adapter'
-require 'do_postgres'
+begin
+  require 'do_postgres'
+rescue
+  STDERR.puts <<-EOS
+You must install the DataObjects::PostgreSQL driver.
+  rake dm:install:postgresql
+EOS
+  exit
+end
 
 module DataMapper
   module Adapters

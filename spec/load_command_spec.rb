@@ -156,6 +156,11 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
      Zoo[1].should be_a_kind_of(Zoo)
      Zoo.find(1).should be_a_kind_of(Zoo)
    end
+   
+   it "should be able to search on UTF-8 strings" do
+     Zoo.create(:name => 'Danish Vowel: Sm\303\203\302\270\303\203\302\270t!')
+     Zoo.first(:name.like => '%ø').should be_a_kind_of(Zoo)
+   end
 end
 
 =begin

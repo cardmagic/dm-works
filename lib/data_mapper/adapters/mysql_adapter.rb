@@ -1,5 +1,13 @@
 require 'data_mapper/adapters/data_object_adapter'
-require 'do_mysql'
+begin
+  require 'do_mysql'
+rescue
+  STDERR.puts <<-EOS
+You must install the DataObjects::Mysql driver.
+  rake dm:install:mysql
+EOS
+  exit
+end
 
 module DataMapper
   module Adapters

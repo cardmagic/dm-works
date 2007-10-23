@@ -1,5 +1,13 @@
 require 'data_mapper/adapters/data_object_adapter'
-require 'do_sqlite3'
+begin
+  require 'do_sqlite3'
+rescue
+  STDERR.puts <<-EOS
+You must install the DataObjects::SQLite3 driver.
+  rake dm:install:sqlite3
+EOS
+  exit
+end
 
 module DataMapper
   module Adapters
