@@ -66,6 +66,14 @@ module DataMapper
         def method_missing(symbol, *args, &block)
           if items.respond_to?(symbol)
             items.send(symbol, *args, &block)
+          elsif association.association_table.associations.any? { |assoc| assoc.name == symbol }
+            results = []
+            each do |item|
+              unless (val = item.send(symbol)).blank?
+                results << (val.is_a?(Enumerable) ? val.entries : val)
+              end
+            end
+            results.flatten
           else
             super
           end
