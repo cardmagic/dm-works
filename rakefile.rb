@@ -43,7 +43,9 @@ PACKAGE_FILES = FileList[
   'MIT-LICENSE',
   '*.rb',
   'lib/**/*.rb',
-  'spec/**/*.{rb,yaml}'
+  'spec/**/*.{rb,yaml}',
+  'tasks/**/*',
+  'plugins/**/*'
 ].to_a
 
 PROJECT = 'datamapper'
