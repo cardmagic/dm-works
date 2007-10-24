@@ -22,6 +22,7 @@ module DataMapper
         builder['user', :username]
         builder['password', :password]
         builder['dbname', :database]
+        builder['socket', :socket]
         
         conn = DataObject::Mysql::Connection.new(connection_string)
         conn.open
