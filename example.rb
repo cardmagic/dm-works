@@ -1,34 +1,32 @@
 #!/usr/bin/env ruby
 
+ENV['LOG_NAME'] = 'example'
+require 'environment'
+
+# Define a fixtures helper method to load up our test data.
+def fixtures(name, force = false)
+  entry = YAML::load_file(File.dirname(__FILE__) + "/spec/fixtures/#{name}.yaml")
+  klass = Kernel::const_get(Inflector.classify(Inflector.singularize(name)))
+  
+  klass.auto_migrate!
+  
+  (entry.kind_of?(Array) ? entry : [entry]).each do |hash|
+    if hash['type']
+      Object::const_get(hash['type'])::create(hash)
+    else
+      klass::create(hash)
+    end
+  end
+end
+
+# Pre-fill the database so non-destructive tests don't need to reload fixtures.
+Dir[File.dirname(__FILE__) + "/spec/fixtures/*.yaml"].each do |path|
+  fixtures(File::basename(path).sub(/\.yaml$/, ''), true)
+end
+
 require 'irb'
-require 'lib/data_mapper'
 
-adapter = ENV['ADAPTER'] || 'sqlite3'
-configuration_options = {
-  :adapter => adapter,
-  :log_stream => 'example.log',
-  :log_level => Logger::DEBUG,
-  :database => 'data_mapper_1'
-}
-
-case adapter
-  when 'postgresql' then
-    configuration_options[:username] = 'postgres'
-  when 'mysql' then
-    configuration_options[:username] = 'root'
-  when 'sqlite3' then
-    configuration_options[:database] << '.db'
-  else
-    raise "Unsupported Adapter => #{adapter.inspect}"
-end
-
-DataMapper::Database.setup(configuration_options)
-
-Dir[File.dirname(__FILE__) + '/spec/models/*.rb'].each do |path|
-  load path
-end
-
-IRB::start
+database { IRB::start }
 
 if false
 

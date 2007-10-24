@@ -52,6 +52,7 @@ describe DataMapper::Validations do
     
     rhonda = Cow.new
     rhonda.valid?.should == false
+    rhonda.errors.should have(2).full_messages
     
     rhonda.errors.full_messages.should include('Age must not be blank')
     rhonda.errors.full_messages.should include('Name must not be blank')
@@ -59,6 +60,22 @@ describe DataMapper::Validations do
     rhonda.name = 'Rhonda'
     rhonda.age = 44
     rhonda.valid?.should == true
-  end  
+  end
+  
+  it 'should have 1 validation error' do    
+    class VPOTest
+      
+      include DataMapper::CallbacksHelper
+      include DataMapper::Validations::ValidationHelper
+      
+      attr_accessor :name, :whatever
+      
+      validates_presence_of :name
+    end
+
+    o = VPOTest.new
+    o.should_not be_valid
+    o.errors.should have(1).full_messages
+  end
   
 end

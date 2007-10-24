@@ -11,8 +11,8 @@ module DataMapper
       # it.
       module Coersion
         
-        TRUE_ALIASES = ['true'.freeze, 'TRUE'.freeze]
-        FALSE_ALIASES = [nil]
+        TRUE_ALIASES = ['true'.freeze, 'TRUE'.freeze, '1'.freeze]
+        FALSE_ALIASES = [nil, '0'.freeze]
         
         def self.included(base)
           base.const_set('TRUE_ALIASES', TRUE_ALIASES.dup)
@@ -55,6 +55,11 @@ module DataMapper
           raw_value.to_d
         rescue ArgumentError 
           nil 
+        end
+                
+        def type_cast_float(raw_value)
+          return nil if raw_value.blank?
+          raw_value.to_f
         end
         
         def type_cast_datetime(raw_value)

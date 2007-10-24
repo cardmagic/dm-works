@@ -22,8 +22,12 @@ module DataMapper
         
         include Enumerable
         
-        def valid?(context)
-          @items.nil? || @items.empty? ? true : @items.all? { |item| item.valid?(context) }
+        def dirty?
+          @items && @items.any? { |item| item != @instance && item.dirty? }
+        end
+        
+        def validate_excluding_association(associated, context)
+          @items.blank? || @items.all? { |item| item.validate_excluding_association(associated, context) }
         end
         
         def save
@@ -43,23 +47,40 @@ module DataMapper
         
         def <<(associated_item)
           items << associated_item
-        end
-
-        def size
-          items.size
-        end
-        alias length size
-
-        def [](index)
-          items[index]
-        end
-
-        def empty?
-          items.empty?
+          
+          # TODO: Optimize!
+          fk = association.foreign_key
+          foreign_association = association.association_table.associations.find do |mapping|
+            mapping.is_a?(BelongsToAssociation) && mapping.foreign_key == fk
+          end
+          
+          associated_item.send("#{foreign_association.name}=", @instance) if foreign_association
+          
+          return @items
         end
         
         def set(items)
           @items = items
+        end
+        
+        def method_missing(symbol, *args, &block)
+          if items.respond_to?(symbol)
+            items.send(symbol, *args, &block)
+          elsif association.association_table.associations.any? { |assoc| assoc.name == symbol }
+            results = []
+            each do |item|
+              unless (val = item.send(symbol)).blank?
+                results << (val.is_a?(Enumerable) ? val.entries : val)
+              end
+            end
+            results.flatten
+          else
+            super
+          end
+        end
+        
+        def respond_to?(symbol)
+          items.respond_to?(symbol) || super
         end
 
         def items
@@ -69,9 +90,12 @@ module DataMapper
             else
               fk = association.foreign_key.to_sym
               
+              finder_options = { association.foreign_key.to_sym => @instance.loaded_set.map { |item| item.key } }
+              finder_options.merge!(association.finder_options)
+              
               associated_items = @instance.session.all(
                 association.constant,
-                association.foreign_key.to_sym => @instance.loaded_set.map(&:key)
+                finder_options
               ).group_by { |entry| entry.send(fk) }
               
               setter_method = "#{@association_name}=".to_sym

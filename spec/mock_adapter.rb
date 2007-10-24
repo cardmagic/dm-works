@@ -1,6 +1,6 @@
-require 'data_mapper/adapters/sql_adapter'
+require 'data_mapper/adapters/data_object_adapter'
 
-class MockAdapter < DataMapper::Adapters::SqlAdapter
+class MockAdapter < DataMapper::Adapters::DataObjectAdapter
   COLUMN_QUOTING_CHARACTER = "`"
   TABLE_QUOTING_CHARACTER = "`"
   

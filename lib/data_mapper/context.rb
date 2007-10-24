@@ -2,7 +2,7 @@ require 'data_mapper/identity_map'
 
 module DataMapper
   
-  class Session
+  class Context
       
     class MaterializationError < StandardError
     end
@@ -53,27 +53,27 @@ module DataMapper
     end
     
     def destroy(instance)
-      @adapter.delete(instance, :session => self)
+      @adapter.delete(self, instance)
     end
     
     def delete_all(klass)
-      @adapter.delete(klass, :session => self)
+      @adapter.delete(self, klass)
     end
     
     def truncate(klass)
-      @adapter.delete(klass, :truncate => true, :session => self)
+      @adapter.truncate(self, klass)
     end
     
     def create_table(klass)
-      @adapter.table(klass).create!
+      @adapter.create_table(klass)
     end
     
     def drop_table(klass)
-      @adapter.table(klass).drop!
+      @adapter.drop(self, klass)
     end
     
     def table_exists?(klass)
-      @adapter.table(klass).exists?
+      @adapter.table_exists?(klass)
     end
     
     def execute(*args)
@@ -89,7 +89,7 @@ module DataMapper
     end
     
     def table(klass)
-      @adapter.schema[klass]
+      @adapter.table(klass)
     end
     
     def log

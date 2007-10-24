@@ -6,22 +6,33 @@ require 'rake/rdoctask'
 require 'rake/gempackagetask'
 require 'rake/contrib/rubyforgepublisher'
 
-task :default => 'test'
+Dir[File.dirname(__FILE__) + '/tasks/*'].each { |t| require(t) }
 
-desc "Run specifications"
-Spec::Rake::SpecTask.new('test') do |t|
-  t.spec_opts = [ '-rspec/spec_helper' ]
-  t.spec_files = FileList[(ENV['FILES'] || 'spec/**/*_spec.rb')]
-end
+task :default => 'dm:spec'
 
-desc "Run comparison with ActiveRecord"
-task :perf do
-  load 'performance.rb'
-end
+namespace :dm do
 
-desc "Profile DataMapper"
-task :profile do
-  load 'profile_data_mapper.rb'
+  desc "Setup Environment"
+  task :environment do
+    require 'environment'
+  end
+  
+  desc "Run specifications"
+  Spec::Rake::SpecTask.new('spec') do |t|
+    t.spec_opts = [ '-rspec/spec_helper' ]
+    t.spec_files = FileList[(ENV['FILES'] || 'spec/**/*_spec.rb')]
+  end
+
+  desc "Run comparison with ActiveRecord"
+  task :perf do
+    load 'performance.rb'
+  end
+
+  desc "Profile DataMapper"
+  task :profile do
+    load 'profile_data_mapper.rb'
+  end
+
 end
 
 PACKAGE_VERSION = '0.1.1'
@@ -32,7 +43,9 @@ PACKAGE_FILES = FileList[
   'MIT-LICENSE',
   '*.rb',
   'lib/**/*.rb',
-  'spec/**/*.{rb,yaml}'
+  'spec/**/*.{rb,yaml}',
+  'tasks/**/*',
+  'plugins/**/*'
 ].to_a
 
 PROJECT = 'datamapper'
@@ -51,14 +64,14 @@ gem_spec = Gem::Specification.new do |s|
   s.summary = "An Object/Relational Mapper for Ruby"
   s.description = "It's ActiveRecord, but Faster, Better, Simpler."
   s.version = PACKAGE_VERSION 
-   
+ 
   s.authors = 'Sam Smoot'
   s.email = 'ssmoot@gmail.com'
   s.rubyforge_project = PROJECT 
   s.homepage = 'http://datamapper.org' 
-   
+ 
   s.files = PACKAGE_FILES 
-   
+ 
   s.require_path = 'lib'
   s.requirements << 'none'
   s.autorequire = 'data_mapper'

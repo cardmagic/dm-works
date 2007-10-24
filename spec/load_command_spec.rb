@@ -4,35 +4,20 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
     fixtures(:zoos)
   end
   
-  it "should return a Struct for custom queries" do
-    results = database.query("SELECT * FROM zoos WHERE name = ?", 'Galveston')
-    zoo = results.first
-    zoo.class.superclass.should == Struct
-    zoo.name.should == "Galveston"
-  end
-  
-end
-  
-describe DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand do
-
-  before(:all) do
-    fixtures(:zoos)
-  end
-  
-  it "should return a Struct for custom queries" do
-    results = database.query("SELECT * FROM zoos WHERE name = ?", 'Galveston')
-    zoo = results.first
-    zoo.class.superclass.should == Struct
-    zoo.name.should == "Galveston"
-  end
-  
   def loader_for(klass, options = {})
     session = database(:mock)
-    DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand.new(session.adapter, session, klass, options)
+    DataMapper::Adapters::Sql::Commands::LoadCommand.new(session.adapter, session, klass, options)
+  end
+  
+  it "should return a Struct for custom queries" do
+    results = database.query("SELECT * FROM zoos WHERE name = ?", 'Galveston')
+    zoo = results.first
+    zoo.class.superclass.should == Struct
+    zoo.name.should == "Galveston"
   end
 
   it "should return a simple select statement for a given class" do
-    loader_for(Zoo).to_parameterized_sql.first.should == 'SELECT `id`, `name` FROM `zoos`'
+    loader_for(Zoo).to_parameterized_sql.first.should == 'SELECT `id`, `name`, `updated_at` FROM `zoos`'
   end
 
   it "should include only the columns specified in the statement" do
@@ -40,12 +25,12 @@ describe DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand do
   end
 
   it "should optionally include lazy-loaded columns in the statement" do
-    loader_for(Zoo, :include => :notes).to_parameterized_sql.first.should == 'SELECT `id`, `name`, `notes` FROM `zoos`'
+    loader_for(Zoo, :include => :notes).to_parameterized_sql.first.should == 'SELECT `id`, `name`, `updated_at`, `notes` FROM `zoos`'
   end
 
   it "should join associations in the statement" do
     loader_for(Zoo, :include => :exhibits).to_parameterized_sql.first.should == <<-EOS.compress_lines
-      SELECT `zoos`.`id`, `zoos`.`name`,
+      SELECT `zoos`.`id`, `zoos`.`name`, `zoos`.`updated_at`,
         `exhibits`.`id`, `exhibits`.`name`, `exhibits`.`zoo_id`
       FROM `zoos`
       JOIN `exhibits` ON `exhibits`.`zoo_id` = `zoos`.`id`
@@ -157,6 +142,25 @@ describe DataMapper::Adapters::Sql::Commands::AdvancedLoadCommand do
      end
    end
 
+   it "should only query once" do
+     database do
+       zoo = Zoo.first
+       same_zoo = Zoo[zoo.id]
+       
+       zoo.should == same_zoo
+     end
+   end
+   
+   it "should return a single object" do
+     Zoo.first.should be_a_kind_of(Zoo)
+     Zoo[1].should be_a_kind_of(Zoo)
+     Zoo.find(1).should be_a_kind_of(Zoo)
+   end
+   
+   it "should be able to search on UTF-8 strings" do
+     Zoo.create(:name => 'Danish Vowels: Smøøt!')
+     Zoo.first(:name.like => '%Smøøt%').should be_a_kind_of(Zoo)
+   end
 end
 
 =begin

@@ -1,5 +1,5 @@
-require 'data_mapper/unit_of_work'
 require 'data_mapper/support/active_record_impersonation'
+require 'data_mapper/support/serialization'
 require 'data_mapper/validations/validation_helper'
 require 'data_mapper/associations'
 require 'data_mapper/callbacks'
@@ -17,9 +17,9 @@ module DataMapper
     # This probably needs to be protected
     attr_accessor :loaded_set
     
-    include UnitOfWork
     include CallbacksHelper
     include Support::ActiveRecordImpersonation
+    include Support::Serialization
     include Validations::ValidationHelper
     include Associations
     
@@ -67,16 +67,7 @@ module DataMapper
         end
         
         def self.inherited(subclass)
-          
           self::subclasses << subclass
-          
-          database.schema[subclass.superclass].columns.each do |c|
-            subclass.property(c.name, c.type, c.options)
-            subclass.before_create do
-              @type = self.class
-            end if c.name == :type
-          end
-          
         end
       end
     end
@@ -118,8 +109,20 @@ module DataMapper
       mapping = database.schema[self].add_column(name, type, options)
       property_getter(name, mapping)
       property_setter(name, mapping)
+      
+      if MAGIC_PROPERTIES.has_key?(name)
+        class_eval(&MAGIC_PROPERTIES[name])
+      end
+      
       return name
     end
+    
+    MAGIC_PROPERTIES = {
+      :updated_at => lambda { before_save { |x| x.updated_at = Time::now } },
+      :updated_on => lambda { before_save { |x| x.updated_on = Date::today } },
+      :created_at => lambda { before_create { |x| x.created_at = Time::now } },
+      :created_on => lambda { before_create { |x| x.created_on = Date::today } }
+    }
     
     def self.embed(class_or_name, &block)
       EmbeddedValue::define(self, class_or_name, &block)
@@ -176,13 +179,31 @@ module DataMapper
       end
       
     end
-        
-    def attributes
-      session.schema[self.class].columns.inject({}) do |values, column|
-        lazy_load!(column.name) if column.lazy?
-        values[column.name] = instance_variable_get(column.instance_variable_name)
-        values
+    
+    def new_record?
+      @new_record.nil? || @new_record
+    end
+    
+    def loaded_attributes
+      pairs = {}
+      
+      session.table(self).columns.each do |column|
+        pairs[column.name] = instance_variable_get(column.instance_variable_name)
       end
+      
+      pairs
+    end
+    
+    def attributes
+      pairs = {}
+      
+      session.table(self).columns.each do |column|
+        lazy_load!(column.name) if column.lazy?
+        value = instance_variable_get(column.instance_variable_name)
+        pairs[column.name] = column.type == :class ? value.to_s : value
+      end
+      
+      pairs
     end
     
     # Mass-assign mapped fields.
@@ -199,7 +220,52 @@ module DataMapper
         end
       end
     end
-        
+    
+    def dirty?(name = nil)
+      if name.nil?
+        session.table(self).columns.any? do |column|
+          if value = self.instance_variable_get(column.instance_variable_name)
+            value.hash != original_hashes[column.name]
+          else
+            false
+          end
+        end || loaded_associations.any? do |loaded_association|
+          if loaded_association.respond_to?(:dirty?)
+            loaded_association.dirty?
+          else
+            false
+          end
+        end
+      else
+        key = name.kind_of?(Symbol) ? name : name.to_sym
+        self.instance_variable_get("@#{name}").hash != original_hashes[key]
+      end
+    end
+
+    def dirty_attributes
+      pairs = {}
+      
+      if new_record?
+        session.table(self).columns.each do |column|
+          unless (value = instance_variable_get(column.instance_variable_name)).nil?
+            pairs[column.name] = value
+          end
+        end
+      else
+        session.table(self).columns.each do |column|
+          if (value = instance_variable_get(column.instance_variable_name)).hash != original_hashes[column.name]
+            pairs[column.name] = value
+          end
+        end
+      end
+      
+      pairs
+    end
+    
+    def original_hashes
+      @original_hashes || (@original_hashes = {})
+    end
+    
     def protected_attribute?(key)
       self.class.protected_attributes.include?(key.kind_of?(Symbol) ? key : key.to_sym)
     end
@@ -247,6 +313,10 @@ module DataMapper
       end
       
       "#<%s:0x%x @new_record=%s, %s>" % [self.class.name, (object_id * 2), new_record?, inspected_attributes.join(', ')]
+    end
+    
+    def loaded_associations
+      @loaded_associations || @loaded_associations = []
     end
     
     def session=(value)

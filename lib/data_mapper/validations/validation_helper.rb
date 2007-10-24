@@ -31,16 +31,22 @@ module DataMapper
       end
       
       def valid?(context = :general)
+        validate_excluding_association(nil, context)
+      end
+      
+      def validate_excluding_association(associated, context = :general)
         return false unless self.class.callbacks.execute(:before_validation, self)
         return false unless self.class.validations.execute(context, self)
-        return false unless instance_variables.all? do |ivar_name|
-          ivar = instance_variable_get(ivar_name)
-          if ivar && ivar.respond_to?(:valid?)
-            ivar.send(:valid?, context)
-          else
-            true
+        if self.respond_to?(:loaded_associations)
+          return false unless self.loaded_associations.all? do |association|
+            if association != associated && association.respond_to?(:validate_excluding_association)
+              association.validate_excluding_association(self, context)
+            else
+              true
+            end
           end
-        end        
+        end
+
         return false unless self.class.callbacks.execute(:after_validation, self)
         return true
       end

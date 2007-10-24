@@ -35,7 +35,7 @@ module DataMapper
           finder_options.merge! @options[:scope] => scope_value
         end
         
-        finder_options.merge!({ target.session.mappings[target.class].key.name.not => target.key }) unless target.new_record?
+        finder_options.merge!({ target.session.table(target.class).key.name.not => target.key }) unless target.new_record?
         target.session.first(target.class, finder_options).nil?
       end
       

@@ -1,4 +1,4 @@
-if ENV['ADAPTER'] == 'postgresql'
+if ENV['ADAPTER'] == 'postgresql' && false
   
   describe DataMapper::Adapters::PostgresqlAdapter::Mappings::Table do
     

@@ -24,6 +24,12 @@ module DataMapper
             @associations = AssociationsSet.new
             
             @multi_class = false
+            
+            if @klass && @klass.ancestors.include?(DataMapper::Base) && @klass.superclass != DataMapper::Base
+              @adapter.table(@klass.superclass).columns.each do |column|
+                self.add_column(column.name, column.type, column.options)
+              end
+            end
           end
           
           def multi_class?
@@ -48,11 +54,14 @@ module DataMapper
           end
           
           def drop!
-            @adapter.delete(self, :drop => true) if exists?
+            @adapter.drop(database, self) if exists?
           end
           
-          def create!
-            @adapter.save(database, self) unless exists?
+          def create!(force = false)
+            unless exists? || force
+              drop! if force
+              @adapter.create_table(self)
+            end
           end
       
           def key
@@ -75,7 +84,7 @@ module DataMapper
         
             if column.nil?
               reset_derived_columns!
-              column = Column.new(@adapter, self, column_name, type, options)
+              column = @adapter.class::Mappings::Column.new(@adapter, self, column_name, type, options)
               @columns.send(column_name == :id ? :unshift : :push, column)
               @multi_class = true if column_name == :type
             end
@@ -116,7 +125,22 @@ module DataMapper
           end
       
           def to_sql
-            @to_sql ||= quote_table.freeze
+            @to_sql || @to_sql = quote_table.freeze
+          end
+          
+          def to_create_table_sql
+            @to_create_table_sql || @to_create_table_sql = begin
+              "CREATE TABLE #{to_sql} (#{columns.map { |c| c.to_long_form }.join(', ')})"
+            end
+          end
+          
+          def to_exists_sql
+            @to_exists_sql || @to_exists_sql = <<-EOS.compress_lines
+              SELECT TABLE_NAME
+              FROM INFORMATION_SCHEMA.TABLES
+              WHERE TABLE_NAME = #{@adapter.quote_value(name)}
+                AND TABLE_SCHEMA = #{@adapter.quote_value(@adapter.schema.name)}
+            EOS
           end
           
           def quote_table
@@ -127,7 +151,7 @@ module DataMapper
             "#<%s:0x%x @klass=%s, @name=%s, @columns=%s>" % [
               self.class.name,
               (object_id * 2),
-              name,
+              klass.inspect,
               to_sql,
               @columns.inspect
             ]

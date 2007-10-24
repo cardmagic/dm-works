@@ -3,7 +3,7 @@ class Person < DataMapper::Base
   property :age, :integer
   property :occupation, :string
   property :type, :class
-  property :notes, :text, :lazy => true
+  property :notes, :text
   
   embed :address do
     property :street, :string

@@ -12,7 +12,10 @@
 
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 
+DM_PLUGINS_ROOT = (File.dirname(__FILE__) + '/../plugins')
+
 # Require the basics...
+require 'yaml'
 require 'set'
 require 'fastthread'
 require 'data_mapper/support/blank'
@@ -33,8 +36,9 @@ elsif defined?(RAILS_ROOT)
   [RAILS_ROOT, RAILS_ENV]
 end
 
+DM_APP_ROOT = application_root || Dir::pwd
+
 if application_root && File.exists?(application_root + '/config/database.yml')
-  require 'yaml'
   
   database_configurations = YAML::load_file(application_root + '/config/database.yml')
   current_database_config = database_configurations[application_environment] || database_configurations[application_environment.to_sym]

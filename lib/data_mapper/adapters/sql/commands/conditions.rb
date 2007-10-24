@@ -5,154 +5,123 @@ module DataMapper
     
         class Conditions
       
-          def initialize(adapter, loader)
+          def initialize(adapter, loader, conditions_hash)
             @adapter, @loader = adapter, loader
-            @has_id = false
-          end
-      
-          class NormalizationError < StandardError
-        
-            attr_reader :inner_error
-        
-            def initialize(clause, inner_error = nil)
-              @clause = clause
-              @inner_error = inner_error
-          
-              message = "Failed to normalize clause: #{clause.inspect}"
-              message << ", Error: #{inner_error.inspect}" unless inner_error.nil?
-          
-              super(message)
-            end
-        
-          end
-      
-          def normalize(clause, collector)
-            case clause
-              when Hash then
-                clause.each_pair do |k,v|
-                  if k.kind_of?(Symbol::Operator)
-                    if k.type == :select
-                      k.options[:class] ||= @loader.klass
-                  
-                      k.options[:select] ||= if k.value.to_s == @adapter.table(k.options[:class]).default_foreign_key
-                        @adapter.table(k.options[:class]).key.column_name
-                      else
-                        k.value
-                      end
-                  
-                      sub_select = @adapter.select_statement(k.options.merge(v))
-                      normalize(["#{@adapter.table(@loader.klass)[k.value.to_sym].to_sql} IN ?", sub_select], collector)
-                    else                
-                      @has_id = true if k.value == :id
-                      op = case k.type
-                        when :gt then '>'
-                        when :gte then '>='
-                        when :lt then '<'
-                        when :lte then '<='
-                        when :not then v.nil? ? 'IS NOT' : (v.kind_of?(Array) ? 'NOT IN' : '<>')
-                        when :eql then v.nil? ? 'IS' : (v.kind_of?(Array) ? 'IN' : '=')
-                        when :like then 'LIKE'
-                        when :in then 'IN'
-                        else raise ArgumentError.new('Operator type not supported')
-                      end
-                      normalize(["#{@adapter.table(@loader.klass)[k.value.to_sym].to_sql} #{op} ?", v], collector)
-                    end
-                  else
-                    @has_id = true if k == :id
-                    case v
-                    when Array then
-                      normalize(["#{@adapter.table(@loader.klass)[k.to_sym].to_sql} IN ?", v], collector)
-                    when LoadCommand then
-                      normalize(["#{@adapter.table(@loader.klass)[k.to_sym].to_sql} IN ?", v], collector)
-                    else
-                      normalize(["#{@adapter.table(@loader.klass)[k.to_sym].to_sql} = ?", v], collector)
-                    end
-                  end
-                end
-              when Array then
-                return collector if clause.empty?
-                @has_id = true if clause.first =~ /(^|\s|\`)id(\`|\s|\=|\<)/ && !clause[1].kind_of?(LoadCommand)
-                collector << escape(clause)
-              when String then
-                @has_id = true if clause =~ /(^|\s|\`)id(\`|\s|\=|\<)/
-                collector << clause
-              else raise NormalizationError.new(clause)              
-            end
-        
-            return collector
-          end
-      
-          def escape(conditions)
-            clause = conditions.shift
-
-            clause.gsub(/\?/) do |x|
-              # Check if the condition is an in, clause.
-              case conditions.first
-              when Array then
-                '(' << conditions.shift.map { |c| @adapter.quote_value(c) }.join(', ') << ')'
-              when LoadCommand then
-                '(' << conditions.shift.to_sql << ')'
-              else
-                @adapter.quote_value(conditions.shift)
-              end
-            end
-          end
-      
-          def has_id?
-            normalized_conditions
-            @has_id
-          end
-          
-          def normalized_conditions
-        
-            if @normalized_conditions.nil?
-              @normalized_conditions = []
-
-              normalize(implicits, @normalized_conditions)
-          
-              if @loader.options.has_key?(:conditions)
-                normalize(@loader.options[:conditions], @normalized_conditions)
-              end
-          
-            end
-        
-            return @normalized_conditions          
-          end
-          
-          def table
-            @table || (@table = @adapter.table(@loader.klass))
-          end
-          
-          def implicits
-            @implicits || @implicits = begin
-              
-              invalid_keys = false
-              
-              implicit_conditions = @loader.options.reject do |k,v|            
-                standard_key = @adapter.class::FIND_OPTIONS.include?(k)
-                invalid_keys = true if !standard_key && table[k.to_sym].nil?
-                standard_key
-              end
-              
-              if invalid_keys
-                invalid_keys = implicit_conditions.select do |k,v|
-                  table[k.to_sym].nil?
-                end
-                
-                raise "Invalid options: #{invalid_keys.inspect}" unless invalid_keys.nil?
-              else
-                implicit_conditions
-              end
-            end
+            @conditions = parse_conditions(conditions_hash)
           end
       
           def empty?
-            !@loader.options.has_key?(:conditions) && implicits.empty? 
+            @conditions.empty?
           end
       
-          def to_a
-            normalized_conditions
+          def to_parameterized_sql
+            sql = []
+            parameters = []
+            
+            @conditions.each do |condition|
+              case condition
+              when String then sql << condition
+              when Array then
+                  sql << condition.shift
+                  parameters += condition
+              else
+                raise "Unable to parse condition: #{condition.inspect}" if condition
+              end
+            end
+            
+            parameters.unshift("(#{sql.join(') AND (')})")
           end
+          
+          private
+            
+            class ConditionsError < StandardError
+              
+              attr_reader :inner_error
+              
+              def initialize(clause, value, inner_error)
+                @clause, @value, @inner_error = clause, value, inner_error
+              end
+              
+              def message
+                "Conditions (:clause => #{@clause.inspect}, :value => #{@value.inspect}) failed: #{@inner_error}"
+              end
+              
+              def backtrace
+                @inner_error.backtrace
+              end              
+              
+            end
+            
+            def expression_to_sql(clause, value, collector)
+              qualify_columns = @loader.qualify_columns?
+              
+              case clause
+              when Symbol::Operator then
+                operator = case clause.type
+                when :gt then '>'
+                when :gte then '>='
+                when :lt then '<'
+                when :lte then '<='
+                when :not then inequality_operator(value)
+                when :eql then equality_operator(value)
+                when :like then equality_operator(value, 'LIKE')
+                when :in then equality_operator(value)
+                else raise ArgumentError.new('Operator type not supported')
+                end
+                collector << ["#{primary_class_table[clause].to_sql(qualify_columns)} #{operator} ?", value]
+              when Symbol then
+                collector << ["#{primary_class_table[clause].to_sql(qualify_columns)} #{equality_operator(value)} ?", value]
+              when String then
+                collector << [clause, value]
+              when Mappings::Column then
+                collector << ["#{clause.to_sql(qualify_columns)} #{equality_operator(value)} ?", value]
+              else raise "CAN HAS CRASH? #{clause.inspect}"
+              end
+            rescue => e
+              raise ConditionsError.new(clause, value, e)
+            end
+            
+            def equality_operator(value, default = '=')
+              case value
+              when NilClass then 'IS'
+              when Array then 'IN'
+              else default
+              end
+            end
+            
+            def inequality_operator(value, default = '<>')
+              case value
+              when NilClass then 'IS NOT'
+              when Array then 'NOT IN'
+              else default
+              end
+            end
+            
+            def parse_conditions(conditions_hash)
+              collection = []
+              
+              case x = conditions_hash.delete(:conditions)
+              when Array then
+                clause = x.shift
+                expression_to_sql(clause, x, collection)
+              when Hash then
+                x.each_pair do |key,value|
+                  expression_to_sql(key, value, collection)
+                end
+              else
+                raise "Unable to parse conditions: #{x.inspect}" if x
+              end
+              
+              conditions_hash.each_pair do |key,value|
+                expression_to_sql(key, value, collection)
+              end
+              
+              collection              
+            end
+            
+            def primary_class_table
+              @primary_class_table || (@primary_class_table = @loader.send(:primary_class_table))
+            end
         end
     
       end

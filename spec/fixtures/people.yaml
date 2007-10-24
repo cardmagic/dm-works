@@ -1,15 +1,25 @@
 - name: Sam
   age: 29
   occupation: Programmer
+  type: Person
+  street: 1337 Duck Way
+  city: Galveston
+  state: TX
+  zip_code: "75000"
+  notes: 
 - name: Amy
   age: 28
   occupation: Business Analyst Manager
+  type: Person
 - name: Scott
   age: 25
   occupation: Programmer
+  type: SalesPerson
+  commission: 172
 - name: Josh
   age: 23
   occupation: Supervisor
+  type:
 - name: Bob
   age: 29
   occupation: Peon
@@ -17,3 +27,5 @@
   city: Dallas
   state: TX
   zip_code: 75000
+  type: SalesPerson
+  commission: 40

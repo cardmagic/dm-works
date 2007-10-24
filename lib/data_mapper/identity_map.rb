@@ -15,7 +15,7 @@ module DataMapper
     # Pass a Class and a key, and to retrieve an instance.
     # If the instance isn't found, nil is returned.
     def get(klass, key)
-      @cache[klass][key]
+      @cache[mapped_class(klass)][key]
     end
 
     # Pass an instance to add it to the IdentityMap.
@@ -23,13 +23,13 @@ module DataMapper
     def set(instance)
       instance_key = instance.key
       raise "Can't store an instance with a nil key in the IdentityMap" if instance_key.nil?
-        
-      @cache[instance.class][instance_key] = instance
+      
+      @cache[mapped_class(instance.class)][instance_key] = instance
     end
     
     # Remove an instance from the IdentityMap.
     def delete(instance)
-      @cache[instance.class].delete(instance.key)
+      @cache[mapped_class(instance.class)].delete(instance.key)
     end
     
     # Clears a particular set of classes from the IdentityMap.
@@ -37,5 +37,13 @@ module DataMapper
       @cache.delete(klass)
     end
     
+    private
+    def mapped_class(klass)      
+      if klass.superclass == DataMapper::Base
+        klass
+      else
+        mapped_class(klass.superclass)
+      end
+    end
   end
 end

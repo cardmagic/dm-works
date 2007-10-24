@@ -12,7 +12,7 @@ module DataMapper
           end
           
           def <<(association)
-            @set[association.name] = association
+            @set[association.name] = association            
           end
           
           def [](name)
