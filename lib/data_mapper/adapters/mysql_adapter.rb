@@ -14,7 +14,16 @@ module DataMapper
     
     class MysqlAdapter < DataObjectAdapter
       def create_connection
-        conn = DataObject::Mysql::Connection.new("socket=/tmp/mysql.sock user=root dbname=data_mapper_1")
+        
+        connection_string = ""
+        builder = lambda { |k,v| connection_string << "#{k}=#{@configuration.send(v)}" if @configuration.send(v) }
+        
+        builder['host', :host]
+        builder['user', :username]
+        builder['password', :password]
+        builder['dbname', :database]
+        
+        conn = DataObject::Mysql::Connection.new(connection_string)
         conn.open
         cmd = conn.create_command("SET NAMES UTF8")
         cmd.execute_non_query
