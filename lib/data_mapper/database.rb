@@ -176,7 +176,7 @@ module DataMapper
     
     attr_reader :name, :adapter
     attr_writer :single_threaded
-    attr_accessor :host, :database, :schema_search_path, :username, :password, :log_stream, :log_level, :index_path
+    attr_accessor :host, :database, :schema_search_path, :username, :password, :log_stream, :log_level, :index_path, :socket
     
     # Returns true or false
     #

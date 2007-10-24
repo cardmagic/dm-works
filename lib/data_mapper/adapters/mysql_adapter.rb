@@ -16,7 +16,7 @@ module DataMapper
       def create_connection
         
         connection_string = ""
-        builder = lambda { |k,v| connection_string << "#{k}=#{@configuration.send(v)}" if @configuration.send(v) }
+        builder = lambda { |k,v| connection_string << "#{k}=#{@configuration.send(v)} " unless @configuration.send(v).blank? }
         
         builder['host', :host]
         builder['user', :username]
@@ -24,7 +24,7 @@ module DataMapper
         builder['dbname', :database]
         builder['socket', :socket]
         
-        conn = DataObject::Mysql::Connection.new(connection_string)
+        conn = DataObject::Mysql::Connection.new(connection_string.strip)
         conn.open
         cmd = conn.create_command("SET NAMES UTF8")
         cmd.execute_non_query
