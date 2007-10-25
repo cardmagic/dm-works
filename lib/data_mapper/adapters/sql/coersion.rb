@@ -11,6 +11,9 @@ module DataMapper
       # it.
       module Coersion
         
+        class CoersionError < StandardError
+        end
+        
         TRUE_ALIASES = ['true'.freeze, 'TRUE'.freeze, '1'.freeze]
         FALSE_ALIASES = [nil, '0'.freeze]
         
@@ -69,7 +72,18 @@ module DataMapper
             when DateTime then raw_value
             when Date then DateTime.new(raw_value)
             when String then DateTime::parse(raw_value)
-            else "Can't type-cast #{raw_value.inspect} to a datetime"
+            else raise CoersionError.new("Can't type-cast #{raw_value.inspect} to a datetime")
+          end
+        end
+        
+        def type_cast_date(raw_value)
+          return nil if raw_value.blank?
+          
+          case raw_value
+            when Date then raw_value
+            when DateTime, Time then Date::civil(raw_value.year, raw_value.month, raw_value.day)
+            when String then Date::parse(raw_value)
+            else raise CoersionError.new("Can't type-cast #{raw_value.inspect} to a date")
           end
         end
         

@@ -22,4 +22,13 @@ describe DataMapper::Adapters::Sql::Coersion do
     bob.date_of_birth.should eql(bob2.date_of_birth)
   end
   
+  it 'should cast to a Date' do
+    target = Date.civil(2001, 1, 1)
+    
+    @coersive.type_cast_date('2001-1-1').should eql(target)
+    @coersive.type_cast_date(target.dup).should eql(target)
+    @coersive.type_cast_date(DateTime::parse('2001-1-1')).should eql(target)
+    @coersive.type_cast_date(Time::parse('2001-1-1')).should eql(target)
+  end
+  
 end
