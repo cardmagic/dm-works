@@ -1,7 +1,7 @@
 describe "Conversion to YAML" do
   # check each model to see if the conversion *.to_yaml works.
   Dir[File.dirname(__FILE__) + "/fixtures/*.yaml"].each do |path|
-    
+
     name = File::basename(path).sub(/\.yaml$/, '')
     klass = Kernel::const_get(Inflector.classify(Inflector.singularize(name)))
     

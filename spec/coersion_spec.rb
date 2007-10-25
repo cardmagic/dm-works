@@ -12,4 +12,14 @@ describe DataMapper::Adapters::Sql::Coersion do
     @coersive.type_cast_decimal(7.2).should == target
   end
   
+  it 'should store and load a date' do
+    dob = Date::today
+    bob = Person.create(:name => 'DateCoersionTest', :date_of_birth => dob)
+    
+    bob2 = Person[:name => 'DateCoersionTest']
+    
+    bob.date_of_birth.should eql(dob)
+    bob.date_of_birth.should eql(bob2.date_of_birth)
+  end
+  
 end

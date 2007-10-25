@@ -4,6 +4,7 @@ class Person < DataMapper::Base
   property :occupation, :string
   property :type, :class
   property :notes, :text
+  property :date_of_birth, :datetime
   
   embed :address do
     property :street, :string
