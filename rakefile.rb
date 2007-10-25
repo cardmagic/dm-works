@@ -35,7 +35,7 @@ namespace :dm do
 
 end
 
-PACKAGE_VERSION = '0.1.1'
+PACKAGE_VERSION = '0.2.0'
 
 PACKAGE_FILES = FileList[
   'README',
@@ -50,15 +50,19 @@ PACKAGE_FILES = FileList[
 
 PROJECT = 'datamapper'
 
+task :ls do
+  p PACKAGE_FILES.reject { |path| path =~ /(^spec|\/spec|\/swig\_)/ }.sort
+end
+
 desc "Generate Documentation"
 rd = Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_dir = 'doc'
   rdoc.title = "DataMapper -- An Object/Relational Mapper for Ruby"
   rdoc.options << '--line-numbers' << '--inline-source' << '--main' << 'README'
-  rdoc.rdoc_files.include(PACKAGE_FILES.reject { |path| path =~ /^(spec|\w+\.rb)/ })
+  rdoc.rdoc_files.include(PACKAGE_FILES.reject { |path| path =~ /(^spec|\/spec|\/swig\_)/ })
 end
 
-gem_spec = Gem::Specification.new do |s| 
+gem_spec = Gem::Specification.new do |s|
   s.platform = Gem::Platform::RUBY 
   s.name = PROJECT 
   s.summary = "An Object/Relational Mapper for Ruby"
@@ -79,7 +83,7 @@ gem_spec = Gem::Specification.new do |s|
 
   s.has_rdoc = true 
   s.rdoc_options << '--line-numbers' << '--inline-source' << '--main' << 'README' 
-  s.extra_rdoc_files = rd.rdoc_files.reject { |path| path =~ /\.rb$/ }.to_a 
+  s.extra_rdoc_files = PACKAGE_FILES.reject { |path| path =~ /(^spec|\/spec|\/swig\_)/ }.to_a 
 end
 
 Rake::GemPackageTask.new(gem_spec) do |p|
