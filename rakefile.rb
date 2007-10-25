@@ -66,7 +66,7 @@ gem_spec = Gem::Specification.new do |s|
   s.platform = Gem::Platform::RUBY 
   s.name = PROJECT 
   s.summary = "An Object/Relational Mapper for Ruby"
-  s.description = "It's ActiveRecord, but Faster, Better, Simpler."
+  s.description = "Faster, Better, Simpler."
   s.version = PACKAGE_VERSION 
  
   s.authors = 'Sam Smoot'
