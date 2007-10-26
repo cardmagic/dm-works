@@ -19,7 +19,7 @@ describe DataMapper::Adapters::Sql::Coersion do
     bob2 = Person[:name => 'DateCoersionTest']
     
     bob.date_of_birth.should eql(dob)
-    bob.date_of_birth.should eql(bob2.date_of_birth)
+    bob2.date_of_birth.should eql(dob)
   end
   
   it 'should cast to a Date' do
