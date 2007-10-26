@@ -17,9 +17,8 @@ module DataMapper
             @klass_or_name = klass_or_name
             
             @adapter = adapter
-            @columns = []
-            @columns_hash = Hash.new { |h,k| h[k] = @columns.find { |c| c.name == k } }
-            @columns_by_column_name = Hash.new { |h,k| h[k.to_s] = @columns.find { |c| c.column_name == k.to_s } }
+            @columns = SortedSet.new
+            @columns_hash = Hash.new { |h,k| h[k] = columns.find { |c| c.name == k } }
             
             @associations = AssociationsSet.new
             
@@ -65,40 +64,36 @@ module DataMapper
           end
       
           def key
-            if @key.nil?
-              key_column = @columns.find { |c| c.key? }
-              @key = if key_column.nil?
-                column = add_column(:id, :integer, :key => true)
+            @key || begin
+              @key = @columns.find { |column| column.key? }
+              
+              if @key.nil?
+                @key = add_column(:id, :integer, :key => true, :ordinal => -1)
                 @klass.send(:attr_reader, :id) unless @klass.methods.include?(:id)
-                column
-              else
-                key_column
               end
+              
+              @key
             end
-          
-            @key
           end
       
           def add_column(column_name, type, options)
-            column = @columns.find { |c| c.name == column_name.to_sym }
-        
-            if column.nil?
-              reset_derived_columns!
-              column = @adapter.class::Mappings::Column.new(@adapter, self, column_name, type, options)
-              @columns.send(column_name == :id ? :unshift : :push, column)
-              @multi_class = true if column_name == :type
+
+            column_ordinal = if options.is_a?(Hash) && options.has_key?(:ordinal)
+              options.delete(:ordinal)
+            else
+              @columns.size
             end
+            
+            column = @adapter.class::Mappings::Column.new(@adapter, self, column_name, type, column_ordinal, options)
+            @columns << column
+            
+            @multi_class = true if column_name == :type
         
             return column
           end
       
           def [](column_name)
-            return key if column_name == :id
-            @columns_hash[column_name.kind_of?(Symbol) ? column_name : column_name.to_sym]
-          end
-      
-          def find_by_column_name(column_name)
-            @columns_by_column_name[column_name.kind_of?(String) ? column_name : column_name.to_s]
+            @columns_hash[column_name.to_sym]
           end
       
           def name
@@ -155,13 +150,6 @@ module DataMapper
               to_sql,
               @columns.inspect
             ]
-          end
-      
-          private
-          def reset_derived_columns!
-            @columns_hash.clear
-            @columns_by_column_name.clear
-            @key = nil
           end
       
         end

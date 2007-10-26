@@ -150,7 +150,12 @@ module DataMapper
                 
                 # Locate the column for the left-key.
                 unless left_key_index
-                  left_key_index = columns.index(association.left_foreign_key)
+                  columns.each_with_index do |column, index|
+                    if column.name == association.left_foreign_key.name
+                      left_key_index = index
+                      break
+                    end
+                  end
                 end
                 
                 if instance.kind_of?(association_constant)

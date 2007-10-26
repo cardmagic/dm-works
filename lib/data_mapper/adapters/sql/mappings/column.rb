@@ -9,10 +9,11 @@ module DataMapper
     
           attr_accessor :table, :name, :type, :options
     
-          def initialize(adapter, table, name, type, options = {})
+          def initialize(adapter, table, name, type, ordinal, options = {})
             @adapter = adapter
             @table = table
             @name, @type, @options = name.to_sym, type, options
+            @ordinal = ordinal
             
             @key = (@options[:key] == true)
             @nullable = @options.has_key?(:nullable) ? @options[:nullable] : !@key
@@ -25,6 +26,10 @@ module DataMapper
                 @adapter.type_cast_#{type}(value)
               end
             EOS
+          end
+          
+          def ordinal
+            @ordinal
           end
     
           def lazy=(value)
@@ -119,6 +124,18 @@ module DataMapper
         
               @to_long_form
             end
+          end
+          
+          def <=>(other)
+            ordinal <=> other.ordinal
+          end
+          
+          def hash
+            name.hash
+          end
+          
+          def eql?(other)
+            name == other.name
           end
           
           private
