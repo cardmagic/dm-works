@@ -95,3 +95,6 @@
 * Session renamed to Context
 * Most command implementations moved to methods in SqlAdapter
 * Removed UnitOfWork module, instead moving a slightly refactored implementation into Base
+
+-- 0.2.1
+* Columns stored in SortedSet
