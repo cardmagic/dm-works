@@ -1,13 +1,45 @@
+require 'rexml/document'
+
 module DataMapper
   module Support
     module Serialization
       
-      def to_yaml
-        document = {}
-        attributes.each_pair { |k,v| document[k.to_s] = v }
-        document.to_yaml
+      def to_yaml(opts = {})
+        
+        YAML::quick_emit( object_id, opts ) do |out|
+          out.map(nil, to_yaml_style ) do |map|
+            session.table(self).columns.each do |column|
+              map.add(column.to_s, send(column.name))
+            end
+          end
+        end
+        
       end
       
+      def to_xml
+        doc = REXML::Document.new
+        
+        table = session.table(self.class)
+        root = doc.add_element(Inflector.underscore(self.class.name))
+        
+        key_attribute = root.attributes << REXML::Attribute.new(table.key.to_s, key)
+        
+        # Single-quoted attributes are ugly. :p
+        # NOTE: I don't want to break existing REXML specs for everyone, so I'm
+        # overwriting REXML::Attribute#to_string just for this instance.
+        def key_attribute.to_string
+          %Q[#@expanded_name="#{to_s().gsub(/"/, '&quot;')}"] 
+        end
+        
+        table.columns.each do |column|
+          next if column.key?
+          value = send(column.name)
+          node = root.add_element(column.to_s)
+          node << REXML::Text.new(value.to_s) unless value.nil?
+        end
+        
+        doc.to_s
+      end
     end
   end # module Support
 end # module DataMapper

@@ -26,8 +26,30 @@ module DataMapper
       #     FROM users
       #   QUERY
       #   => "SELECT name FROM users"
-      def compress_lines
-        gsub(/\s+/, ' ').strip
+      def compress_lines(spaced = true)
+        split($/).map { |line| line.strip }.join(spaced ? ' ' : '')
+      end
+      
+      def margin(indicator = nil)
+        target = dup
+        lines = target.split($/)
+        
+        if indicator.nil?
+          min_margin = nil
+          lines.each do |line|
+            if line =~ /(\s+)/ && (min_margin.nil? || $1.size < min_margin)
+              min_margin = $1.size
+            end
+          end
+
+          lines.map do |line|
+            line.sub(/^\s{#{min_margin}}/, '')
+          end.join($/)
+        else
+          lines.map do |line|
+            line.sub(/^.*?#{"\\" + indicator}/, '')
+          end.join($/)
+        end
       end
       
     end # module String
