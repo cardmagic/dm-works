@@ -19,7 +19,7 @@ namespace :dm do
   
   desc "Run specifications"
   Spec::Rake::SpecTask.new('spec') do |t|
-    t.spec_opts = [ '-rspec/spec_helper' ]
+    t.spec_opts = ["-rspec/spec_helper", "--format", "specdoc", "--colour"]
     t.spec_files = FileList[(ENV['FILES'] || 'spec/**/*_spec.rb')]
   end
 
