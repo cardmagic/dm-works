@@ -64,6 +64,10 @@ describe DataMapper::Associations::HasManyAssociation do
     @zoo.destroy!
   end
   
+  it "should display correctly when inspected" do
+    Zoo.first(:name => 'Dallas').exhibits.inspect.should match(/\#\<Exhibit\:0x.{7}/)
+  end
+  
   it 'should lazily-load the association when Enumerable methods are called' do
     database do |db|
       san_diego = Zoo[:name => 'San Diego']
