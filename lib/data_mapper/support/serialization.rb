@@ -1,5 +1,11 @@
 require 'rexml/document'
 
+begin
+  require 'json/ext'
+rescue LoadError
+  require 'json/pure'
+end
+
 module DataMapper
   module Support
     module Serialization
@@ -39,6 +45,19 @@ module DataMapper
         end
         
         doc.to_s
+      end
+      
+      def to_json(*a)
+        table = session.table(self.class)
+        
+        result = '{ '
+        
+        result << table.columns.map do |column|
+          "#{column.name.to_json}: #{send(column.name).to_json(*a)}"
+        end.join(', ')
+        
+        result << ' }'
+        result
       end
     end
   end # module Support

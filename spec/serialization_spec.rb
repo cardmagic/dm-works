@@ -32,4 +32,25 @@ describe DataMapper::Support::Serialization do
     EOS
   end
   
+  it "should serialize to JSON" do
+    
+    Animal.first(:name => 'Frog').to_json.should == <<-EOS.compress_lines
+      {
+        "id": 1,
+        "name": "Frog",
+        "notes": "I am a Frog!"
+      }
+    EOS
+    
+    san_diego_zoo = Zoo.first(:name => 'San Diego')
+    san_diego_zoo.to_json.should == <<-EOS.compress_lines
+      {
+        "id": 2,
+        "name": "San Diego",
+        "notes": null,
+        "updated_at": #{san_diego_zoo.updated_at.to_json}
+      }
+    EOS
+  end
+  
 end
