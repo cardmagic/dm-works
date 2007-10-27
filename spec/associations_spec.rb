@@ -64,6 +64,12 @@ describe DataMapper::Associations::HasManyAssociation do
     @zoo.destroy!
   end
   
+  it "should return an empty Enumerable for new objects" do
+    project = Project.new
+    project.sections.should be_a_kind_of(Enumerable)
+    project.sections.should be_empty
+  end
+  
   it "should display correctly when inspected" do
     Zoo.first(:name => 'Dallas').exhibits.inspect.should match(/\#\<Exhibit\:0x.{7}/)
   end
