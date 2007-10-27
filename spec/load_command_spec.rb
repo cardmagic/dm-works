@@ -161,6 +161,15 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
      Zoo.create(:name => 'Danish Vowels: Smøøt!')
      Zoo.first(:name.like => '%Smøøt%').should be_a_kind_of(Zoo)
    end
+   
+   it "should destructively reload the loaded attributes of an object" do
+     zoo = Zoo.first(:name => 'Dallas')
+     zoo.name.should eql('Dallas')
+     zoo.name = 'bob'
+     zoo.name.should eql('bob')
+     zoo.reload!
+     zoo.name.should eql('Dallas')
+   end
 end
 
 =begin
