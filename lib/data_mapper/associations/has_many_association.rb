@@ -109,7 +109,7 @@ module DataMapper
         end # def items
         
         def inspect
-          @entries.inspect
+          entries.inspect
         end
       end
 
