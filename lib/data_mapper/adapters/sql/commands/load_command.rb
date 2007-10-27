@@ -91,6 +91,7 @@ module DataMapper
             end
             
             results += @loaders[@primary_class].loaded_set
+            
             return results
           end
           
