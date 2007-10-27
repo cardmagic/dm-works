@@ -12,7 +12,7 @@ module DataMapper
       end
       
       def reload!
-        session.first(self.class, key, :select => session.mappings[self.class].columns.map(&:name), :reload => true)
+        session.first(self.class, key, :select => original_hashes.keys, :reload => true)
       end
       
       def reload
