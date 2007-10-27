@@ -170,6 +170,10 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
      zoo.reload!
      zoo.name.should eql('Dallas')
    end
+   
+   it "should return nil when finding by id, and the id is not present and/or invalid" do
+     Zoo.find(nil).should be_nil
+   end
 end
 
 =begin

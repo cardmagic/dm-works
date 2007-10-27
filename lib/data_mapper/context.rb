@@ -37,7 +37,7 @@ module DataMapper
       
       options.merge!(b.to_hash) if block_given?
       
-      @adapter.load(self, klass, options)
+      @adapter.load(self, klass, options).first
     end
     
     def all(klass, options = {})

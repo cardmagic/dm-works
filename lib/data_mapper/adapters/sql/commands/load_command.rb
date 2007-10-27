@@ -75,7 +75,7 @@ module DataMapper
             unless reload? || @instance_id.blank? || @instance_id.is_a?(Array)
               # If the id is for only a single record, attempt to find it.
               if instance = @session.identity_map.get(@primary_class, @instance_id)
-                return instance
+                return [instance]
               end
             end
             
@@ -91,12 +91,7 @@ module DataMapper
             end
             
             results += @loaders[@primary_class].loaded_set
-            
-            if @limit == 1 || (@instance_id && !@instance_id.is_a?(Array))
-              results.first
-            else
-              results
-            end
+            return results
           end
           
           def load(reader)          
