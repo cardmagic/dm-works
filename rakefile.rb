@@ -48,10 +48,14 @@ PACKAGE_FILES = FileList[
   'plugins/**/*'
 ].to_a
 
+DOCUMENTED_FILES = PACKAGE_FILES.reject do |path|
+  FileTest.directory?(path) || path =~ /(^spec|\/spec|\/swig\_)/
+end
+
 PROJECT = 'datamapper'
 
 task :ls do
-  p PACKAGE_FILES.reject { |path| path =~ /(^spec|\/spec|\/swig\_)/ }.sort
+  p DOCUMENTED_FILES
 end
 
 desc "Generate Documentation"
@@ -59,7 +63,7 @@ rd = Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_dir = 'doc'
   rdoc.title = "DataMapper -- An Object/Relational Mapper for Ruby"
   rdoc.options << '--line-numbers' << '--inline-source' << '--main' << 'README'
-  rdoc.rdoc_files.include(PACKAGE_FILES.reject { |path| path =~ /(^spec|\/spec|\/swig\_)/ })
+  rdoc.rdoc_files.include(*DOCUMENTED_FILES)
 end
 
 gem_spec = Gem::Specification.new do |s|
@@ -82,8 +86,8 @@ gem_spec = Gem::Specification.new do |s|
   s.add_dependency('fastthread')
 
   s.has_rdoc = true 
-  s.rdoc_options << '--line-numbers' << '--inline-source' << '--main' << 'README' 
-  s.extra_rdoc_files = PACKAGE_FILES.reject { |path| path =~ /(^spec|\/spec|\/swig\_)/ }.to_a 
+  s.rdoc_options << '--line-numbers' << '--inline-source' << '--main' << 'README'
+  s.extra_rdoc_files = DOCUMENTED_FILES
 end
 
 Rake::GemPackageTask.new(gem_spec) do |p|
