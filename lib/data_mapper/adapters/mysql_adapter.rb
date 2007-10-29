@@ -24,6 +24,8 @@ module DataMapper
         builder['dbname', :database]
         builder['socket', :socket]
         
+        log.debug { connection_string.strip }
+        
         conn = DataObject::Mysql::Connection.new(connection_string.strip)
         conn.open
         cmd = conn.create_command("SET NAMES UTF8")
