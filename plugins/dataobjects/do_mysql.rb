@@ -164,9 +164,7 @@ module DataObject
           else
             val
         end
-      end
-      
-      
+      end      
     end
     
     class Command < DataObject::Command
