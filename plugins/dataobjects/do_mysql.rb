@@ -9,10 +9,22 @@ module DataObject
     QUOTE_COLUMN = "`"
     
     class Connection < DataObject::Connection
+      
+      def self.conns
+        @conns
+      end
+      
+      def self.conns=(val)
+        @conns = val
+      end
+      
+      self.conns = 0
+      
       attr_reader :db
       
       def initialize(connection_string)
-        @open_readers = []
+        @num = (self.class.conns += 1)
+        
         @state = STATE_CLOSED
         @connection_string = connection_string
         opts = connection_string.split(" ")
@@ -51,28 +63,18 @@ module DataObject
         Command.new(self, text)
       end
       
-      def open_readers
-        @open_readers
-      end
-      
     end
     
     class Reader < DataObject::Reader
-    
-      attr_accessor :command
       
-      def initialize(connection, command, reader)
-        @connection = connection
-        @command = command
-        @connection.open_readers << self
-        
+      def initialize(db, reader)        
         @reader = reader
         unless @reader
-          if Mysql_c.mysql_field_count(connection.db) == 0
-            @records_affected = Mysql_c.mysql_affected_rows(connection.db)
+          if Mysql_c.mysql_field_count(db) == 0
+            @records_affected = Mysql_c.mysql_affected_rows(db)
             close
           else
-            raise UnknownError, "An unknown error has occured while trying to process a MySQL query.\n#{Mysql_c.mysql_error(connection.db)}"
+            raise UnknownError, "An unknown error has occured while trying to process a MySQL query.\n#{Mysql_c.mysql_error(db)}"
           end
         else
           @field_count = Mysql_c.mysql_num_fields(@reader)
@@ -80,24 +82,15 @@ module DataObject
           self.next
           fields = Mysql_c.mysql_fetch_fields(@reader)
           @native_fields = fields
-          raise UnknownError, "An unknown error has occured while trying to process a MySQL query. There were no fields in the resultset\n#{Mysql_c.mysql_error(connection.db)}" unless fields
+          raise UnknownError, "An unknown error has occured while trying to process a MySQL query. There were no fields in the resultset\n#{Mysql_c.mysql_error(db)}" unless fields
           @fields = fields.map {|field| field.name}
           @rows = Mysql_c.mysql_num_rows(@reader)
           @has_rows = @rows > 0
         end
       end
       
-      def close
-        @connection.open_readers.delete(self)
-        if @command.text == "SELECT `id`, `name`, `updated_at` FROM `zoos` WHERE (`id` IS NULL)"
-          STDERR.puts('*' * 70)
-          STDERR.puts(@state, @reader)
-          STDERR.puts(@fields)
-          STDERR.puts(@rows)
-        end
+      def real_close
         Mysql_c.mysql_free_result(@reader)
-        @state = STATE_CLOSED
-        true
       end
       
       def name(col)
@@ -120,15 +113,10 @@ module DataObject
         typecast(@row[idx], idx)
       end
       
-      def next
-        super
-        @row = Mysql_c.mysql_fetch_row(@reader)
-        close if @row.nil?
-        @row ? true : nil
-      end
-      
-      def inspect
-        "#<Reader @text=#{@command.text.inspect}>"
+      def each
+        while(@row = Mysql_c.mysql_fetch_row(@reader)) do
+          yield
+        end
       end
       
       protected
@@ -173,9 +161,11 @@ module DataObject
         super
         result = Mysql_c.mysql_query(@connection.db, @text)
         # TODO: Real Error
-        raise QueryError, "Your query failed.\n#{Mysql_c.mysql_error(@connection.db)}\n#{@text}" unless result == 0 
-        reader = Mysql_c.mysql_store_result(@connection.db)
-        Reader.new(@connection, self, reader)
+        raise QueryError, "Your query failed.\n#{Mysql_c.mysql_error(@connection.db)}\n#{@text}" unless result == 0
+        reader = Reader.new(@connection.db, Mysql_c.mysql_store_result(@connection.db))
+        result = yield(reader)
+        reader.close
+        result
       end
       
       def execute_non_query

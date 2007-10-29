@@ -69,10 +69,8 @@ module DataObject
         end
       end
       
-      def close
+      def real_close
         Sqlite3_c.sqlite3_finalize(@reader)
-        @state = STATE_CLOSED
-        true
       end
       
       def name(idx)
@@ -102,13 +100,12 @@ module DataObject
         end
       end
       
-      def next
-        result = Sqlite3_c.sqlite3_step(@reader)
-        unless result == Sqlite3_c::SQLITE_ROW
-          close
-          nil
-        else
-          true
+      def each
+        return unless has_rows?
+        
+        while(true) do
+          yield
+          break unless Sqlite3_c.sqlite3_step(@reader) == Sqlite3_c::SQLITE_ROW
         end
       end
       
@@ -118,11 +115,14 @@ module DataObject
       
       def execute_reader
         super
-        result, reader = Sqlite3_c.sqlite3_prepare_v2(@connection.db, @text, @text.size + 1)
+        result, ptr = Sqlite3_c.sqlite3_prepare_v2(@connection.db, @text, @text.size + 1)
         unless result == Sqlite3_c::SQLITE_OK
           raise QueryError, "Your query failed.\n#{Sqlite3_c.sqlite3_errmsg(@connection.db)}\nQUERY: \"#{@text}\""
         else
-          Reader.new(@connection.db, reader)
+          reader = Reader.new(@connection.db, ptr)
+          return_value = yield(reader)
+          reader.close
+          return_value
         end
       end
       

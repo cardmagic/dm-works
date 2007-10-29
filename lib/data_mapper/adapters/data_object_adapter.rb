@@ -70,23 +70,28 @@ module DataMapper
           # Close all open connections, assuming that if one
           # had an error, it's likely due to a lost connection,
           # in which case all connections are likely broken.
-          begin
-            @connection_pool.available_connections.each do |active_connection|
-              active_connection.close
-            end
-          rescue => close_connection_error
-            # An error on closing the connection is almost expected
-            # if the socket is broken.
-            @configuration.log.warn(close_connection_error)
-          end
-          
-          # Reopen fresh connections.
-          @connection_pool.available_connections.clear
+          flush_connections!
           
           raise execution_error
         end
       end
+      
+      # Close any open connections.
+      def flush_connections!
+        begin
+          @connection_pool.available_connections.each do |active_connection|
+            active_connection.close
+          end
+        rescue => close_connection_error
+          # An error on closing the connection is almost expected
+          # if the socket is broken.
+          @configuration.log.warn(close_connection_error)
+        end
         
+        # Reopen fresh connections.
+        @connection_pool.available_connections.clear
+      end
+      
       def transaction(&block)
         raise NotImplementedError.new
       end
@@ -96,22 +101,14 @@ module DataMapper
           connection do |db|
             sql = escape_sql(*args)
             log.debug { sql }
-            result = nil
           
             command = db.create_command(sql)
           
             if block_given?
-              begin
-                reader = command.execute_reader
-                result = yield(reader)
-              ensure
-                reader.close if reader.open?
-              end
+              command.execute_reader { |reader| yield(reader) }
             else
-              result = command.execute_non_query
+              command.execute_non_query
             end
-          
-            result
           end
         end
       rescue => e

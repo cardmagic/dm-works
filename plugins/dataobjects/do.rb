@@ -90,11 +90,7 @@ module DataObject
     attr_reader :field_count, :records_affected, :fields
     
     def each
-      return nil unless has_rows?
-      while(true) do
-        yield
-        break unless self.next
-      end
+      raise NotImplementedError
     end
     
     def has_rows?
@@ -114,6 +110,15 @@ module DataObject
     end
     
     def close
+      each { nil }
+        
+      real_close
+      @reader = nil
+      @state = STATE_CLOSED
+      true
+    end
+    
+    def real_close
       raise NotImplementedError
     end
     
