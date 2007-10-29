@@ -87,7 +87,6 @@ module DataMapper
   class Database
     
     @databases = {}
-    @context = []
     
     # Allows you to access any of the named databases you have already setup.
     #
@@ -101,7 +100,7 @@ module DataMapper
     #
     # This is what gives us thread safety, boys and girls
     def self.context
-      @context
+      Thread::current[:context] || Thread::current[:context] = []
     end
     
     # Setup creates a database and sets all of your properties for that database.
@@ -157,11 +156,10 @@ module DataMapper
     # Creates a new database object with the name you specify, and a default set of options.
     #
     # The default options are as follows:
-    #   {:single_threaded => true, :host => 'localhost', :database => nil, :username => 'root', :password => '', :adapter = nil }
+    #   { :host => 'localhost', :database => nil, :username => 'root', :password => '', :adapter = nil }
     def initialize(name)
       @name = name
       
-      @single_threaded = true
       @adapter = nil
       @host = 'localhost'
       @database = nil
@@ -175,15 +173,7 @@ module DataMapper
     end
     
     attr_reader :name, :adapter
-    attr_writer :single_threaded
     attr_accessor :host, :database, :schema_search_path, :username, :password, :log_stream, :log_level, :index_path, :socket
-    
-    # Returns true or false
-    #
-    # NOTE: single_threaded is true unless explicitly set to false.
-    def single_threaded?
-      @single_threaded
-    end
     
     # Allows us to set the adapter for this database object. It can only be set once, and expects two types of values.
     #

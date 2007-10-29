@@ -6,8 +6,7 @@ adapter = ENV['ADAPTER'] || 'sqlite3'
 
 configuration_options = {
   :adapter => adapter,
-  :database =>  (ENV['DATABASE'] || 'data_mapper_1').dup,
-  :single_threaded => true
+  :database =>  (ENV['DATABASE'] || 'data_mapper_1').dup
 }
 
 # Prepare the log path, and remove the existing spec.log

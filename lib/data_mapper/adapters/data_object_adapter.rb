@@ -50,9 +50,7 @@ module DataMapper
       def initialize(configuration)
         super
 
-        unless @configuration.single_threaded?
-          @connection_pool = Support::ConnectionPool.new { create_connection }
-        end
+        @connection_pool = Support::ConnectionPool.new { create_connection }
       end
       
       def create_connection
@@ -64,11 +62,7 @@ module DataMapper
       def connection
         begin
           # Yield the appropriate connection
-          if @configuration.single_threaded?
-            yield(@active_connection || @active_connection = create_connection)
-          else
-            @connection_pool.hold { |active_connection| yield(active_connection) }
-          end
+          @connection_pool.hold { |active_connection| yield(active_connection) }
         rescue => execution_error
           # Log error on failure
           @configuration.log.error(execution_error)
@@ -77,12 +71,8 @@ module DataMapper
           # had an error, it's likely due to a lost connection,
           # in which case all connections are likely broken.
           begin
-            if @configuration.single_threaded?
-              @active_connection.close
-            else
-              @connection_pool.available_connections.each do |active_connection|
-                active_connection.close
-              end
+            @connection_pool.available_connections.each do |active_connection|
+              active_connection.close
             end
           rescue => close_connection_error
             # An error on closing the connection is almost expected
@@ -91,11 +81,7 @@ module DataMapper
           end
           
           # Reopen fresh connections.
-          if @configuration.single_threaded?
-            @active_connection = create_connection
-          else
-            @connection_pool.available_connections.clear
-          end
+          @connection_pool.available_connections.clear
           
           raise execution_error
         end

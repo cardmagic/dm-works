@@ -228,9 +228,7 @@ module DataMapper
             else
               reader.each do
                 @loaders.each_pair do |klass,loader|
-                  row = reader.current_row
-                  @adapter.log.debug { row }
-                  loader.materialize(row)
+                  loader.materialize(reader.current_row)
                 end
               end
             end
