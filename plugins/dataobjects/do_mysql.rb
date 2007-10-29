@@ -59,8 +59,11 @@ module DataObject
     
     class Reader < DataObject::Reader
     
-      def initialize(connection, reader)
+      attr_accessor :command
+      
+      def initialize(connection, command, reader)
         @connection = connection
+        @command = command
         @connection.open_readers << self
         
         @reader = reader
@@ -86,6 +89,12 @@ module DataObject
       
       def close
         @connection.open_readers.delete(self)
+        if @command.text == "SELECT `id`, `name`, `updated_at` FROM `zoos` WHERE (`id` IS NULL)"
+          STDERR.puts('*' * 70)
+          STDERR.puts(@state, @reader)
+          STDERR.puts(@fields)
+          STDERR.puts(@rows)
+        end
         Mysql_c.mysql_free_result(@reader)
         @state = STATE_CLOSED
         true
@@ -116,6 +125,10 @@ module DataObject
         @row = Mysql_c.mysql_fetch_row(@reader)
         close if @row.nil?
         @row ? true : nil
+      end
+      
+      def inspect
+        "#<Reader @text=#{@command.text.inspect}>"
       end
       
       protected
@@ -164,7 +177,7 @@ module DataObject
         # TODO: Real Error
         raise QueryError, "Your query failed.\n#{Mysql_c.mysql_error(@connection.db)}\n#{@text}" unless result == 0 
         reader = Mysql_c.mysql_store_result(@connection.db)
-        Reader.new(@connection, reader)
+        Reader.new(@connection, self, reader)
       end
       
       def execute_non_query

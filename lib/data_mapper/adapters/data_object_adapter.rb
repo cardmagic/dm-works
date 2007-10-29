@@ -49,7 +49,7 @@ module DataMapper
       
       def initialize(configuration)
         super
-
+        @mutex = Mutex.new        
         @connection_pool = Support::ConnectionPool.new { create_connection }
       end
       
@@ -92,25 +92,27 @@ module DataMapper
       end
       
       def execute(*args)
-        connection do |db|
-          sql = escape_sql(*args)
-          log.debug { sql }
-          result = nil
+        @mutex.synchronize do
+          connection do |db|
+            sql = escape_sql(*args)
+            log.debug { sql }
+            result = nil
           
-          command = db.create_command(sql)
+            command = db.create_command(sql)
           
-          if block_given?
-            begin
-              reader = command.execute_reader
-              result = yield(reader)
-            ensure
-              reader.close if reader.open?
+            if block_given?
+              begin
+                reader = command.execute_reader
+                result = yield(reader)
+              ensure
+                reader.close if reader.open?
+              end
+            else
+              result = command.execute_non_query
             end
-          else
-            result = command.execute_non_query
-          end
           
-          result
+            result
+          end
         end
       rescue => e
         handle_error(e)
