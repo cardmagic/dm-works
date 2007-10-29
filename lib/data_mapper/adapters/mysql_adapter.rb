@@ -33,6 +33,18 @@ module DataMapper
         return conn
       end
       
+      def quote_time(value)
+        "DATE('#{value.xmlschema}')"
+      end
+      
+      def quote_datetime(value)
+        "DATE('#{value}')"
+      end
+      
+      def quote_date(value)
+        "DATE('#{value.strftime("%Y-%m-%d")}')"
+      end
+      
       module Mappings
         
         def to_create_table_sql

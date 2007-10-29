@@ -22,14 +22,14 @@ module DataMapper
           return 'NULL' if value.nil?
 
           case value
-            when Numeric then value.to_s
-            when String then "'#{value.gsub("'", "''")}'"
-            when Class then "'#{value.name}'"
-            when Time then "'#{value.xmlschema}'"
-            when DateTime then "'#{value}'"
-            when Date then "'#{value.strftime("%Y-%m-%d")}'"
-            when TrueClass, FalseClass then value.to_s.upcase
-            when Array then "(#{value.map { |entry| quote_value(entry) }.join(', ')})"
+            when Numeric then quote_numeric(value)
+            when String then quote_string(value)
+            when Class then quote_class(value)
+            when Time then quote_time(value)
+            when DateTime then quote_datetime(value)
+            when Date then quote_date(value)
+            when TrueClass, FalseClass then quote_boolean(value)
+            when Array then quote_array(value)
             else 
               if value.respond_to?(:to_sql)
                 value.to_sql
@@ -37,6 +37,38 @@ module DataMapper
                 raise "Don't know how to quote #{value.inspect}"
               end
           end
+        end
+        
+        def quote_numeric(value)
+          value.to_s
+        end
+        
+        def quote_string(value)
+          "'#{value.gsub("'", "''")}'"
+        end
+        
+        def quote_class(value)
+          "'#{value.name}'"
+        end
+        
+        def quote_time(value)
+          "'#{value.xmlschema}'"
+        end
+        
+        def quote_datetime(value)
+          "'#{value}'"
+        end
+        
+        def quote_date(value)
+          "'#{value.strftime("%Y-%m-%d")}'"
+        end
+        
+        def quote_boolean(value)
+          value.to_s.upcase
+        end
+        
+        def quote_array(value)
+          "(#{value.map { |entry| quote_value(entry) }.join(', ')})"
         end
 
       end # module Quoting
