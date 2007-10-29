@@ -25,8 +25,9 @@ module DataMapper
             when Numeric then value.to_s
             when String then "'#{value.gsub("'", "''")}'"
             when Class then "'#{value.name}'"
+            when Time then "'#{value.xmlschema}'"
+            when DateTime then "'#{value}'"
             when Date then "'#{value.strftime("%Y-%m-%d")}'"
-            when Time, DateTime then "'#{value.utc.strftime("%Y-%m-%d %H:%M:%S")}'"
             when TrueClass, FalseClass then value.to_s.upcase
             when Array then "(#{value.map { |entry| quote_value(entry) }.join(', ')})"
             else 

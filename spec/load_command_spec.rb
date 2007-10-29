@@ -174,6 +174,18 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
    it "should return nil when finding by id, and the id is not present and/or invalid" do
      Zoo.find(nil).should be_nil
    end
+   
+   it "should return in order" do
+     %w(One Two Three).each do |title|
+       Post.create(:title => title)
+     end
+     
+     one = Post.first
+     one.title.should eql('One')
+     two = one.next
+     two.title.should eql('Two')
+     one.next.next.previous.previous.next.previous.next.next.title.should eql('Three')
+   end
 end
 
 =begin
