@@ -176,10 +176,8 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
    end
    
    it "should return in order" do
-     %w(One Two Three).each do |title|
-       Post.create(:title => title)
-     end
-     
+     fixtures(:posts)
+          
      one = Post.first
      one.title.should eql('One')
      two = one.next
