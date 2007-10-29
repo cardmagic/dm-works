@@ -87,15 +87,18 @@ module DataObject
   class Reader
     include Enumerable
     
-    attr_reader :field_count, :has_rows, :records_affected, :fields
-    alias_method :has_rows?, :has_rows
+    attr_reader :field_count, :records_affected, :fields
     
     def each
-      return nil unless has_rows
+      return nil unless has_rows?
       while(true) do
         yield
         break unless self.next
       end
+    end
+    
+    def has_rows?
+      @has_rows
     end
     
     def current_row
@@ -104,6 +107,10 @@ module DataObject
         ret[i] = item(i)
       end
       ret
+    end
+    
+    def open?
+      @state != STATE_CLOSED
     end
     
     def close

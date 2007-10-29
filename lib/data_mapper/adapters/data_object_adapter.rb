@@ -114,9 +114,12 @@ module DataMapper
           command = db.create_command(sql)
           
           if block_given?
-            reader = command.execute_reader
-            result = yield(reader)
-            reader.close
+            begin
+              reader = command.execute_reader
+              result = yield(reader)
+            ensure
+              reader.close if reader.open?
+            end
           else
             result = command.execute_non_query
           end

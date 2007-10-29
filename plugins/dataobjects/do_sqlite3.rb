@@ -70,13 +70,9 @@ module DataObject
       end
       
       def close
-        if @state != STATE_CLOSED
-          Sqlite3_c.sqlite3_finalize(@reader)
-          @state = STATE_CLOSED
-          true
-        else
-          false
-        end
+        Sqlite3_c.sqlite3_finalize(@reader)
+        @state = STATE_CLOSED
+        true
       end
       
       def name(idx)

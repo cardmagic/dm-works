@@ -12,6 +12,7 @@ module DataObject
       attr_reader :db
       
       def initialize(connection_string)
+        @open_readers = []
         @state = STATE_CLOSED
         @connection_string = connection_string
         opts = connection_string.split(" ")
@@ -50,18 +51,25 @@ module DataObject
         Command.new(self, text)
       end
       
+      def open_readers
+        @open_readers
+      end
+      
     end
     
     class Reader < DataObject::Reader
     
-      def initialize(db, reader)
+      def initialize(connection, reader)
+        @connection = connection
+        @connection.open_readers << self
+        
         @reader = reader
         unless @reader
-          if Mysql_c.mysql_field_count(db) == 0
-            @records_affected = Mysql_c.mysql_affected_rows(db)
+          if Mysql_c.mysql_field_count(connection.db) == 0
+            @records_affected = Mysql_c.mysql_affected_rows(connection.db)
             close
           else
-            raise UnknownError, "An unknown error has occured while trying to process a MySQL query.\n#{Mysql_c.mysql_error(db)}"
+            raise UnknownError, "An unknown error has occured while trying to process a MySQL query.\n#{Mysql_c.mysql_error(connection.db)}"
           end
         else
           @field_count = Mysql_c.mysql_num_fields(@reader)
@@ -69,7 +77,7 @@ module DataObject
           self.next
           fields = Mysql_c.mysql_fetch_fields(@reader)
           @native_fields = fields
-          raise UnknownError, "An unknown error has occured while trying to process a MySQL query. There were no fields in the resultset\n#{Mysql_c.mysql_error(db)}" unless fields
+          raise UnknownError, "An unknown error has occured while trying to process a MySQL query. There were no fields in the resultset\n#{Mysql_c.mysql_error(connection.db)}" unless fields
           @fields = fields.map {|field| field.name}
           @rows = Mysql_c.mysql_num_rows(@reader)
           @has_rows = @rows > 0
@@ -77,13 +85,10 @@ module DataObject
       end
       
       def close
-        if @state != STATE_CLOSED
-          Mysql_c.mysql_free_result(@reader)
-          @state = STATE_CLOSED
-          true
-        else
-          false
-        end
+        @connection.open_readers.delete(self)
+        Mysql_c.mysql_free_result(@reader)
+        @state = STATE_CLOSED
+        true
       end
       
       def name(col)
@@ -159,7 +164,7 @@ module DataObject
         # TODO: Real Error
         raise QueryError, "Your query failed.\n#{Mysql_c.mysql_error(@connection.db)}\n#{@text}" unless result == 0 
         reader = Mysql_c.mysql_store_result(@connection.db)
-        Reader.new(@connection.db, reader)
+        Reader.new(@connection, reader)
       end
       
       def execute_non_query
