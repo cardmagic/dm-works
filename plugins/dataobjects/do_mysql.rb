@@ -67,33 +67,6 @@ module DataObject
     
     class Reader < DataObject::Reader
       
-      def initialize(db, reader)
-        @reader = reader
-        result = Sqlite3_c.sqlite3_step(reader)        
-        rows_affected, field_count = Sqlite3_c.sqlite3_changes(db), Sqlite3_c.sqlite3_column_count(reader)
-        if field_count == 0
-          @records_affected = rows_affected
-          close
-        else
-          @field_count = field_count
-          @fields, @field_types = [], []
-          i = 0
-          while(i < @field_count)
-            @field_types.push(Sqlite3_c.sqlite3_column_type(reader, i))
-            @fields.push(Sqlite3_c.sqlite3_column_name(reader, i))
-            i += 1
-          end
-          case result
-          when Sqlite3_c::SQLITE_BUSY, Sqlite3_c::SQLITE_ERROR, Sqlite3_c::SQLITE_MISUSE
-            raise ReaderError, "An error occurred while trying to get the next row\n#{Sqlite3_c.sqlite3_errmsg(db)}"
-          else
-            @has_rows = result == Sqlite3_c::SQLITE_ROW
-            @state = STATE_OPEN
-            close unless @has_rows
-          end
-        end
-      end
-      
       def initialize(db, reader)        
         @reader = reader
         unless @reader
