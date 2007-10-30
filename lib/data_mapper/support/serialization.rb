@@ -15,7 +15,9 @@ module DataMapper
         YAML::quick_emit( object_id, opts ) do |out|
           out.map(nil, to_yaml_style ) do |map|
             session.table(self).columns.each do |column|
-              map.add(column.to_s, send(column.name))
+              lazy_load!(column.name) if column.lazy?
+              value = instance_variable_get(column.instance_variable_name)
+              map.add(column.to_s, value.is_a?(Class) ? value.to_s : value)
             end
           end
         end

@@ -10,6 +10,8 @@ Dir[File.dirname(__FILE__) + '/tasks/*'].each { |t| require(t) }
 
 task :default => 'dm:spec'
 
+task :environment => 'dm:environment'
+
 namespace :dm do
 
   desc "Setup Environment"

@@ -41,4 +41,4 @@ DataMapper::Database.setup(:mock, :adapter => MockAdapter)
 [:default, :mock].each { |name| database(name) { load_models.call } }
 
 # Reset the test database.
-DataMapper::Base.auto_migrate! 
+DataMapper::Base.auto_migrate! unless ENV['AUTO_MIGRATE'] == 'false'

@@ -169,7 +169,13 @@ module DataMapper
       end
       
       def create_table(name)
-        execute(table(name).to_create_table_sql); true
+        table = self.table(name)
+        
+        if table.exists?
+          false
+        else
+          execute(table(name).to_create_table_sql); true
+        end
       end
       
       def delete(session, instance)
