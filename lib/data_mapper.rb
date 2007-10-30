@@ -9,10 +9,11 @@
 
 # This line just let's us require anything in the +lib+ sub-folder
 # without specifying a full path.
+unless defined?(DM_PLUGINS_ROOT)
+  $LOAD_PATH.unshift(File.dirname(__FILE__))
 
-$LOAD_PATH.unshift(File.dirname(__FILE__))
-
-DM_PLUGINS_ROOT = (File.dirname(__FILE__) + '/../plugins')
+  DM_PLUGINS_ROOT = (File.dirname(__FILE__) + '/../plugins')
+end
 
 # Require the basics...
 require 'yaml'
@@ -29,29 +30,28 @@ require 'data_mapper/base'
 # This block of code is for compatibility with Ruby On Rails' or Merb's database.yml
 # file, allowing you to simply require the data_mapper.rb in your
 # Rails application's environment.rb to configure the DataMapper.
-
-application_root, application_environment = *if defined?(MERB_ROOT)
-  [MERB_ROOT, MERB_ENV]
-elsif defined?(RAILS_ROOT)
-  [RAILS_ROOT, RAILS_ENV]
-end
-
 unless defined?(DM_APP_ROOT)
+  application_root, application_environment = *if defined?(MERB_ROOT)
+    [MERB_ROOT, MERB_ENV]
+  elsif defined?(RAILS_ROOT)
+    [RAILS_ROOT, RAILS_ENV]
+  end
+  
   DM_APP_ROOT = application_root || Dir::pwd
-end
 
-if application_root && File.exists?(application_root + '/config/database.yml')
+  if application_root && File.exists?(application_root + '/config/database.yml')
   
-  database_configurations = YAML::load_file(application_root + '/config/database.yml')
-  current_database_config = database_configurations[application_environment] || database_configurations[application_environment.to_sym]
+    database_configurations = YAML::load_file(application_root + '/config/database.yml')
+    current_database_config = database_configurations[application_environment] || database_configurations[application_environment.to_sym]
   
-  default_database_config = {
-    :adapter  => current_database_config['adapter'] || current_database_config[:adapter],
-    :host     => current_database_config['host'] || current_database_config[:host],
-    :database => current_database_config['database'] || current_database_config[:database],
-    :username => current_database_config['username'] || current_database_config[:username],
-    :password => current_database_config['password'] || current_database_config[:password]
-  }
+    default_database_config = {
+      :adapter  => current_database_config['adapter'] || current_database_config[:adapter],
+      :host     => current_database_config['host'] || current_database_config[:host],
+      :database => current_database_config['database'] || current_database_config[:database],
+      :username => current_database_config['username'] || current_database_config[:username],
+      :password => current_database_config['password'] || current_database_config[:password]
+    }
   
-  DataMapper::Database.setup(default_database_config)
+    DataMapper::Database.setup(default_database_config)
+  end
 end
