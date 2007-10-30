@@ -1,8 +1,6 @@
 #!/opt/local/bin/ruby
 
-ENV['LOGGER'] = 'false'
-
-require 'example'
+require 'environment'
 require 'ruby-prof'
 
 # RubyProf, making profiling Ruby pretty since 1899!
@@ -17,9 +15,11 @@ end
 
 profile do
   1000.times do
-    Zoo.all
+    database.query("SELECT * FROM zoos")
   end
 end
+
+puts "Done!"
 
 # require 'benchmark'
 # 

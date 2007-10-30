@@ -89,16 +89,16 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
   end
   
   x.report('ActiveRecord:all') do
-    N.times { ARAnimal.find(:all).each { |a| a.name } }
+    N.times { ARZoo.find(:all).each { |a| a.name } }
   end
   
   x.report('DataMapper:all') do
-    N.times { DMAnimal.all.each { |a| a.name } }
+    N.times { Zoo.all.each { |a| a.name } }
   end
   
   x.report('DataMapper:all:in-session') do
     database do
-      N.times { DMAnimal.all.each { |a| a.name } }
+      N.times { Zoo.all.each { |a| a.name } }
     end
   end
   
@@ -209,6 +209,19 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
   x.report('DataMapper:find_by_sql') do
     N.times do
       database.query("SELECT * FROM zoos").each { |z| z.name }
+    end
+  end
+  
+  x.report('DataMapper:raw-query') do
+    N.times do
+      database.adapter.connection do |db|
+        
+        command = db.create_command("SELECT * FROM zoos")
+      
+        command.execute_reader do |reader|          
+          reader.each { reader.current_row }
+        end
+      end
     end
   end
   

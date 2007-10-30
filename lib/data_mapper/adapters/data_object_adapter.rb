@@ -115,25 +115,32 @@ module DataMapper
         handle_error(e)
       end
       
-      def query(*args)
-        execute(*args) do |reader|
-          fields = reader.fields.map { |field| Inflector.underscore(field).to_sym }
-
-          results = []
-          
-          if fields.size > 1
-            struct = Struct.new(*fields)
+      def query(*args)        
+        connection do |db|
+          sql = escape_sql(*args)
+          log.debug { sql }
+        
+          command = db.create_command(sql)
+        
+          command.execute_reader do |reader|
+            fields = reader.fields.map { |field| Inflector.underscore(field).to_sym }
             
-            reader.each do
-              results << struct.new(*reader.current_row)
+            results = []
+
+            if fields.size > 1
+              struct = Struct.new(*fields)
+              
+              reader.each do
+                results << struct.new(*reader.current_row)
+              end
+            else
+              reader.each do
+                results << reader.item(0)
+              end
             end
-          else
-            reader.each do
-              results << reader.item(0)
-            end
+
+            results            
           end
-          
-          results
         end
       end      
       
