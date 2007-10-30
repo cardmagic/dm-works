@@ -36,7 +36,9 @@ elsif defined?(RAILS_ROOT)
   [RAILS_ROOT, RAILS_ENV]
 end
 
-DM_APP_ROOT = application_root || Dir::pwd
+unless defined?(DM_APP_ROOT)
+  DM_APP_ROOT = application_root || Dir::pwd
+end
 
 if application_root && File.exists?(application_root + '/config/database.yml')
   
