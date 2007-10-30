@@ -174,7 +174,7 @@ module DataMapper
         if table.exists?
           false
         else
-          execute(table(name).to_create_table_sql); true
+          execute(table.to_create_table_sql); true
         end
       end
       
