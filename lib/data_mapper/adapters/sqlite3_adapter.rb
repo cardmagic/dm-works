@@ -1,7 +1,7 @@
 require 'data_mapper/adapters/data_object_adapter'
 begin
   require 'do_sqlite3'
-rescue
+rescue LoadError
   STDERR.puts <<-EOS
 You must install the DataObjects::SQLite3 driver.
   rake dm:install:sqlite3

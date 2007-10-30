@@ -1,7 +1,7 @@
 require 'data_mapper/adapters/data_object_adapter'
 begin
   require 'do_mysql'
-rescue
+rescue LoadError
   STDERR.puts <<-EOS
 You must install the DataObjects::Mysql driver.
   rake dm:install:mysql

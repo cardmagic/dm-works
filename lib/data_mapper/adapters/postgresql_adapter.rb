@@ -1,7 +1,7 @@
 require 'data_mapper/adapters/data_object_adapter'
 begin
   require 'do_postgres'
-rescue
+rescue LoadError
   STDERR.puts <<-EOS
 You must install the DataObjects::PostgreSQL driver.
   rake dm:install:postgresql
