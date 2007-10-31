@@ -32,5 +32,10 @@ describe DataMapper::Adapters::Sql::Coersion do
     @coersive.type_cast_date(DateTime::parse('2001-1-1')).should eql(target)
     @coersive.type_cast_date(Time::parse('2001-1-1')).should eql(target)
   end
-  
+
+  it 'should cast to a String' do
+    target = "\n\ttest\n\n\ntest\n\n"
+
+    @coersive.type_cast_text(target).should == target
+  end
 end

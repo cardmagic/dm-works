@@ -30,6 +30,6 @@ end
 
 class String
   def blank?
-    empty? || self =~ /^\s*$/
+    empty? || self =~ /\A\s*\Z/
   end
 end
