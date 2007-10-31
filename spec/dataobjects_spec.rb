@@ -8,7 +8,7 @@ describe DataObject do
 
       command.execute_reader do |reader|
         reader.has_rows?.should eql(false)
-    
+  
         reader.each do
           reader.current_row.should be_nil
         end

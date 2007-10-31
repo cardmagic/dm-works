@@ -50,7 +50,7 @@ module DataMapper
       def initialize(configuration)
         super
         @mutex = Mutex.new        
-        @connection_pool = Support::ConnectionPool.new { create_connection }
+        @connection_pool = Support::ConnectionPool.new(4) { create_connection }
       end
       
       def create_connection
@@ -60,6 +60,12 @@ module DataMapper
       # Yields an available connection. Flushes the connection-pool and reconnects
       # if the connection returns an error.
       def connection
+        
+        conn = create_connection
+        rv = yield(conn)
+        conn.close
+        return rv
+        
         begin
           # Yield the appropriate connection
           @connection_pool.hold { |active_connection| yield(active_connection) }
