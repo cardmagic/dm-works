@@ -67,13 +67,13 @@ module DataObject
           @field_count = @reader.field_count
           @state = STATE_OPEN
           self.next
-          fields = Mysql_c.mysql_fetch_fields(@reader)
-          @native_fields = fields
           raise UnknownError, "An unknown error has occured while trying to process a MySQL query. There were no fields in the resultset\n#{Mysql_c.mysql_error(db)}" if @reader.field_count == 0
           @native_fields, @fields = [], []
           0.upto(@reader.field_count - 1) do |pos|
-            @native_fields << Mysql_c.mysql_fetch_field_direct(@reader, pos)
-            @fields << Mysql_c.mysql_fetch_field_direct(@reader, pos).name
+            field = Mysql_c.mysql_fetch_field_direct(@reader, pos)
+            @native_fields << field.type
+            @fields << field.name
+            field = nil
           end
           
           @rows = Mysql_c.mysql_num_rows(@reader)
@@ -127,13 +127,9 @@ module DataObject
       def typecast(val, idx)
         return nil if val.nil?
         field = @native_fields[idx]
-        case TYPES[field.type]
+        case TYPES[field]
           when "TINY"
-            if field.max_length == 1
-              val != "0"
-            else
-              val.to_i
-            end
+            val != "0"
           when "BIT"
             val.to_i(2)
           when "SHORT", "LONG", "INT24", "LONGLONG"
