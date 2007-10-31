@@ -9,9 +9,22 @@ module DataObject
     QUOTE_COLUMN = "`"
     
     class Connection < DataObject::Connection
+      
+      def self.conns
+        @conns
+      end
+      
+      def self.conns=(val)
+        @conns = val
+      end
+      
+      self.conns = 0
+      
       attr_reader :db
       
       def initialize(connection_string)
+        @num = (self.class.conns += 1)
+        
         @state = STATE_CLOSED
         @connection_string = connection_string
         opts = connection_string.split(" ")
@@ -52,9 +65,17 @@ module DataObject
       
     end
     
+    class Field
+      attr_reader :name, :type
+      
+      def initialize(ptr)
+        @name, @type = ptr.name.to_s, ptr.type.to_s
+      end
+    end
+    
     class Reader < DataObject::Reader
-
-      def initialize(db, reader)
+      
+      def initialize(db, reader)        
         @reader = reader
         unless @reader
           if Mysql_c.mysql_field_count(db) == 0
@@ -64,31 +85,23 @@ module DataObject
             raise UnknownError, "An unknown error has occured while trying to process a MySQL query.\n#{Mysql_c.mysql_error(db)}"
           end
         else
-          @field_count = @reader.field_count
+          @field_count = Mysql_c.mysql_num_fields(@reader)
           @state = STATE_OPEN
-          self.next
-          raise UnknownError, "An unknown error has occured while trying to process a MySQL query. There were no fields in the resultset\n#{Mysql_c.mysql_error(db)}" if @reader.field_count == 0
-          @native_fields, @fields = [], []
-          0.upto(@reader.field_count - 1) do |pos|
-            field = Mysql_c.mysql_fetch_field_direct(@reader, pos)
-            @native_fields << field.type
-            @fields << field.name
-            field = nil
-          end
           
-          @rows = Mysql_c.mysql_num_rows(@reader)
-          @has_rows = @rows > 0
+          @native_fields = []
+          @field_count.times do |i|
+            @native_fields << Field.new(Mysql_c.mysql_fetch_field_direct(@reader, i))
+          end
+
+          raise UnknownError, "An unknown error has occured while trying to process a MySQL query. There were no fields in the resultset\n#{Mysql_c.mysql_error(db)}" if @native_fields.empty?
+          @fields = @native_fields.map { |field| field.name }
+          
+          @has_rows = !(@row = Mysql_c.mysql_fetch_row(@reader)).nil?
         end
       end
       
-      def close
-        if @state != STATE_CLOSED
-          Mysql_c.mysql_free_result(@reader)
-          @state = STATE_CLOSED
-          true
-        else
-          false
-        end
+      def real_close
+        Mysql_c.mysql_free_result(@reader)
       end
       
       def name(col)
@@ -111,11 +124,13 @@ module DataObject
         typecast(@row[idx], idx)
       end
       
-      def next
-        super
-        @row = Mysql_c.mysql_fetch_row(@reader)
-        close if @row.nil?
-        @row ? true : nil
+      def each
+        return unless has_rows?
+        
+        while(true) do
+          yield
+          break unless @row = Mysql_c.mysql_fetch_row(@reader)
+        end
       end
       
       protected
@@ -127,9 +142,13 @@ module DataObject
       def typecast(val, idx)
         return nil if val.nil?
         field = @native_fields[idx]
-        case TYPES[field]
+        case TYPES[field.type]
           when "TINY"
-            val != "0"
+            if field.max_length == 1
+              val != "0"
+            else
+              val.to_i
+            end
           when "BIT"
             val.to_i(2)
           when "SHORT", "LONG", "INT24", "LONGLONG"
@@ -147,9 +166,7 @@ module DataObject
           else
             val
         end
-      end
-      
-      
+      end      
     end
     
     class Command < DataObject::Command
@@ -160,15 +177,11 @@ module DataObject
         # TODO: Real Error
         raise QueryError, "Your query failed.\n#{Mysql_c.mysql_error(@connection.db)}\n#{@text}" unless result == 0
         reader = Reader.new(@connection.db, Mysql_c.mysql_use_result(@connection.db))
-        if block_given?
-          result = yield(reader)
-          reader.close
-          result
-        else
-          reader
-        end
+        result = yield(reader)
+        reader.close
+        result
       end
-            
+      
       def execute_non_query
         super
         result = Mysql_c.mysql_query(@connection.db, @text)

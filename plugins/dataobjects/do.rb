@@ -108,7 +108,20 @@ module DataObject
     def open?
       @state != STATE_CLOSED
     end
+    
+    def close
+      each { nil }
         
+      real_close
+      @reader = nil
+      @state = STATE_CLOSED
+      true
+    end
+    
+    def real_close
+      raise NotImplementedError
+    end
+    
     # retrieves the Ruby data type for a particular column number
     def data_type_name(col)
       raise ReaderClosed, "You cannot ask for metadata once the reader is closed" if state_closed?      
