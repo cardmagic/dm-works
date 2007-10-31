@@ -85,23 +85,25 @@ module DataObject
             raise UnknownError, "An unknown error has occured while trying to process a MySQL query.\n#{Mysql_c.mysql_error(db)}"
           end
         else
-          @field_count = Mysql_c.mysql_num_fields(@reader)
+          @field_count = @reader.field_count
           @state = STATE_OPEN
           
-          @native_fields = []
-          @field_count.times do |i|
-            @native_fields << Field.new(Mysql_c.mysql_fetch_field_direct(@reader, i))
-          end
+          @native_fields, @fields = Mysql_c.mysql_c_fetch_field_types(@reader, @field_count), Mysql_c.mysql_c_fetch_field_names(@reader, @field_count)
 
           raise UnknownError, "An unknown error has occured while trying to process a MySQL query. There were no fields in the resultset\n#{Mysql_c.mysql_error(db)}" if @native_fields.empty?
-          @fields = @native_fields.map { |field| field.name }
           
-          @has_rows = !(@row = Mysql_c.mysql_fetch_row(@reader)).nil?
+          @has_rows = !(@row = Mysql_c.mysql_c_fetch_row(@reader)).nil?
         end
       end
       
-      def real_close
-        Mysql_c.mysql_free_result(@reader)
+      def close
+        if @state == STATE_OPEN
+          Mysql_c.mysql_free_result(@reader)
+          @state = STATE_CLOSED
+          true
+        else
+          false
+        end
       end
       
       def name(col)
@@ -119,10 +121,21 @@ module DataObject
         @row[idx] == nil
       end
       
+      def current_row
+        @row
+      end
+      
       def item(idx)
         super
         typecast(@row[idx], idx)
       end
+      
+      def next
+        super
+        @row = Mysql_c.mysql_c_fetch_row(@reader)
+        close if @row.nil?
+        @row ? true : nil
+      end      
       
       def each
         return unless has_rows?
@@ -149,13 +162,9 @@ module DataObject
       def typecast(val, idx)
         return nil if val.nil?
         field = @native_fields[idx]
-        case TYPES[field.type]
+        case TYPES[field]
           when "TINY"
-            if field.max_length == 1
-              val != "0"
-            else
-              val.to_i
-            end
+            val != "0"
           when "BIT"
             val.to_i(2)
           when "SHORT", "LONG", "INT24", "LONGLONG"
