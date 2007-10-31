@@ -1,3 +1,5 @@
+require File.dirname(__FILE__) + "/spec_helper"
+
 describe DataMapper::Validations::LengthValidator do
   
   before(:all) do

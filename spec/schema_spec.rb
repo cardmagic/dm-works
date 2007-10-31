@@ -1,3 +1,5 @@
+require File.dirname(__FILE__) + "/spec_helper"
+
 if ENV['ADAPTER'] == 'postgresql' && false
   
   describe DataMapper::Adapters::PostgresqlAdapter::Mappings::Table do

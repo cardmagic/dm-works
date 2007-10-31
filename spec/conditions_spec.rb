@@ -1,3 +1,5 @@
+require File.dirname(__FILE__) + "/spec_helper"
+
 describe DataMapper::Adapters::Sql::Commands::LoadCommand do
   
   def conditions_for(klass, options = {})

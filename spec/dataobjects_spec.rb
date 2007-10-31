@@ -1,3 +1,5 @@
+require File.dirname(__FILE__) + "/spec_helper"
+
 describe DataObject do
   
   it "should return an empty reader" do

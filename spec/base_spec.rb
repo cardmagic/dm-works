@@ -1,3 +1,5 @@
+require File.dirname(__FILE__) + "/spec_helper"
+
 describe DataMapper::Base do
   
   it "attributes method should load all lazy-loaded values" do

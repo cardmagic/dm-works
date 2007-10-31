@@ -1,3 +1,5 @@
+require File.dirname(__FILE__) + "/spec_helper"
+
 describe "Magic Columns" do
   
   it "should update updated_at on save" do

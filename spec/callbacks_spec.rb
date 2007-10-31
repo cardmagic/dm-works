@@ -1,3 +1,5 @@
+require File.dirname(__FILE__) + "/spec_helper"
+
 describe DataMapper::Callbacks do
   
   it "should allow for a callback to be set, then called" do

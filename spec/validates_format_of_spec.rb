@@ -1,3 +1,5 @@
+require File.dirname(__FILE__) + "/spec_helper"
+
 context DataMapper::Validations::FormatValidator do
   
   before(:all) do

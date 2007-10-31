@@ -1,3 +1,5 @@
+require File.dirname(__FILE__) + "/spec_helper"
+
 describe 'Single Table Inheritance' do
   
   before(:all) do

@@ -1,3 +1,5 @@
+require File.dirname(__FILE__) + "/spec_helper"
+
 describe('A query') do
   
   it 'should return a simple Array of primitives' do

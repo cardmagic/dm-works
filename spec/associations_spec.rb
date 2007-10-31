@@ -1,3 +1,5 @@
+require File.dirname(__FILE__) + "/spec_helper"
+
 describe DataMapper::Associations::BelongsToAssociation do
   before(:each) do
     @aviary = Exhibit[:name => 'Monkey Mayhem']

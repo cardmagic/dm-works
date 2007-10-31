@@ -1,3 +1,5 @@
+require File.dirname(__FILE__) + "/spec_helper"
+
 describe 'Legacy mappings' do
   
   it('should allow models to map with custom attribute names') do

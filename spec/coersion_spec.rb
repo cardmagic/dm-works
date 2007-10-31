@@ -1,3 +1,5 @@
+require File.dirname(__FILE__) + "/spec_helper"
+
 describe DataMapper::Adapters::Sql::Coersion do
   
   before(:all) do

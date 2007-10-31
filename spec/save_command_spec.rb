@@ -1,3 +1,5 @@
+require File.dirname(__FILE__) + "/spec_helper"
+
 describe "Save Commands" do
   
   it "should create a new row" do
