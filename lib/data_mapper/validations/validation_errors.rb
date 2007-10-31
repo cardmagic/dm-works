@@ -24,9 +24,12 @@ module DataMapper
       end
     end
     
-    # Are any errors present?
-    def empty?
-      @errors.empty?
+    def on(attribute)
+      @errors[attribute]
+    end
+    
+    def method_missing(meth, *args)
+      @errors.send(meth, *args)
     end
    
   end
