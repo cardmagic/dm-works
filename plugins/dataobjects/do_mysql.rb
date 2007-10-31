@@ -9,22 +9,9 @@ module DataObject
     QUOTE_COLUMN = "`"
     
     class Connection < DataObject::Connection
-      
-      def self.conns
-        @conns
-      end
-      
-      def self.conns=(val)
-        @conns = val
-      end
-      
-      self.conns = 0
-      
       attr_reader :db
       
       def initialize(connection_string)
-        @num = (self.class.conns += 1)
-        
         @state = STATE_CLOSED
         @connection_string = connection_string
         opts = connection_string.split(" ")
@@ -65,17 +52,9 @@ module DataObject
       
     end
     
-    class Field
-      attr_reader :name, :type
-      
-      def initialize(ptr)
-        @name, @type = ptr.name.to_s, ptr.type.to_s
-      end
-    end
-    
     class Reader < DataObject::Reader
-      
-      def initialize(db, reader)        
+
+      def initialize(db, reader)
         @reader = reader
         unless @reader
           if Mysql_c.mysql_field_count(db) == 0
@@ -85,24 +64,31 @@ module DataObject
             raise UnknownError, "An unknown error has occured while trying to process a MySQL query.\n#{Mysql_c.mysql_error(db)}"
           end
         else
-          @field_count = Mysql_c.mysql_num_fields(@reader)
+          @field_count = @reader.field_count
           @state = STATE_OPEN
-          
-          @native_fields = []
-          Mysql_c.mysql_fetch_fields(@reader).each do |ptr|
-            @native_fields << Field.new(ptr)
-            ptr = nil
+          self.next
+          fields = Mysql_c.mysql_fetch_fields(@reader)
+          @native_fields = fields
+          raise UnknownError, "An unknown error has occured while trying to process a MySQL query. There were no fields in the resultset\n#{Mysql_c.mysql_error(db)}" if @reader.field_count == 0
+          @native_fields, @fields = [], []
+          0.upto(@reader.field_count - 1) do |pos|
+            @native_fields << Mysql_c.mysql_fetch_field_direct(@reader, pos)
+            @fields << Mysql_c.mysql_fetch_field_direct(@reader, pos).name
           end
-
-          raise UnknownError, "An unknown error has occured while trying to process a MySQL query. There were no fields in the resultset\n#{Mysql_c.mysql_error(db)}" if @native_fields.empty?
-          @fields = @native_fields.map { |field| field.name }
           
-          @has_rows = !(@row = Mysql_c.mysql_fetch_row(@reader)).nil?
+          @rows = Mysql_c.mysql_num_rows(@reader)
+          @has_rows = @rows > 0
         end
       end
       
-      def real_close
-        Mysql_c.mysql_free_result(@reader)
+      def close
+        if @state != STATE_CLOSED
+          Mysql_c.mysql_free_result(@reader)
+          @state = STATE_CLOSED
+          true
+        else
+          false
+        end
       end
       
       def name(col)
@@ -125,13 +111,11 @@ module DataObject
         typecast(@row[idx], idx)
       end
       
-      def each
-        return unless has_rows?
-        
-        while(true) do
-          yield
-          break unless @row = Mysql_c.mysql_fetch_row(@reader)
-        end
+      def next
+        super
+        @row = Mysql_c.mysql_fetch_row(@reader)
+        close if @row.nil?
+        @row ? true : nil
       end
       
       protected
@@ -167,7 +151,9 @@ module DataObject
           else
             val
         end
-      end      
+      end
+      
+      
     end
     
     class Command < DataObject::Command
@@ -176,11 +162,9 @@ module DataObject
         super
         result = Mysql_c.mysql_query(@connection.db, @text)
         # TODO: Real Error
-        raise QueryError, "Your query failed.\n#{Mysql_c.mysql_error(@connection.db)}\n#{@text}" unless result == 0
-        reader = Reader.new(@connection.db, Mysql_c.mysql_use_result(@connection.db))
-        result = yield(reader)
-        reader.close
-        result
+        raise QueryError, "Your query failed.\n#{Mysql_c.mysql_error(@connection.db)}\n#{@text}" unless result == 0 
+        reader = Mysql_c.mysql_store_result(@connection.db)
+        Reader.new(@connection.db, reader)
       end
       
       def execute_non_query
