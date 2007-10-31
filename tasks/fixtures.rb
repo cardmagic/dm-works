@@ -19,7 +19,6 @@ namespace :dm do
       ENV['AUTO_MIGRATE'] = 'false'
       Rake::Task['environment'].invoke
       directory fixtures_path
-      puts DataMapper::Base.subclasses.join("\n")
       DataMapper::Base.subclasses.each do |table|
         puts "Dumping #{table}"
         File.open( "#{fixtures_path}/#{Inflector.underscore(table.to_s)}.yml", "w+") do |file|
