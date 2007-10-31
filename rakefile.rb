@@ -24,7 +24,7 @@ namespace :dm do
     t.spec_opts = ["--format", "specdoc", "--colour"]
     t.spec_files = FileList[(ENV['FILES'] || 'spec/**/*_spec.rb')]
   end
-
+  
   desc "Run comparison with ActiveRecord"
   task :perf do
     load 'performance.rb'
