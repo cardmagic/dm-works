@@ -109,9 +109,7 @@ module DataObject
       @state != STATE_CLOSED
     end
     
-    def close
-      each { nil }
-        
+    def close        
       real_close
       @reader = nil
       @state = STATE_CLOSED

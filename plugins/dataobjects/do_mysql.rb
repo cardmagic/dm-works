@@ -129,8 +129,15 @@ module DataObject
         
         while(true) do
           yield
-          break unless @row = Mysql_c.mysql_fetch_row(@reader)
+          break unless self.next
         end
+      end
+      
+      def next
+        super
+        @row = Mysql_c.mysql_fetch_row(@reader)
+        close if @row.nil?
+        @row ? true : nil
       end
       
       protected
