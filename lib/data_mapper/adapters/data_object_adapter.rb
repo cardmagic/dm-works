@@ -60,12 +60,6 @@ module DataMapper
       # Yields an available connection. Flushes the connection-pool and reconnects
       # if the connection returns an error.
       def connection
-        
-        conn = create_connection
-        rv = yield(conn)
-        conn.close
-        return rv
-        
         begin
           # Yield the appropriate connection
           @connection_pool.hold { |active_connection| yield(active_connection) }

@@ -65,6 +65,14 @@ module DataObject
       
     end
     
+    class Field
+      attr_reader :name, :type
+      
+      def initialize(ptr)
+        @name, @type = ptr.name.to_s, ptr.type.to_s
+      end
+    end
+    
     class Reader < DataObject::Reader
       
       def initialize(db, reader)        
@@ -79,11 +87,15 @@ module DataObject
         else
           @field_count = Mysql_c.mysql_num_fields(@reader)
           @state = STATE_OPEN
-          self.next
-          fields = Mysql_c.mysql_fetch_fields(@reader)
-          @native_fields = fields
-          raise UnknownError, "An unknown error has occured while trying to process a MySQL query. There were no fields in the resultset\n#{Mysql_c.mysql_error(db)}" unless fields
-          @fields = fields.map {|field| field.name }
+          
+          @native_fields = []
+          Mysql_c.mysql_fetch_fields(@reader).each do |ptr|
+            @native_fields << Field.new(ptr)
+            ptr = nil
+          end
+
+          raise UnknownError, "An unknown error has occured while trying to process a MySQL query. There were no fields in the resultset\n#{Mysql_c.mysql_error(db)}" if @native_fields.empty?
+          @fields = @native_fields.map { |field| field.name }
           
           @has_rows = !(@row = Mysql_c.mysql_fetch_row(@reader)).nil?
         end

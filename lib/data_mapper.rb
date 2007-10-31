@@ -38,20 +38,37 @@ unless defined?(DM_APP_ROOT)
   end
   
   DM_APP_ROOT = application_root || Dir::pwd
-
-  if application_root && File.exists?(application_root + '/config/database.yml')
   
+  if application_root && File.exists?(application_root + '/config/database.yml')
+
     database_configurations = YAML::load_file(application_root + '/config/database.yml')
     current_database_config = database_configurations[application_environment] || database_configurations[application_environment.to_sym]
-  
+    
+    config = lambda { |key| current_database_config[entry.to_s] || current_database_config[entry] }
+    
     default_database_config = {
-      :adapter  => current_database_config['adapter'] || current_database_config[:adapter],
-      :host     => current_database_config['host'] || current_database_config[:host],
-      :database => current_database_config['database'] || current_database_config[:database],
-      :username => current_database_config['username'] || current_database_config[:username],
-      :password => current_database_config['password'] || current_database_config[:password]
+      :adapter  => config[:adapter],
+      :host     => config[:host],
+      :database => config[:database],
+      :username => config[:username],
+      :password => config[:password]
     }
   
     DataMapper::Database.setup(default_database_config)
+    
+  elsif application_root && FileTest.directory?(application_root + '/config')
+    
+    %w(development testing production).map do |environment|
+      <<-EOS.margin
+        #{environment}:
+          adapter: mysql
+          username: root
+          password:
+          host: localhost
+          database: #{File.dirname(DM_APP_ROOT).split('/').last}_#{environment}
+      EOS
+    end
+    
+    #File::open(application_root + '/config/database.yml')
   end
 end
