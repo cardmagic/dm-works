@@ -120,9 +120,14 @@ module DataObject
           raise QueryError, "Your query failed.\n#{Sqlite3_c.sqlite3_errmsg(@connection.db)}\nQUERY: \"#{@text}\""
         else
           reader = Reader.new(@connection.db, ptr)
-          return_value = yield(reader)
-          reader.close
-          return_value
+          
+          if block_given?
+            return_value = yield(reader)
+            reader.close
+            return_value
+          else
+            reader
+          end
         end
       end
       

@@ -177,9 +177,13 @@ module DataObject
         # TODO: Real Error
         raise QueryError, "Your query failed.\n#{Mysql_c.mysql_error(@connection.db)}\n#{@text}" unless result == 0
         reader = Reader.new(@connection.db, Mysql_c.mysql_use_result(@connection.db))
-        result = yield(reader)
-        reader.close
-        result
+        if block_given?
+          result = yield(reader)
+          reader.close
+          result
+        else
+          reader
+        end
       end
       
       def execute_non_query
