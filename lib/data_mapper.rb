@@ -44,7 +44,7 @@ unless defined?(DM_APP_ROOT)
     database_configurations = YAML::load_file(application_root + '/config/database.yml')
     current_database_config = database_configurations[application_environment] || database_configurations[application_environment.to_sym]
     
-    config = lambda { |key| current_database_config[entry.to_s] || current_database_config[entry] }
+    config = lambda { |key| current_database_config[key.to_s] || current_database_config[key] }
     
     default_database_config = {
       :adapter  => config[:adapter],

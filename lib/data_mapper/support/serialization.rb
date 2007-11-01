@@ -19,6 +19,9 @@ module DataMapper
               value = instance_variable_get(column.instance_variable_name)
               map.add(column.to_s, value.is_a?(Class) ? value.to_s : value)
             end
+            (self.instance_variable_get("@yaml_added") || []).each do |k,v|
+              map.add(k.to_s, v)
+            end
           end
         end
         
