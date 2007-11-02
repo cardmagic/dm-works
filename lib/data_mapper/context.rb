@@ -35,7 +35,9 @@ module DataMapper
         raise ArgumentError.new('Session#first takes a class, and optional type_or_id and/or options arguments')
       end
       
-      options.merge!(b.to_hash) if block_given?
+      # Account for undesired behaviour in MySQL that returns the
+      # last inserted row when the WHERE clause contains a "#{primary_key} IS NULL".
+      return nil if options.has_key?(:id) && options[:id] == nil
       
       @adapter.load(self, klass, options).first
     end

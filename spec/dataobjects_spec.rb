@@ -18,11 +18,7 @@ describe DataObject do
       command = connection.create_command('SELECT `id`, `name` FROM `zoos` WHERE (`id` IS NULL)')
 
       command.execute_reader do |reader|
-        reader.has_rows?.should eql(false)
-  
-        reader.each do
-          reader.current_row.should be_nil
-        end
+        reader.has_rows?.should eql(ENV['ADAPTER'] == 'mysql')
       end
     end
   end
