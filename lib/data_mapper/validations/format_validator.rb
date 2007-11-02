@@ -8,11 +8,6 @@ module DataMapper
       # Seems to me that all this email garbage belongs somewhere else...  Where's the best
       # place to stick it?
       include DataMapper::Validations::Helpers::Email
-
-      ERROR_MESSAGES = {
-        :invalid => '#{field} is invalid',
-        :invalid_email => '#{value} is not a valid email address'
-      }
             
       FORMATS = {
         :email_address => [lambda { |email_address| email_address =~ DataMapper::Validations::Helpers::Email::RFC2822::EmailAddress }, :invalid_email]
@@ -52,7 +47,12 @@ module DataMapper
           field = Inflector.humanize(@field_name)
           value = target.instance_variable_get("@#{@field_name}")
           
-          error_message = validation_error_message(ERROR_MESSAGES[message_key], nil, binding)        
+          error_message = if message_key == :invalid
+            '%s is invalid'.t(field)
+          else
+            '%s is not a valid email address'.t(value)
+          end
+          
           add_error(target, error_message , @field_name)
         end
         

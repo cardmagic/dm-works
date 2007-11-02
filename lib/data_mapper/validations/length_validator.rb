@@ -3,13 +3,6 @@ module DataMapper
     
     class LengthValidator < GenericValidator
       
-      ERROR_MESSAGES = {
-        :range => '#{field} must be between #{min} and #{max} characters long',
-        :min => '#{field} must be more than #{min} characters long',
-        :max => '#{field} must be less than #{max} characters long',
-        :equals => '#{field} must be #{equal} characters long'
-      }
-      
       def initialize(field_name, options)
         @field_name = field_name
         @options = options
@@ -35,17 +28,25 @@ module DataMapper
         max = @range ? @range.max : @max
         equal = @equal
 
-        error_message = validation_error_message(ERROR_MESSAGES[@validation_method], nil, binding)
+        error_message = nil
         
-        valid = case @validation_method
+        case @validation_method
         when :range then
-          @range.include?(field_value.size)
+          unless valid = @range.include?(field_value.size)
+            error_message = '%s must be between %s and %s characters long'.t(field, min, max)
+          end
         when :min then
-          field_value.size >= min
+          unless valid = field_value.size >= min
+            error_message = '%s must be more than %s characters long'.t(field, min)
+          end
         when :max then
-          field_value.size <= max
+          unless valid = field_value.size <= max
+            error_message = '%s must be less than %s characters long'.t(field, max)
+          end
         when :equals then
-          field_value.size == equal
+          unless valid = field_value.size == equal
+            error_message = '%s must be %s characters long'.t(field, equal)
+          end
         end
         
         add_error(target, error_message, @field_name) unless valid

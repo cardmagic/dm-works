@@ -2,11 +2,7 @@ module DataMapper
   module Validations
     
     class RequiredFieldValidator < GenericValidator
-      
-      ERROR_MESSAGES = {
-        :required => '#{field} must not be blank'
-      }
-      
+
       def initialize(field_name)
         @field_name = field_name
       end
@@ -15,9 +11,7 @@ module DataMapper
         field_value = !target.instance_variable_get("@#{@field_name}").nil?
         return true if field_value
         
-        field = Inflector.humanize(@field_name)
-        
-        error_message = validation_error_message(ERROR_MESSAGES[:required], nil, binding)        
+        error_message = "%s must not be blank".t(Inflector.humanize(@field_name))
         add_error(target, error_message , @field_name)
         
         return false

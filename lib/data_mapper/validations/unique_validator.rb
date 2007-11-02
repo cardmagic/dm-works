@@ -3,20 +3,14 @@ module DataMapper
     
     class UniqueValidator < GenericValidator
       
-      ERROR_MESSAGES = {
-        :unique => '#{field} has already been taken'
-      }
-      
       def initialize(field_name, options = {})
         @options = options
         @field_name = field_name.to_sym
       end
       
       def call(target)
-        field = Inflector.humanize(@field_name)
-
         unless valid?(target)
-          error_message = validation_error_message(ERROR_MESSAGES[:unique], nil, binding)        
+          error_message = '%s has already been taken'.t(Inflector.humanize(@field_name))
           add_error(target, error_message , @field_name)
           return false
         end

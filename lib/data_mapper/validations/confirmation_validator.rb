@@ -13,10 +13,8 @@ module DataMapper
       end
       
       def call(target)
-        field = Inflector.humanize(@field_name)
-
         unless valid?(target)
-          error_message = validation_error_message(ERROR_MESSAGES[:confirmation], nil, binding)        
+          error_message = '%s does not match the confirmation'.t(Inflector.humanize(@field_name))
           add_error(target, error_message , @field_name)
           return false
         end

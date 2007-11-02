@@ -4,7 +4,18 @@ module DataMapper
       
       # I set the constant on the String itself to avoid inheritance chain lookups.
       def self.included(base)
-        base.const_set('EMPTY', ''.freeze)
+        base.extend(ClassMethods)
+      end
+      
+      module ClassMethods
+        # Overwrite this method to provide your own translations.
+        def translate(value)
+          translations[value] || value
+        end
+        
+        def translations
+          @translations || @translations = {}
+        end
       end
       
       def ensure_starts_with(part)
@@ -50,6 +61,15 @@ module DataMapper
             line.sub(/^.*?#{"\\" + indicator}/, '')
           end.join($/)
         end
+      end
+      
+      # Formats String for easy translation. Replaces an arbitrary number of 
+      # values using numeric identifier replacement.
+      # 
+      #   "%s %s %s" % %w(one two three) #=> "one two three"
+      #   "%3$s %2$s %1$s" % %w(one two three) #=> "three two one"
+      def t(*values)
+        self.class::translate(self) % values
       end
       
     end # module String

@@ -80,4 +80,17 @@ describe DataMapper::Validations do
     o.errors.should have(1).full_messages
   end
   
+  it 'should translate error messages' do
+    String::translations["%s must not be blank"] = "%s should not be blank!"
+    
+    beth = Cow.new
+    beth.age = 30
+    
+    beth.should_not be_valid
+    
+    beth.errors.full_messages.should include('Name should not be blank!')
+    
+    String::translations.delete("%s must not be blank")
+  end
+  
 end
