@@ -1,11 +1,23 @@
 require 'mkmf'
+require 'open3'
 
 def config_value(type)
   ENV["MYSQL_#{type.upcase}"] || mysql_config(type)
 end
 
 def mysql_config(type)
-  IO.popen("mysql_config5 --#{type}").readline.chomp[2..-1] rescue IO.popen("mysql_config --#{type}").readline.chomp[2..-1] rescue nil
+
+  sin, sout, serr = Open3.popen3("mysql_config5 --#{type}")
+  
+  unless serr.read.empty?
+    sin, sout, serr = Open3.popen3("mysql_config --#{type}")
+  end
+  
+  unless serr.read.empty?
+    raise "mysql_config not found"
+  end
+  
+  sout.readline.chomp[2..-1]
 end
 
 $inc, $lib = dir_config('mysql', config_value('include'), config_value('libs_r')) 
