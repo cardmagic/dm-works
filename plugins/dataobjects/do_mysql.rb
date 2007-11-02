@@ -146,13 +146,6 @@ module DataObject
         end
       end
       
-      def next
-        super
-        @row = Mysql_c.mysql_fetch_row(@reader)
-        close if @row.nil?
-        @row ? true : nil
-      end
-      
       protected
       def native_type(col)
         super
