@@ -111,8 +111,12 @@
 * BUG: Column copy for STI moved into Table#initialize to better handle STI with multiple mapped databases
 * BUG: before_create callbacks moved in the execution flow since they weren't guaranteed to fire before
 * Threading enhancements: Removed single_threaded_mode, #database block form adjusted for thread-safety
-* BUG: Fixed String#blank? when a multi-line string contained a blank line (thanks pimpmaster!)
+* BUG: Fixed String#blank? when a multi-line string contained a blank line (thanks zapnap!)
 * Performance enhancements: (thanks wycats!)
 
 -- 0.2.2
 * Removed C extension bundles and log files from package
+
+-- 0.2.3
+* See ticket #35.
+* Give credit where it's due: zapnap, not pimpmaster, submitted the String#blank? patch. My bad. :-(
