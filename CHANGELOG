@@ -118,5 +118,5 @@
 * Removed C extension bundles and log files from package
 
 -- 0.2.3
-* See ticket #35.
+* Added String#t for translation and overrides for default validation messages
 * Give credit where it's due: zapnap, not pimpmaster, submitted the String#blank? patch. My bad. :-(
