@@ -97,4 +97,20 @@
 * Removed UnitOfWork module, instead moving a slightly refactored implementation into Base
 
 -- 0.2.1
+* Added :float column support
+* Added association proxies: ie: Zoo.first.exhibits.animals
 * Columns stored in SortedSet
+* Swig files are no longer RDOCed
+* Added :date column support
+* BUG: Fixed UTC issues with datetimes
+* Added #to_yaml method
+* Added #to_xml method
+* Added #to_json method
+* BUG: Fixed HasManyAssociation::Set#inspect
+* BUG: Fixed #reload!
+* BUG: Column copy for STI moved into Table#initialize to better handle STI with multiple mapped databases
+* BUG: before_create callbacks moved in the execution flow since they weren't guaranteed to fire before
+* Threading enhancements: Removed single_threaded_mode, #database block form adjusted for thread-safety
+* BUG: Fixed String#blank? when a multi-line string contained a blank line (thanks pimpmaster!)
+* Performance enhancements: (thanks wycats!)
+

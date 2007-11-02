@@ -37,7 +37,7 @@ namespace :dm do
 
 end
 
-PACKAGE_VERSION = '0.2.0'
+PACKAGE_VERSION = '0.2.1'
 
 PACKAGE_FILES = FileList[
   'README',
@@ -48,7 +48,7 @@ PACKAGE_FILES = FileList[
   'spec/**/*.{rb,yaml}',
   'tasks/**/*',
   'plugins/**/*'
-].to_a
+].to_a.reject { |path| path =~ /\.(bundle|log)$/ }
 
 DOCUMENTED_FILES = PACKAGE_FILES.reject do |path|
   FileTest.directory?(path) || path =~ /(^spec|\/spec|\/swig\_)/
@@ -57,7 +57,7 @@ end
 PROJECT = 'datamapper'
 
 task :ls do
-  p DOCUMENTED_FILES
+  p PACKAGE_FILES
 end
 
 desc "Generate Documentation"
