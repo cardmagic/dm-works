@@ -114,3 +114,5 @@
 * BUG: Fixed String#blank? when a multi-line string contained a blank line (thanks pimpmaster!)
 * Performance enhancements: (thanks wycats!)
 
+-- 0.2.2
+* Removed C extension bundles and log files from package
