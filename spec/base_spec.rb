@@ -34,7 +34,17 @@ describe DataMapper::Base do
     diff.should include(:age)
     diff[:name].should eql(['Sam', 'Amy'])
     diff[:age].should eql([30, 21])
+    
+    x.destroy!
+    y.destroy!
   end
+  
+  it "should update attributes" do
+    x = Person.create(:name => 'Sam')
+    x.update_attributes(:age => 30).should eql(true)
+    x.age.should eql(30)
+    x.should_not be_dirty
+  end 
   
 end
 

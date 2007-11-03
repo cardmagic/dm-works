@@ -121,3 +121,4 @@
 * Added String#t for translation and overrides for default validation messages
 * Give credit where it's due: zapnap, not pimpmaster, submitted the String#blank? patch. My bad. :-(
 * Resolve issue with non-unique-hash values and #dirty?; now frozen original values are stored instead
+* Added Base#update_attributes

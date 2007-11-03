@@ -209,6 +209,11 @@ module DataMapper
       pairs
     end
     
+    def update_attributes(update_hash)
+      self.attributes = update_hash
+      self.save
+    end
+    
     def attributes
       pairs = {}
       
