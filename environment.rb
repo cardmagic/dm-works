@@ -1,6 +1,3 @@
-MERB_ROOT = Dir::pwd
-MERB_ENV = 'development'
-
 # Require the DataMapper, and a Mock Adapter.
 require File.dirname(__FILE__) + '/lib/data_mapper'
 require File.dirname(__FILE__) + '/spec/mock_adapter'
