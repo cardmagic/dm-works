@@ -205,16 +205,16 @@ module DataMapper
     end
     
     # Default Logger from Ruby's logger.rb
-    def log
-      @log = Logger.new(@log_stream, File::WRONLY | File::APPEND | File::CREAT)
-      @log.level = @log_level
-      at_exit { @log.close }
+    def logger
+      @logger = Logger.new(@log_stream, File::WRONLY | File::APPEND | File::CREAT)
+      @logger.level = @log_level
+      at_exit { @logger.close }
       
       class << self
-        attr_reader :log
+        attr_reader :logger
       end
       
-      return @log
+      return @logger
     end
     
   end

@@ -29,8 +29,8 @@ module DataMapper
         raise NotImplementedError.new
       end
       
-      def log
-        @configuration.log
+      def logger
+        @logger || @logger = @configuration.logger
       end
       
     end # class AbstractAdapter

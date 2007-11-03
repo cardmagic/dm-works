@@ -48,6 +48,7 @@ module DataObject
       end
       
       def create_command(text)
+        logger.debug { text }
         Command.new(self, text)
       end
       
@@ -168,9 +169,9 @@ module DataObject
     
     class Command < DataObject::Command
       
-      def execute_reader
+      def execute_reader(*args)
         super
-        result = Mysql_c.mysql_query(@connection.db, @text)
+        result = Mysql_c.mysql_query(@connection.db, escape_sql(args))
         # TODO: Real Error
         raise QueryError, "Your query failed.\n#{Mysql_c.mysql_error(@connection.db)}\n#{@text}" unless result == 0
         reader = Reader.new(@connection.db, Mysql_c.mysql_use_result(@connection.db))
@@ -183,9 +184,9 @@ module DataObject
         end
       end
       
-      def execute_non_query
+      def execute_non_query(*args)
         super
-        result = Mysql_c.mysql_query(@connection.db, @text)
+        result = Mysql_c.mysql_query(@connection.db, escape_sql(args))
         raise QueryError, "Your query failed.\n#{Mysql_c.mysql_error(@connection.db)}\n#{@text}" unless result == 0         
         reader = Mysql_c.mysql_store_result(@connection.db)
         raise QueryError, "You called execute_non_query on a query: #{@text}" if reader
@@ -194,6 +195,17 @@ module DataObject
         return ResultData.new(@connection, rows_affected, Mysql_c.mysql_insert_id(@connection.db))
       end
       
+      def quote_time(value)
+        "DATE('#{value.xmlschema}')"
+      end
+      
+      def quote_datetime(value)
+        "DATE('#{value}')"
+      end
+      
+      def quote_date(value)
+        "DATE('#{value.strftime("%Y-%m-%d")}')"
+      end
     end
     
   end

@@ -6,7 +6,7 @@ def fixtures(name)
   entry = YAML::load_file(File.dirname(__FILE__) + "/fixtures/#{name}.yaml")
   klass = Kernel::const_get(Inflector.classify(Inflector.singularize(name)))
   
-  database.log.debug { "AUTOMIGRATE: #{klass}" }
+  database.logger.debug { "AUTOMIGRATE: #{klass}" }
   klass.auto_migrate!
   
   (entry.kind_of?(Array) ? entry : [entry]).each do |hash|

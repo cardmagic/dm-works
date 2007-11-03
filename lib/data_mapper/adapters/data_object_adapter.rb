@@ -64,7 +64,7 @@ module DataMapper
           @connection_pool.hold { |active_connection| yield(active_connection) }
         rescue => execution_error
           # Log error on failure
-          @configuration.log.error(execution_error)
+          logger.error { execution_error }
           
           # Close all open connections, assuming that if one
           # had an error, it's likely due to a lost connection,
@@ -84,7 +84,7 @@ module DataMapper
         rescue => close_connection_error
           # An error on closing the connection is almost expected
           # if the socket is broken.
-          @configuration.log.warn(close_connection_error)
+          logger.warn { close_connection_error }
         end
         
         # Reopen fresh connections.
@@ -95,31 +95,13 @@ module DataMapper
         raise NotImplementedError.new
       end
       
-      def execute(*args)
-        connection do |db|
-          sql = escape_sql(*args)
-          log.debug { sql }
-        
-          command = db.create_command(sql)
-        
-          if block_given?
-            command.execute_reader { |reader| yield(reader) }
-          else
-            command.execute_non_query
-          end
-        end
-      rescue => e
-        handle_error(e)
-      end
-      
       def query(*args)        
         connection do |db|
-          sql = escape_sql(*args)
-          log.debug { sql }
         
-          command = db.create_command(sql)
-        
-          command.execute_reader do |reader|
+          command = db.create_command(args.shift)
+          logger.debug { command.text }
+          
+          command.execute_reader(*args) do |reader|
             fields = reader.fields.map { |field| Inflector.underscore(field).to_sym }
             
             results = []
@@ -150,19 +132,30 @@ module DataMapper
       end
       
       def table_exists?(name)
-        execute(table(name).to_exists_sql) { |reader| reader.has_rows? }
+        connection do |db|
+          table = self.table(name)
+          command = db.create_command(table.to_exists_sql)
+          
+          command.execute_reader(table.name, table.schema.name) do |reader|
+            reader.has_rows?
+          end
+        end
       end
       
       def truncate(session, name)
-        result = execute("TRUNCATE TABLE #{table(name).to_sql}")
-        session.identity_map.clear!(name)
-        result.to_i > 0
+        connection do |db|
+          result = db.create_command("TRUNCATE TABLE #{table(name).to_sql}").execute_non_query
+          session.identity_map.clear!(name)
+          result.to_i > 0
+        end
       end
       
       def drop(session, name)
-        result = execute("DROP TABLE #{table(name).to_sql}")
-        session.identity_map.clear!(name)
-        true
+        connection do |db|
+          result = db.create_command("DROP TABLE #{table(name).to_sql}").execute_non_query
+          session.identity_map.clear!(name)
+          true
+        end
       end
       
       def create_table(name)
@@ -171,7 +164,10 @@ module DataMapper
         if table.exists?
           false
         else
-          execute(table.to_create_table_sql); true
+          connection do |db|
+            db.create_command(table.to_create_table_sql).execute_non_query
+            true
+          end
         end
       end
       
@@ -179,12 +175,17 @@ module DataMapper
         table = self.table(instance)
         
         if instance.is_a?(Class)
-          execute("DELETE FROM #{table.to_sql}")
+          connection do |db|
+            db.create_command("DELETE FROM #{table.to_sql}").execute_non_query
+          end
           session.identity_map.clear!(instance)
         else
           callback(instance, :before_destroy)
           
-          if execute("DELETE FROM #{table.to_sql} WHERE #{table.key.to_sql} = #{quote_value(instance.key)}").to_i > 0
+          if connection do |db|
+              command = db.create_command("DELETE FROM #{table.to_sql} WHERE #{table.key.to_sql} = ?")
+              command.execute_non_query(instance.key).to_i > 0
+            end # connection do...end # if continued below:
             instance.instance_variable_set(:@new_record, true)
             instance.session = session
             instance.original_values.clear
@@ -225,7 +226,10 @@ module DataMapper
               end
           
               # Formatting is a bit off here, but it looks nicer in the log this way.
-              insert_id = execute("INSERT INTO #{table.to_sql} (#{keys.join(', ')}) VALUES (#{values.map { |v| quote_value(v) }.join(', ')})").last_insert_row
+              insert_id = connection do |db|
+                db.create_command("INSERT INTO #{table.to_sql} (#{keys.join(', ')}) VALUES ?")\
+                  .execute_non_query(values).last_insert_row
+              end
               instance.instance_variable_set(:@new_record, false)
               instance.key = insert_id if table.key.serial? && !attributes.include?(table.key.name)
               session.identity_map.set(instance)
@@ -237,17 +241,23 @@ module DataMapper
             
             table = self.table(instance)
             attributes = instance.dirty_attributes
+            parameters = []
             
             unless attributes.empty?
               sql = "UPDATE " << table.to_sql << " SET "
       
               sql << attributes.map do |key, value|
-                "#{table[key].to_sql} = #{quote_value(value)}"
+                parameters << value
+                "#{table[key].to_sql} = ?"
               end.join(', ')
       
-              sql << " WHERE #{table.key.to_sql} = " << quote_value(instance.key)
-          
-              execute(sql).to_i > 0 && callback(instance, :after_update)
+              sql << " WHERE #{table.key.to_sql} = ?"
+              parameters << instance.key
+              
+              connection do |db|
+                db.create_command(sql).execute_non_query(*parameters).to_i > 0 \
+                && callback(instance, :after_update)
+              end
             end
           end
           
@@ -264,7 +274,7 @@ module DataMapper
           result
         end
       rescue => error
-        log.error(error)
+        logger.error(error)
         raise error
       end
       
@@ -287,36 +297,6 @@ module DataMapper
       
       def callback(instance, callback_name)
         instance.class.callbacks.execute(callback_name, instance)
-      end
-      
-      # Escape a string of SQL with a set of arguments.
-      # The first argument is assumed to be the SQL to escape,
-      # the remaining arguments (if any) are assumed to be
-      # values to escape and interpolate.
-      #
-      # ==== Examples
-      #   escape_sql("SELECT * FROM zoos")
-      #   # => "SELECT * FROM zoos"
-      # 
-      #   escape_sql("SELECT * FROM zoos WHERE name = ?", "Dallas")
-      #   # => "SELECT * FROM zoos WHERE name = `Dallas`"
-      #
-      #   escape_sql("SELECT * FROM zoos WHERE name = ? AND acreage > ?", "Dallas", 40)
-      #   # => "SELECT * FROM zoos WHERE name = `Dallas` AND acreage > 40"
-      # 
-      # ==== Warning
-      # This method is meant mostly for adapters that don't support
-      # bind-parameters.
-      def escape_sql(*args)
-        sql = args.shift
-      
-        unless args.empty?
-          sql.gsub!(/\?/) do |x|
-            quote_value(args.shift)
-          end
-        end
-        
-        sql
       end
       
       # This callback copies and sub-classes modules and classes

@@ -35,6 +35,7 @@ module DataObject
       end
       
       def create_command(text)
+        logger.debug { text }
         Command.new(self, text)
       end
       
@@ -113,11 +114,12 @@ module DataObject
     
     class Command < DataObject::Command
       
-      def execute_reader
+      def execute_reader(*args)
         super
-        result, ptr = Sqlite3_c.sqlite3_prepare_v2(@connection.db, @text, @text.size + 1)
+        sql = escape_sql(args)
+        result, ptr = Sqlite3_c.sqlite3_prepare_v2(@connection.db, sql, sql.size + 1)
         unless result == Sqlite3_c::SQLITE_OK
-          raise QueryError, "Your query failed.\n#{Sqlite3_c.sqlite3_errmsg(@connection.db)}\nQUERY: \"#{@text}\""
+          raise QueryError, "Your query failed.\n#{Sqlite3_c.sqlite3_errmsg(@connection.db)}\nQUERY: \"#{sql}\""
         else
           reader = Reader.new(@connection.db, ptr)
           
@@ -131,12 +133,13 @@ module DataObject
         end
       end
       
-      def execute_non_query
+      def execute_non_query(*args)
         super
-        result, reader = Sqlite3_c.sqlite3_prepare_v2(@connection.db, @text, -1)
+        sql = escape_sql(args)
+        result, reader = Sqlite3_c.sqlite3_prepare_v2(@connection.db, sql, -1)
         unless result == Sqlite3_c::SQLITE_OK
           Sqlite3_c.sqlite3_finalize(reader)
-          raise QueryError, "Your query failed.\n#{Sqlite3_c.sqlite3_errmsg(@connection.db)}\nQUERY: \"#{@text}\""
+          raise QueryError, "Your query failed.\n#{Sqlite3_c.sqlite3_errmsg(@connection.db)}\nQUERY: \"#{sql}\""
         else
           exec_result = Sqlite3_c.sqlite3_step(reader)
           Sqlite3_c.sqlite3_finalize(reader)

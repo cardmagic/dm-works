@@ -200,11 +200,15 @@ module DataMapper
             results = []
             
             # Execute the statement and load the objects.
-            @adapter.execute(*to_parameterized_sql) do |reader, num_rows|
-              if @options.has_key?(:intercept_load)
-                load(reader, &@options[:intercept_load])
-              else
-                load(reader)
+            @adapter.connection do |db|
+              sql, *parameters = to_parameterized_sql
+              command = db.create_command(sql)
+              command.execute_reader(*parameters) do |reader|
+                if @options.has_key?(:intercept_load)
+                  load(reader, &@options[:intercept_load])
+                else
+                  load(reader)
+                end
               end
             end
             

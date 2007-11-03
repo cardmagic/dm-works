@@ -26,6 +26,7 @@ module DataMapper
       
       def create_connection
         conn = DataObject::Sqlite3::Connection.new("dbname=#{@configuration.database}")
+        conn.logger = self.logger
         conn.open
         return conn
       end
@@ -43,7 +44,7 @@ module DataMapper
               SELECT "name"
               FROM "sqlite_master"
               WHERE "type" = "table"
-                AND "name" = #{@adapter.quote_value(name)}
+                AND "name" = ?
             EOS
           end
         end # class Table

@@ -31,6 +31,7 @@ module DataObject
       end
       
       def create_command(text)
+        logger.debug { text }
         Command.new(self, text)
       end
       

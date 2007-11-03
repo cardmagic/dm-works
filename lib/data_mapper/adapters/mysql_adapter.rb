@@ -24,25 +24,14 @@ module DataMapper
         builder['dbname', :database]
         builder['socket', :socket]
         
-        log.debug { connection_string.strip }
+        logger.debug { connection_string.strip }
         
         conn = DataObject::Mysql::Connection.new(connection_string.strip)
+        conn.logger = self.logger
         conn.open
         cmd = conn.create_command("SET NAMES UTF8")
         cmd.execute_non_query
         return conn
-      end
-      
-      def quote_time(value)
-        "DATE('#{value.xmlschema}')"
-      end
-      
-      def quote_datetime(value)
-        "DATE('#{value}')"
-      end
-      
-      def quote_date(value)
-        "DATE('#{value.strftime("%Y-%m-%d")}')"
       end
       
       module Mappings

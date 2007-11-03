@@ -94,8 +94,8 @@ module DataMapper
       @adapter.table(klass)
     end
     
-    def log
-      @adapter.log
+    def logger
+      @logger || @logger = @adapter.logger
     end
 
   end

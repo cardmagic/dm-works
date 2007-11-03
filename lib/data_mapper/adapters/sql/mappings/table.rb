@@ -31,6 +31,10 @@ module DataMapper
             end
           end
           
+          def schema
+            @schema || @schema = @adapter.schema
+          end
+          
           def multi_class?
             @multi_class
           end
@@ -133,8 +137,8 @@ module DataMapper
             @to_exists_sql || @to_exists_sql = <<-EOS.compress_lines
               SELECT TABLE_NAME
               FROM INFORMATION_SCHEMA.TABLES
-              WHERE TABLE_NAME = #{@adapter.quote_value(name)}
-                AND TABLE_SCHEMA = #{@adapter.quote_value(@adapter.schema.name)}
+              WHERE TABLE_NAME = ?
+                AND TABLE_SCHEMA = ?
             EOS
           end
           
