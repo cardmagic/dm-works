@@ -184,6 +184,21 @@ module DataMapper
       @new_record.nil? || @new_record
     end
     
+    def ^(other)
+      results = {}
+      
+      self_attributes, other_attributes = attributes, other.attributes
+      
+      self_attributes.each_pair do |k,v|
+        other_value = other_attributes[k]
+        unless v == other_value
+          results[k] = [v, other_value]
+        end
+      end
+      
+      results      
+    end
+    
     def loaded_attributes
       pairs = {}
       

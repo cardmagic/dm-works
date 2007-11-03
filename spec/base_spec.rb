@@ -18,6 +18,24 @@ describe DataMapper::Base do
     a.test.should == 'testing!'
   end
   
+  it "should be dirty" do
+    x = Person.create(:name => 'a')
+    x.should_not be_dirty
+    x.name = 'dslfay'
+    x.should be_dirty
+  end
+  
+  it "should return a diff" do
+    x = Person.new(:name => 'Sam', :age => 30, :occupation => 'Programmer')
+    y = Person.new(:name => 'Amy', :age => 21, :occupation => 'Programmer')
+    
+    diff = (x ^ y)
+    diff.should include(:name)
+    diff.should include(:age)
+    diff[:name].should eql(['Sam', 'Amy'])
+    diff[:age].should eql([30, 21])
+  end
+  
 end
 
 describe 'A new record' do
