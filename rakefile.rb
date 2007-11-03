@@ -86,6 +86,7 @@ gem_spec = Gem::Specification.new do |s|
   s.requirements << 'none'
   s.autorequire = 'data_mapper'
   s.add_dependency('fastthread')
+  s.add_dependency('rspec')
 
   s.has_rdoc = true 
   s.rdoc_options << '--line-numbers' << '--inline-source' << '--main' << 'README'

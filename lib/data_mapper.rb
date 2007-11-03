@@ -16,6 +16,7 @@ unless defined?(DM_PLUGINS_ROOT)
 end
 
 # Require the basics...
+require 'rubygems'
 require 'yaml'
 require 'set'
 require 'fastthread'
