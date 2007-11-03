@@ -187,7 +187,7 @@ module DataMapper
           if execute("DELETE FROM #{table.to_sql} WHERE #{table.key.to_sql} = #{quote_value(instance.key)}").to_i > 0
             instance.instance_variable_set(:@new_record, true)
             instance.session = session
-            instance.original_hashes.clear
+            instance.original_values.clear
             session.identity_map.delete(instance)
             callback(instance, :after_destroy)
           end          
@@ -210,7 +210,12 @@ module DataMapper
             attributes = instance.dirty_attributes
             
             unless attributes.empty?
-              attributes[:type] = instance.class.name if table.multi_class?
+              if table.multi_class?
+                instance.instance_variable_set(
+                  table[:type].instance_variable_name,
+                  attributes[:type] = instance.class.name
+                )
+              end
             
               keys = []
               values = []
@@ -247,7 +252,7 @@ module DataMapper
           end
           
           instance.attributes.each_pair do |name, value|
-            instance.original_hashes[name] = value.hash
+            instance.original_values[name] = value
           end
           
           instance.loaded_associations.each do |association|

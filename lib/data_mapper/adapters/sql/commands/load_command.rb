@@ -48,17 +48,17 @@ module DataMapper
 
               @klass.callbacks.execute(:before_materialize, instance)
 
-              original_hashes = instance.original_hashes
+              original_values = instance.original_values
 
               @columns.each_pair do |index, column|
                 # This may be a little confusing, but we're
-                # setting both the original-hash value, and the
+                # setting both the original_value, and the
                 # instance-variable through method chaining to avoid
                 # lots of extra short-lived local variables.
-                original_hashes[column.name] = instance.instance_variable_set(
+                original_values[column.name] = instance.instance_variable_set(
                   column.instance_variable_name,
                   column.type_cast_value(values[index])
-                ).hash
+                )
               end
 
               instance.instance_variable_set(:@loaded_set, @set)

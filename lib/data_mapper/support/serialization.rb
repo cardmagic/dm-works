@@ -46,7 +46,7 @@ module DataMapper
           next if column.key?
           value = send(column.name)
           node = root.add_element(column.to_s)
-          node << REXML::Text.new(value.to_s) unless value.nil?
+          node << REXML::Text.new(value.is_a?(String) ? value.dup : value.to_s) unless value.nil?
         end
         
         doc.to_s

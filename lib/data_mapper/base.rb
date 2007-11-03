@@ -239,11 +239,7 @@ module DataMapper
     def dirty?(name = nil)
       if name.nil?
         session.table(self).columns.any? do |column|
-          if value = self.instance_variable_get(column.instance_variable_name)
-            value.hash != original_hashes[column.name]
-          else
-            false
-          end
+          self.instance_variable_get(column.instance_variable_name) != original_values[column.name]
         end || loaded_associations.any? do |loaded_association|
           if loaded_association.respond_to?(:dirty?)
             loaded_association.dirty?
@@ -253,7 +249,7 @@ module DataMapper
         end
       else
         key = name.kind_of?(Symbol) ? name : name.to_sym
-        self.instance_variable_get("@#{name}").hash != original_hashes[key]
+        self.instance_variable_get("@#{name}") != original_values[key]
       end
     end
 
@@ -268,7 +264,7 @@ module DataMapper
         end
       else
         session.table(self).columns.each do |column|
-          if (value = instance_variable_get(column.instance_variable_name)).hash != original_hashes[column.name]
+          if (value = instance_variable_get(column.instance_variable_name)) != original_values[column.name]
             pairs[column.name] = value
           end
         end
@@ -277,8 +273,8 @@ module DataMapper
       pairs
     end
     
-    def original_hashes
-      @original_hashes || (@original_hashes = {})
+    def original_values
+      @original_values || (@original_values = {})
     end
     
     def protected_attribute?(key)

@@ -33,12 +33,14 @@ module DataMapper
         
         def type_cast_string(raw_value)
           return nil if raw_value.blank?
-          raw_value
+          # type-cast values should be immutable for memory conservation
+          raw_value.freeze
         end
         
         def type_cast_text(raw_value)
           return nil if raw_value.blank?
-          raw_value
+          # type-cast values should be immutable for memory conservation
+          raw_value.freeze
         end
         
         def type_cast_class(raw_value)
@@ -48,13 +50,13 @@ module DataMapper
         
         def type_cast_integer(raw_value)
           return nil if raw_value.blank?
-          raw_value.to_i # Integer(raw_value) would be "safer", but not as fast.
+          raw_value.to_i
         rescue ArgumentError
           nil
         end
         
-        def type_cast_decimal(raw_value) 
-          return nil if raw_value.blank? 
+        def type_cast_decimal(raw_value)
+          return nil if raw_value.blank?
           raw_value.to_d
         rescue ArgumentError 
           nil 
@@ -62,14 +64,18 @@ module DataMapper
                 
         def type_cast_float(raw_value)
           return nil if raw_value.blank?
-          raw_value.to_f
+          case raw_value
+            when Float then raw_value
+            when Numeric, String then raw_value.to_f
+            else CoersionError.new("Can't type-cast #{raw_value.inspect} to a float")
+          end
         end
         
         def type_cast_datetime(raw_value)
           return nil if raw_value.blank?
           
           case raw_value
-            when DateTime then raw_value
+            when DateTime then raw_value.freeze
             when Date then DateTime.new(raw_value)
             when String then DateTime::parse(raw_value)
             else raise CoersionError.new("Can't type-cast #{raw_value.inspect} to a datetime")
@@ -80,7 +86,7 @@ module DataMapper
           return nil if raw_value.blank?
           
           case raw_value
-            when Date then raw_value
+            when Date then raw_value.freeze
             when DateTime, Time then Date::civil(raw_value.year, raw_value.month, raw_value.day)
             when String then Date::parse(raw_value)
             else raise CoersionError.new("Can't type-cast #{raw_value.inspect} to a date")
@@ -90,10 +96,22 @@ module DataMapper
         def type_cast_value(type, raw_value)
           return nil if raw_value.blank?
           
-          if respond_to?("type_cast_#{type}")
-            send("type_cast_#{type}", raw_value)
+          case type
+          when :string then type_cast_string(raw_value)
+          when :text then type_cast_text(raw_value)
+          when :boolean then type_cast_boolean(raw_value)
+          when :class then type_cast_class(raw_value)
+          when :integer then type_cast_integer(raw_value)
+          when :decimal then type_cast_decimal(raw_value)
+          when :float then type_cast_float(raw_value)
+          when :datetime then type_cast_datetime(raw_value)
+          when :date then type_cast_date(raw_value)
           else
-            raise "Don't know how to type-cast #{{ type => raw_value }.inspect }"
+            if respond_to?("type_cast_#{type}")
+              send("type_cast_#{type}", raw_value)
+            else
+              raise "Don't know how to type-cast #{{ type => raw_value }.inspect }"
+            end
           end
         end
 

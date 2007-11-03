@@ -10,21 +10,9 @@ module DataObject
     
     class Connection < DataObject::Connection
       
-      def self.conns
-        @conns
-      end
-      
-      def self.conns=(val)
-        @conns = val
-      end
-      
-      self.conns = 0
-      
       attr_reader :db
       
-      def initialize(connection_string)
-        @num = (self.class.conns += 1)
-        
+      def initialize(connection_string)        
         @state = STATE_CLOSED
         @connection_string = connection_string
         opts = connection_string.split(" ")
