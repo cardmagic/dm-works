@@ -57,7 +57,7 @@ module DataMapper
           end
           
           def drop!
-            @adapter.drop(database, self) if exists?
+            @adapter.drop(database, self)
           end
           
           def create!(force = false)

@@ -28,6 +28,7 @@ module DataMapper
       
       def create_connection
         conn = DataObject::Postgres::Connection.new("dbname=#{@configuration.database}")
+        conn.logger = self.logger
         conn.open
         return conn
              
@@ -75,8 +76,8 @@ module DataMapper
             @to_exists_sql || @to_exists_sql = <<-EOS.compress_lines
               SELECT TABLE_NAME
               FROM INFORMATION_SCHEMA.TABLES
-              WHERE TABLE_NAME = #{@adapter.quote_value(name)}
-                AND TABLE_CATALOG = #{@adapter.quote_value(@adapter.schema.name)}
+              WHERE TABLE_NAME = ?
+                AND TABLE_CATALOG = ?
             EOS
           end
           

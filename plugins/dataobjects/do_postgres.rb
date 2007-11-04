@@ -31,7 +31,6 @@ module DataObject
       end
       
       def create_command(text)
-        logger.debug { text }
         Command.new(self, text)
       end
       
@@ -92,6 +91,15 @@ module DataObject
         typecast(val, @field_types[idx])
       end
       
+      def each
+        return unless has_rows?
+        
+        while(true) do
+          yield
+          break unless self.next
+        end
+      end
+      
       def next
         super   
         if @cursor >= @rows - 1
@@ -118,11 +126,11 @@ module DataObject
           when "FLOAT4", "FLOAT8", "NUMERIC", "CASH"
             val.to_f
           when "TIMESTAMP", "TIMETZ", "TIMESTAMPTZ"
-            DateTime.parse(val)
+            DateTime.parse(val) rescue nil
           when "TIME"
-            DateTime.parse(val).to_time
+            DateTime.parse(val).to_time rescue nil
           when "DATE"
-            Date.parse(val)
+            Date.parse(val) rescue nil
           else
             val
         end
@@ -147,25 +155,37 @@ module DataObject
     
     class Command < DataObject::Command
       
-      def execute_reader
+      def execute_reader(*args)
         super
-        reader = Postgres_c.PQexec(@connection.db, @text)
-        unless [Postgres_c::PGRES_COMMAND_OK, Postgres_c::PGRES_TUPLES_OK].include?(Postgres_c.PQresultStatus(reader))
-          raise QueryError, "Your query failed.\n#{Postgres_c.PQerrorMessage(@connection.db)}QUERY: \"#{@text}\""
+        sql = escape_sql(args)
+        @connection.logger.debug { sql }
+        ptr = Postgres_c.PQexec(@connection.db, sql)
+        unless [Postgres_c::PGRES_COMMAND_OK, Postgres_c::PGRES_TUPLES_OK].include?(Postgres_c.PQresultStatus(ptr))
+          raise QueryError, "Your query failed.\n#{Postgres_c.PQerrorMessage(@connection.db)}QUERY: \"#{sql}\""
+        else
+          reader = Reader.new(@connection.db, ptr)
+          if block_given?
+            return_value = yield(reader)
+            reader.close
+            return_value
+          else
+            reader
+          end
         end
-        Reader.new(@connection.db, reader)
       end
       
-      def execute_non_query
+      def execute_non_query(*args)
         super
-        results = Postgres_c.PQexec(@connection.db, @text)
+        sql = escape_sql(args)
+        @connection.logger.debug { sql }
+        results = Postgres_c.PQexec(@connection.db, sql)
         status = Postgres_c.PQresultStatus(results)
         if status == Postgres_c::PGRES_TUPLES_OK
           Postgres_c.PQclear(results)
-          raise QueryError, "Your query failed or you tried to execute a SELECT query through execute_non_reader\n#{Postgres_c.PQerrorMessage(@connection.db)}\nQUERY: \"#{@text}\""
+          raise QueryError, "Your query failed or you tried to execute a SELECT query through execute_non_reader\n#{Postgres_c.PQerrorMessage(@connection.db)}\nQUERY: \"#{sql}\""
         elsif status != Postgres_c::PGRES_COMMAND_OK
           Postgres_c.PQclear(results)
-          raise QueryError, "Your query failed.\n#{Postgres_c.PQerrorMessage(@connection.db)}\nQUERY: \"#{@text}\""
+          raise QueryError, "Your query failed.\n#{Postgres_c.PQerrorMessage(@connection.db)}\nQUERY: \"#{sql}\""
         end
         rows_affected = Postgres_c.PQcmdTuples(results).to_i
         Postgres_c.PQclear(results)

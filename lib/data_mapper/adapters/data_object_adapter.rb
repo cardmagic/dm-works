@@ -134,8 +134,7 @@ module DataMapper
       def table_exists?(name)
         connection do |db|
           table = self.table(name)
-          command = db.create_command(table.to_exists_sql)
-          
+          command = db.create_command(table.to_exists_sql)          
           command.execute_reader(table.name, table.schema.name) do |reader|
             reader.has_rows?
           end
@@ -151,10 +150,16 @@ module DataMapper
       end
       
       def drop(session, name)
-        connection do |db|
-          result = db.create_command("DROP TABLE #{table(name).to_sql}").execute_non_query
-          session.identity_map.clear!(name)
-          true
+        table = self.table(name)
+        
+        if table.exists?
+          connection do |db|
+            result = db.create_command("DROP TABLE #{table.to_sql}").execute_non_query
+            session.identity_map.clear!(name)
+            true
+          end
+        else
+          false
         end
       end
       

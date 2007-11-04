@@ -15,7 +15,8 @@ describe DataObject do
   #     SELECT * FROM tbl WHERE auto IS NULL;
   it "should return an empty reader" do
     database.adapter.connection do |connection|
-      command = connection.create_command('SELECT `id`, `name` FROM `zoos` WHERE (`id` IS NULL)')
+      sql = 'SELECT `id`, `name` FROM `zoos` WHERE (`id` IS NULL)'.gsub(/\`/, database.adapter.class::COLUMN_QUOTING_CHARACTER)
+      command = connection.create_command(sql)
 
       command.execute_reader do |reader|
         reader.has_rows?.should eql(ENV['ADAPTER'] == 'mysql')

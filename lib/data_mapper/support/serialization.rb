@@ -46,7 +46,7 @@ module DataMapper
           next if column.key?
           value = send(column.name)
           node = root.add_element(column.to_s)
-          node << REXML::Text.new(value.is_a?(String) ? value.dup : value.to_s) unless value.nil?
+          node << REXML::Text.new(copy_frozen_value(value).to_s) unless value.nil?
         end
         
         doc.to_s
@@ -58,11 +58,19 @@ module DataMapper
         result = '{ '
         
         result << table.columns.map do |column|
-          "#{column.name.to_json}: #{send(column.name).to_json(*a)}"
+          "#{column.name.to_json}: #{copy_frozen_value(send(column.name)).to_json(*a)}"
         end.join(', ')
         
         result << ' }'
         result
+      end
+      
+      def copy_frozen_value(value)
+        case value
+        when Date, DateTime, Time, String then value.dup
+        when Fixnum, Class then value
+        else value
+        end
       end
     end
   end # module Support

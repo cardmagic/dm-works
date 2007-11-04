@@ -29,7 +29,7 @@ describe DataMapper::Support::Serialization do
       <zoo id="2">
         <name>San Diego</name>
         <notes/>
-        <updated_at>#{san_diego_zoo.updated_at}</updated_at>
+        <updated_at>#{san_diego_zoo.updated_at.dup}</updated_at>
       </zoo>
     EOS
   end
@@ -50,7 +50,7 @@ describe DataMapper::Support::Serialization do
         "id": 2,
         "name": "San Diego",
         "notes": null,
-        "updated_at": #{san_diego_zoo.updated_at.to_json}
+        "updated_at": #{san_diego_zoo.updated_at.dup.to_json}
       }
     EOS
   end

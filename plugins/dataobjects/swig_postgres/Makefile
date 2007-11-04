@@ -4,7 +4,7 @@ SHELL = /bin/sh
 #### Start of system configuration section. ####
 
 srcdir = .
-topdir = /opt/local/lib/ruby/1.8/i686-darwin8.10.1
+topdir = /opt/local/lib/ruby/1.8/i686-darwin8.9.1
 hdrdir = $(topdir)
 VPATH = $(srcdir):$(topdir):$(hdrdir)
 prefix = $(DESTDIR)/opt/local
@@ -38,8 +38,8 @@ LIBRUBYARG_STATIC = -l$(RUBY_SO_NAME)-static
 
 RUBY_EXTCONF_H = 
 CFLAGS   =  -fno-common -O2  -fno-common -pipe -fno-common -Wall  
-INCFLAGS = -I. -I. -I/opt/local/lib/ruby/1.8/i686-darwin8.10.1 -I.
-CPPFLAGS = -DHAVE_LIBPQ_FE_H -DHAVE_LIBPQ_LIBPQ_FS_H -DHAVE_PQSETCLIENTENCODING -DHAVE_PG_ENCODING_TO_CHAR -DHAVE_PQFREEMEM -I/opt/local/include/postgresql82 -I/opt/local/include
+INCFLAGS = -I. -I. -I/opt/local/lib/ruby/1.8/i686-darwin8.9.1 -I.
+CPPFLAGS = -DHAVE_LIBPQ_FE_H -DHAVE_LIBPQ_LIBPQ_FS_H -DHAVE_PQSETCLIENTENCODING -DHAVE_PG_ENCODING_TO_CHAR -DHAVE_PQFREEMEM -I/usr/local/pgsql/include -I/opt/local/include
 CXXFLAGS = $(CFLAGS) 
 DLDFLAGS = -L/opt/local/lib  
 LDSHARED = cc -dynamic -bundle -undefined suppress -flat_namespace
@@ -48,9 +48,9 @@ EXEEXT =
 
 RUBY_INSTALL_NAME = ruby
 RUBY_SO_NAME = ruby
-arch = i686-darwin8.10.1
-sitearch = i686-darwin8.10.1
-vendorarch = i686-darwin8.10.1
+arch = i686-darwin8.9.1
+sitearch = i686-darwin8.9.1
+vendorarch = i686-darwin8.9.1
 ruby_version = 1.8
 ruby = /opt/local/bin/ruby
 RUBY = $(ruby)
@@ -65,8 +65,8 @@ COPY = cp
 
 preload = 
 
-libpath = $(libdir) /opt/local/lib/postgresql82
-LIBPATH =  -L"$(libdir)" -L"/opt/local/lib/postgresql82"
+libpath = $(libdir) /usr/local/pgsql/lib
+LIBPATH =  -L"$(libdir)" -L"/usr/local/pgsql/lib"
 DEFFILE = 
 
 CLEANFILES = 

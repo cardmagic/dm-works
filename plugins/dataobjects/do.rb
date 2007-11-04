@@ -304,7 +304,7 @@ module DataObject
     end
     
     def quote_datetime(value)
-      "'#{value}'"
+      "'#{value.dup}'"
     end
     
     def quote_date(value)
