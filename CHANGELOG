@@ -123,3 +123,4 @@
 * MAJOR: Resolve issue with non-unique-hash values and #dirty?; now frozen original values are stored instead
 * Added Base#update_attributes
 * MAJOR: Queries are now passed to the database drivers in a parameterized fashion
+* Updated PostgreSQL driver and adapter to current
