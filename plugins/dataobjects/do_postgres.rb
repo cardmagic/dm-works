@@ -60,10 +60,8 @@ module DataObject
         end
       end
       
-      def close
+      def real_close
         Postgres_c.PQclear(@reader)
-        @state = STATE_CLOSED
-        true
       end
       
       def data_type_name(col)
