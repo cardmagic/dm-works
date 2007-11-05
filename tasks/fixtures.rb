@@ -19,10 +19,11 @@ namespace :dm do
       ENV['AUTO_MIGRATE'] = 'false'
       Rake::Task['environment'].invoke
       directory fixtures_path
-      DataMapper::Base.subclasses.each do |table|
+      DataMapper::Base.subclasses.each do |klass|
+        table = database.table(klass)
         puts "Dumping #{table}"
-        File.open( "#{fixtures_path}/#{Inflector.underscore(table.to_s)}.yml", "w+") do |file|
-          file.write YAML::dump(table.all)
+        File.open( "#{fixtures_path}/#{table}.yaml", "w+") do |file|
+          file.write YAML::dump(klass.all)
         end
       end
     end
@@ -31,14 +32,15 @@ namespace :dm do
     task :load do
       Rake::Task['environment'].invoke
       directory fixtures_path
-      DataMapper::Base.subclasses.each do |table|
-        file_name = "#{fixtures_path}/#{Inflector.underscore(table.to_s)}.yml"
+      DataMapper::Base.subclasses.each do |klass|
+        table = database.table(klass)
+        file_name = "#{fixtures_path}/#{table}.yaml"
         next unless File.exists?( file_name )
         puts "Loading #{table}"
-        table.delete_all
+        klass.delete_all
         File.open( file_name, "r") do |file|
           YAML::load(file).each do |attributes|
-            table.create(attributes)
+            klass.create(attributes)
           end
         end
       end

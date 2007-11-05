@@ -127,6 +127,10 @@ module DataMapper
             @to_sql || @to_sql = quote_table.freeze
           end
           
+          def to_s
+            name.to_s
+          end
+          
           def to_create_table_sql
             @to_create_table_sql || @to_create_table_sql = begin
               "CREATE TABLE #{to_sql} (#{columns.map { |c| c.to_long_form }.join(', ')})"
