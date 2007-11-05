@@ -48,7 +48,7 @@ PACKAGE_FILES = FileList[
   'spec/**/*.{rb,yaml}',
   'tasks/**/*',
   'plugins/**/*'
-].to_a.reject { |path| path =~ /\.(bundle|log)$/ }
+].to_a.reject { |path| path =~ /(\/db|Makefile|\.bundle|\.log|\.o)$/ }
 
 DOCUMENTED_FILES = PACKAGE_FILES.reject do |path|
   FileTest.directory?(path) || path =~ /(^spec|\/spec|\/swig\_)/
