@@ -118,7 +118,7 @@ module DataMapper
                 @to_long_form << " #{serial_declaration}"
               end
               
-              if default && !default_declaration.blank?
+              unless default.nil? || default_declaration.blank?
                 @to_long_form << " #{default_declaration}"
               end
         
