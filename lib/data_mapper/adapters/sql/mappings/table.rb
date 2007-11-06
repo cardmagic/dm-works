@@ -148,7 +148,7 @@ module DataMapper
           
           def to_column_exists_sql
             @to_column_exists_sql || @to_column_exists_sql = <<-EOS.compress_lines
-              SELECT COLUMN_NAME
+              SELECT TABLE_NAME, COLUMN_NAME
               FROM INFORMATION_SCHEMA.COLUMNS
               WHERE TABLE_NAME = ?
               AND COLUMN_NAME = ?

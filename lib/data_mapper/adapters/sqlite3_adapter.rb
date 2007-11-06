@@ -36,7 +36,7 @@ module DataMapper
         session.identity_map.clear!(name)
         result.to_i > 0
       end
-          
+                
       module Mappings
         class Table
           def to_exists_sql
@@ -50,11 +50,7 @@ module DataMapper
           
           def to_column_exists_sql
             @to_column_exists_sql || @to_column_exists_sql = <<-EOS.compress_lines
-              SELECT "name"
-              FROM "sqlite_master"
-              WHERE "type" = "table"
-              AND "name" = ?
-              AND "sql" LIKE "%(%?%)%"
+              PRAGMA TABLE_INFO(?)
             EOS
           end
           

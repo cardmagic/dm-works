@@ -146,10 +146,20 @@ module DataMapper
           table = self.table(table_name)
           command = db.create_command(table.to_column_exists_sql)
           command.execute_reader(table.name, column_name, table.schema.name) do |reader|
-            reader.has_rows?
+            reader.any? { reader.item(1) == column_name.to_s }
           end
         end
-      end
+      end            
+      
+      # def column_exists_for_table?(table_name, column_name)
+      #   connection do |db|
+      #     table = self.table(table_name)
+      #     command = db.create_command(table.to_column_exists_sql)
+      #     command.execute_reader(table.name, column_name, table.schema.name) do |reader|
+      #       reader.has_rows?
+      #     end
+      #   end
+      # end
       
       def truncate(session, name)
         connection do |db|
