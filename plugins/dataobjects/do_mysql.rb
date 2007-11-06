@@ -196,11 +196,11 @@ module DataObject
       end
       
       def quote_time(value)
-        "TIME('#{value.xmlschema}')"
+        "DATE('#{value.xmlschema}')"
       end
       
       def quote_datetime(value)
-        "'#{value}'"
+        "DATE('#{value}')"
       end
       
       def quote_date(value)
