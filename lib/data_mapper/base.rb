@@ -4,6 +4,7 @@ require 'data_mapper/validations/validation_helper'
 require 'data_mapper/associations'
 require 'data_mapper/callbacks'
 require 'data_mapper/embedded_value'
+require 'data_mapper/auto_migrations'
 
 begin
   require 'ferret'
@@ -35,33 +36,12 @@ module DataMapper
     end
     
     def self.inherited(klass)
+      klass.send :extend, AutoMigrations
       DataMapper::Base::subclasses << klass
       klass.send(:undef_method, :id)      
       
       # When this class is sub-classed, copy the declared columns.
       klass.class_eval do
-        
-        def self.auto_migrate!
-          if self::subclasses.empty?
-            database.schema[self].drop!
-            database.save(self)
-          else
-            schema = database.schema
-            columns = self::subclasses.inject(schema[self].columns) do |span, subclass|
-              span + schema[subclass].columns
-            end
-            
-            table_name = schema[self].name.to_s
-            table = schema[table_name]
-            columns.each do |column|
-              table.add_column(column.name, column.type, column.options)
-            end
-            
-            table.drop!
-            table.create!
-          end
-        end
-        
         def self.subclasses
           @subclasses || (@subclasses = [])
         end

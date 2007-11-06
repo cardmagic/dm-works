@@ -4,29 +4,33 @@ SHELL = /bin/sh
 #### Start of system configuration section. ####
 
 srcdir = .
-topdir = /opt/local/lib/ruby/1.8/i686-darwin8.9.1
+topdir = /sw/lib/ruby/1.8/i686-darwin
 hdrdir = $(topdir)
 VPATH = $(srcdir):$(topdir):$(hdrdir)
-prefix = $(DESTDIR)/opt/local
-exec_prefix = $(DESTDIR)/opt/local
+prefix = $(DESTDIR)/sw
+exec_prefix = $(DESTDIR)/sw
 sitedir = $(prefix)/lib/ruby/site_ruby
 rubylibdir = $(libdir)/ruby/$(ruby_version)
+docdir = $(datarootdir)/doc/$(PACKAGE)
+dvidir = $(docdir)
+datarootdir = $(prefix)/share
 archdir = $(rubylibdir)/$(arch)
 sbindir = $(exec_prefix)/sbin
-vendordir = $(prefix)/lib/ruby/vendor_ruby
-datadir = $(prefix)/share
+psdir = $(docdir)
+localedir = $(datarootdir)/locale
+htmldir = $(docdir)
+datadir = $(datarootdir)
 includedir = $(prefix)/include
-infodir = $(prefix)/info
+infodir = $(datarootdir)/info
 sysconfdir = $(prefix)/etc
-mandir = $(DESTDIR)/opt/local/share/man
-libdir = $(DESTDIR)/opt/local/lib
+mandir = $(prefix)/share/man
+libdir = $(DESTDIR)/sw/lib
 sharedstatedir = $(prefix)/com
 oldincludedir = $(DESTDIR)/usr/include
+pdfdir = $(docdir)
 sitearchdir = $(sitelibdir)/$(sitearch)
-vendorarchdir = $(vendorlibdir)/$(vendorarch)
 bindir = $(exec_prefix)/bin
 localstatedir = $(prefix)/var
-vendorlibdir = $(vendordir)/$(ruby_version)
 sitelibdir = $(sitedir)/$(ruby_version)
 libexecdir = $(exec_prefix)/libexec
 
@@ -37,22 +41,21 @@ LIBRUBYARG_SHARED = -l$(RUBY_SO_NAME)
 LIBRUBYARG_STATIC = -l$(RUBY_SO_NAME)-static
 
 RUBY_EXTCONF_H = 
-CFLAGS   =  -fno-common -O2  -fno-common -pipe -fno-common -Wall  
-INCFLAGS = -I. -I. -I/opt/local/lib/ruby/1.8/i686-darwin8.9.1 -I.
-CPPFLAGS = -DHAVE_LIBPQ_FE_H -DHAVE_LIBPQ_LIBPQ_FS_H -DHAVE_PQSETCLIENTENCODING -DHAVE_PG_ENCODING_TO_CHAR -DHAVE_PQFREEMEM -I/usr/local/pgsql/include -I/opt/local/include
+CFLAGS   =  -fno-common -g -Os  -fno-common -pipe -fno-common -Wall  
+INCFLAGS = -I. -I. -I/sw/lib/ruby/1.8/i686-darwin -I.
+CPPFLAGS = -DHAVE_LIBPQ_FE_H -DHAVE_LIBPQ_LIBPQ_FS_H -DHAVE_PQSETCLIENTENCODING -DHAVE_PG_ENCODING_TO_CHAR -DHAVE_PQFREEMEM -I/usr/local/pgsql/include -I/sw/lib/system-openssl/include -I/sw/include
 CXXFLAGS = $(CFLAGS) 
-DLDFLAGS = -L/opt/local/lib  
-LDSHARED = cc -dynamic -bundle -undefined suppress -flat_namespace
+DLDFLAGS = -L. -L/sw/lib/system-openssl/lib -L/sw/lib  
+LDSHARED = cc -dynamic -bundle -Wl,-undefined,dynamic_lookup -Wl,-multiply_defined,suppress
 AR = ar
 EXEEXT = 
 
-RUBY_INSTALL_NAME = ruby
+RUBY_INSTALL_NAME = ruby1.8
 RUBY_SO_NAME = ruby
-arch = i686-darwin8.9.1
-sitearch = i686-darwin8.9.1
-vendorarch = i686-darwin8.9.1
+arch = i686-darwin
+sitearch = i686-darwin
 ruby_version = 1.8
-ruby = /opt/local/bin/ruby
+ruby = /sw/bin/ruby1.8
 RUBY = $(ruby)
 RM = rm -f
 MAKEDIRS = mkdir -p
@@ -65,8 +68,8 @@ COPY = cp
 
 preload = 
 
-libpath = $(libdir) /usr/local/pgsql/lib
-LIBPATH =  -L"$(libdir)" -L"/usr/local/pgsql/lib"
+libpath = . $(libdir) /usr/local/pgsql/lib
+LIBPATH =  -L"." -L"$(libdir)" -L"/usr/local/pgsql/lib"
 DEFFILE = 
 
 CLEANFILES = 
@@ -76,7 +79,7 @@ extout =
 extout_prefix = 
 target_prefix = 
 LOCAL_LIBS = 
-LIBS = $(LIBRUBYARG_SHARED) -lpq  -lpthread -ldl -lobjc  
+LIBS = $(LIBRUBYARG_SHARED) -lpq  -ldl -lobjc  
 SRCS = postgres_c.c
 OBJS = postgres_c.o
 TARGET = postgres_c
@@ -139,7 +142,7 @@ site-install-rb: install-rb
 
 $(DLLIB): $(OBJS)
 	@-$(RM) $@
-	$(LDSHARED) $(DLDFLAGS) $(LIBPATH) -o $@ $(OBJS) $(LOCAL_LIBS) $(LIBS)
+	$(LDSHARED) -o $@ $(OBJS) $(LIBPATH) $(DLDFLAGS) $(LOCAL_LIBS) $(LIBS)
 
 
 

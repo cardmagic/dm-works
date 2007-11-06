@@ -78,6 +78,10 @@ module DataMapper
       @adapter.table_exists?(klass)
     end
     
+    def column_exists_for_table?(klass, column_name)
+      @adapter.column_exists_for_table?(klass, column_name)
+    end
+    
     def execute(*args)
       @adapter.execute(*args)
     end

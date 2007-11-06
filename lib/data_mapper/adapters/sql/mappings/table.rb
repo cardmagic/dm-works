@@ -146,6 +146,16 @@ module DataMapper
             EOS
           end
           
+          def to_column_exists_sql
+            @to_column_exists_sql || @to_column_exists_sql = <<-EOS.compress_lines
+              SELECT COLUMN_NAME
+              FROM INFORMATION_SCHEMA.COLUMNS
+              WHERE TABLE_NAME = ?
+              AND COLUMN_NAME = ?
+              AND TABLE_SCHEMA = ?
+            EOS
+          end          
+          
           def quote_table
             @adapter.quote_table_name(name)
           end

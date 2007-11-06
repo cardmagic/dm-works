@@ -47,6 +47,17 @@ module DataMapper
                 AND "name" = ?
             EOS
           end
+          
+          def to_column_exists_sql
+            @to_column_exists_sql || @to_column_exists_sql = <<-EOS.compress_lines
+              SELECT "name"
+              FROM "sqlite_master"
+              WHERE "type" = "table"
+              AND "name" = ?
+              AND "sql" LIKE "%(%?%)%"
+            EOS
+          end
+          
         end # class Table
         
         class Column

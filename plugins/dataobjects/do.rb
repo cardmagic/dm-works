@@ -278,6 +278,7 @@ module DataObject
         when Date then quote_date(value)
         when TrueClass, FalseClass then quote_boolean(value)
         when Array then quote_array(value)
+        when Symbol then quote_symbol(value)
         else 
           if value.respond_to?(:to_sql)
             value.to_sql
@@ -285,6 +286,10 @@ module DataObject
             raise "Don't know how to quote #{value.inspect}"
           end
       end
+    end
+    
+    def quote_symbol(value)
+      quote_string(value.to_s)
     end
     
     def quote_numeric(value)

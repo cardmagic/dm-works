@@ -141,6 +141,16 @@ module DataMapper
         end
       end
       
+      def column_exists_for_table?(table_name, column_name)
+        connection do |db|
+          table = self.table(table_name)
+          command = db.create_command(table.to_column_exists_sql)
+          command.execute_reader(table.name, column_name, table.schema.name) do |reader|
+            reader.has_rows?
+          end
+        end
+      end
+      
       def truncate(session, name)
         connection do |db|
           result = db.create_command("TRUNCATE TABLE #{table(name).to_sql}").execute_non_query

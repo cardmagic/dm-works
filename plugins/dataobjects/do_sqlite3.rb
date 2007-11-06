@@ -151,6 +151,9 @@ module DataObject
         end
       end
       
+      def quote_symbol(value)
+        value.to_s
+      end
     end
     
   end
