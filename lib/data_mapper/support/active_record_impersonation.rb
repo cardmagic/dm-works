@@ -8,6 +8,7 @@ module DataMapper
       end
       
       def save
+        self.valid?
         session.save(self)
       end
       

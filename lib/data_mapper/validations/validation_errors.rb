@@ -28,8 +28,14 @@ module DataMapper
       @errors[attribute]
     end
     
-    def method_missing(meth, *args)
-      @errors.send(meth, *args)
+    def each
+      @errors.map.each do |k,v|
+        yield(v)
+      end
+    end
+    
+    def method_missing(meth, *args, &block)
+      @errors.send(meth, *args, &block)
     end
    
   end
