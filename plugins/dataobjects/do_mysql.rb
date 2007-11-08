@@ -196,11 +196,12 @@ module DataObject
       end
       
       def quote_time(value)
-        "DATE('#{value.xmlschema}')"
+        # TIMESTAMP() used for both time and datetime columns
+        quote_datetime(value)
       end
       
       def quote_datetime(value)
-        "DATE('#{value}')"
+        "TIMESTAMP('#{value.strftime("%Y-%m-%d %H:%M:%S")}')"
       end
       
       def quote_date(value)
