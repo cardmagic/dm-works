@@ -213,10 +213,10 @@ module DataMapper
       values_hash.reject do |key, value|
         protected_attribute? key
       end.each_pair do |key, value|
-        if column = table[key]
-          instance_variable_set(column.instance_variable_name, value)
-        else
+        if respond_to?(key)
           send("#{key}=", value)
+        elsif column = table[key]
+          instance_variable_set(column.instance_variable_name, value)          
         end
       end
     end
