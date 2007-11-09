@@ -1,3 +1,4 @@
+require 'data_mapper/property'
 require 'data_mapper/support/active_record_impersonation'
 require 'data_mapper/support/serialization'
 require 'data_mapper/validations/validation_helper'
@@ -36,6 +37,8 @@ module DataMapper
     end
     
     def self.inherited(klass)
+      klass.instance_variable_set('@properties', [])
+      
       klass.send :extend, AutoMigrations
       DataMapper::Base::subclasses << klass
       klass.send(:undef_method, :id)      
@@ -50,6 +53,10 @@ module DataMapper
           self::subclasses << subclass
         end
       end
+    end
+    
+    def self.properties
+      @properties
     end
     
     # Allows you to override the table name for a model.
