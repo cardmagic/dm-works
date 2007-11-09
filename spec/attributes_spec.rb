@@ -14,4 +14,17 @@ describe DataMapper::Base do
     zoo.notes.should eql('This is another test.')
   end
   
+  it "should allow custom setters" do
+    zoo = Zoo.new
+    
+    zoo.name = 'Colorado Springs'
+    zoo.name.should eql("Cheyenne Mountain")
+  end
+  
+  it "should call custom setters on mass-assignment" do
+    zoo = Zoo.new(:name => 'Colorado Springs')
+    
+    zoo.name.should eql("Cheyenne Mountain")
+  end
+  
 end

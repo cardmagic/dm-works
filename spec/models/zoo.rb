@@ -6,4 +6,8 @@ class Zoo < DataMapper::Base
   has_many :exhibits
   
   validates_presence_of :name
+  
+  def name=(val)
+    @name = (val == "Colorado Springs") ? "Cheyenne Mountain" : val
+  end
 end
