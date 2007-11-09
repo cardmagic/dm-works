@@ -92,5 +92,17 @@ describe DataMapper::Validations do
   
     String::translations.delete("%s must not be blank")
   end
+
+  it 'should be able to find specific error message' do
+    class Cow
+      validations.clear!
+      validates_presence_of :name
+    end
+
+    gertie = Cow.new
+    gertie.should_not be_valid
+    gertie.errors.on(:name).should == ['Name must not be blank']
+    gertie.errors.on(:age).should == nil
+  end
   
 end

@@ -24,8 +24,9 @@ module DataMapper
       end
     end
     
+    # Return validation errors for a particular attribute.
     def on(attribute)
-      @errors[attribute]
+      @errors[attribute].empty? ? nil : @errors[attribute]
     end
     
     def each
