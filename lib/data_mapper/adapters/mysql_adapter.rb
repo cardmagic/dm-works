@@ -34,6 +34,10 @@ module DataMapper
         return conn
       end
       
+      def database_column_name
+        "TABLE_SCHEMA"
+      end
+      
       module Mappings
         
         def to_create_table_sql
@@ -41,6 +45,15 @@ module DataMapper
             "CREATE TABLE #{to_sql} (#{columns.map { |c| c.to_long_form }.join(', ')}) Type=MyISAM CHARACTER SET utf8"
           end
         end
+        
+        class Schema
+
+          def database_tables
+            get_database_tables(@adapter.schema.name)
+          end
+
+        end
+
         
       end # module Mappings
     end # class MysqlAdapter

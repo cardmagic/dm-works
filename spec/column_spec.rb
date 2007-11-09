@@ -20,4 +20,6 @@ describe DataMapper::Adapters::Sql::Mappings::Column do
     columns.should have(4).entries
   end
   
+  it "should get its meta data from the database"
+  
 end

@@ -142,7 +142,7 @@ module DataMapper
               SELECT TABLE_NAME
               FROM INFORMATION_SCHEMA.TABLES
               WHERE TABLE_NAME = ?
-                AND TABLE_SCHEMA = ?
+                AND #{@adapter.database_column_name} = ?
             EOS
           end
           
@@ -152,7 +152,7 @@ module DataMapper
               FROM INFORMATION_SCHEMA.COLUMNS
               WHERE TABLE_NAME = ?
               AND COLUMN_NAME = ?
-              AND TABLE_SCHEMA = ?
+                AND #{@adapter.database_column_name} = ?
             EOS
           end          
           
@@ -170,6 +170,11 @@ module DataMapper
             ]
           end
       
+        end
+        
+        class Schema
+          def to_tables_sql
+          end
         end
     
       end

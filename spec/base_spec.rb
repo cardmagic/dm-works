@@ -46,6 +46,10 @@ describe DataMapper::Base do
     x.should_not be_dirty
   end 
   
+  it "should return the table for a given model" do
+    Person.table.should be_a_kind_of DataMapper::Adapters::Sql::Mappings::Table
+  end
+
 end
 
 describe 'A new record' do

@@ -38,6 +38,19 @@ module DataMapper
       end
                 
       module Mappings
+        
+        class Schema
+          def to_tables_sql
+            @to_tables_sql || @to_tables_sql = <<-EOS.compress_lines
+              SELECT "name" 
+              FROM sqlite_master 
+              where "type"= "table"
+              and "name" <> "sqlite_sequence"
+            EOS
+          end
+          alias_method :database_tables, :get_database_tables
+        end # class Schema
+        
         class Table
           def to_exists_sql
             @to_exists_sql || @to_exists_sql = <<-EOS.compress_lines
@@ -53,6 +66,20 @@ module DataMapper
               PRAGMA TABLE_INFO(?)
             EOS
           end
+          alias_method :to_columns_sql, :to_column_exists_sql
+          def get_database_columns
+            columns = []            
+            @adapter.connection do |db|
+              command = db.create_command(to_columns_sql)
+              command.execute_reader(name) do |reader|
+                columns = reader.map {
+                  @adapter.class::Mappings::Column.new(@adapter, name, reader.item(1), DataMapper::Adapters::Sqlite3Adapter::TYPES.index(reader.item(2)),reader.item(0).to_i)
+                }
+              end
+            end
+            columns
+          end
+          alias_method :database_columns, :get_database_columns
           
         end # class Table
         

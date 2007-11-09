@@ -299,6 +299,10 @@ module DataMapper
       Inflector.underscore(self.name) + "_id"
     end
     
+    def self.table
+      database.schema[self]
+    end
+    
     def inspect
       inspected_attributes = attributes.map { |k,v| "@#{k}=#{v.inspect}" }
       
@@ -335,6 +339,7 @@ module DataMapper
         key_column.type_cast_value(instance_variable_get(key_column.instance_variable_name))
       end
     end
+    
     
   end
   

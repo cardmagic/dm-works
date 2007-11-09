@@ -128,7 +128,7 @@ module DataMapper
       end
       
       def schema
-        @schema || ( @schema = Mappings::Schema.new(self, @configuration.database) )
+        @schema || ( @schema = self.class::Mappings::Schema.new(self, @configuration.database) )
       end
       
       def table_exists?(name)

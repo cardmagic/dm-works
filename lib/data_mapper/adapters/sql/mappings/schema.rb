@@ -24,6 +24,25 @@ module DataMapper
               yield table
             end
           end
+
+          def to_tables_sql
+            @to_column_exists_sql || @to_column_exists_sql = <<-EOS.compress_lines
+              SELECT TABLE_NAME
+              FROM INFORMATION_SCHEMA.TABLES
+              WHERE TABLE_SCHEMA LIKE ?
+            EOS
+          end
+          
+          def get_database_tables(schema = "%")
+            tables = []            
+            @adapter.connection do |db|
+              command = db.create_command(to_tables_sql)
+              command.execute_reader(schema) do |reader|
+                tables = reader.map { @adapter.class::Mappings::Table.new(@adapter, reader.item(0)) }
+              end
+            end
+            tables
+          end
     
         end
     

@@ -38,6 +38,10 @@ module DataMapper
         
         return connection
       end
+      
+      def database_column_name
+        "TABLE_CATALOG"
+      end
             
       TABLE_QUOTING_CHARACTER = '"'.freeze
       COLUMN_QUOTING_CHARACTER = '"'.freeze
@@ -72,24 +76,24 @@ module DataMapper
             return sql
           end
           
-          def to_exists_sql
-            @to_exists_sql || @to_exists_sql = <<-EOS.compress_lines
-              SELECT TABLE_NAME
-              FROM INFORMATION_SCHEMA.TABLES
-              WHERE TABLE_NAME = ?
-                AND TABLE_CATALOG = ?
-            EOS
-          end
-          
-          def to_column_exists_sql
-            @to_column_exists_sql || @to_column_exists_sql = <<-EOS.compress_lines
-              SELECT TABLE_NAME, COLUMN_NAME
-              FROM INFORMATION_SCHEMA.COLUMNS
-              WHERE TABLE_NAME = ?
-              AND COLUMN_NAME = ?
-              AND TABLE_CATALOG = ?
-            EOS
-          end          
+          # def to_exists_sql
+          #   @to_exists_sql || @to_exists_sql = <<-EOS.compress_lines
+          #     SELECT TABLE_NAME
+          #     FROM INFORMATION_SCHEMA.TABLES
+          #     WHERE TABLE_NAME = ?
+          #       AND TABLE_CATALOG = ?
+          #   EOS
+          # end
+          # 
+          # def to_column_exists_sql
+          #   @to_column_exists_sql || @to_column_exists_sql = <<-EOS.compress_lines
+          #     SELECT TABLE_NAME, COLUMN_NAME
+          #     FROM INFORMATION_SCHEMA.COLUMNS
+          #     WHERE TABLE_NAME = ?
+          #     AND COLUMN_NAME = ?
+          #     AND TABLE_CATALOG = ?
+          #   EOS
+          # end          
                     
           private 
           
@@ -100,6 +104,14 @@ module DataMapper
               @adapter.quote_table_name(part) }.join('.')
           end
         end # class Table
+        
+        class Schema
+          
+          def database_tables
+            get_database_tables("public")
+          end
+          
+        end
         
         class Column
           def serial_declaration
