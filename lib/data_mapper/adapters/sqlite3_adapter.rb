@@ -69,6 +69,10 @@ module DataMapper
           end
           alias_method :to_columns_sql, :to_column_exists_sql
           
+          def unquote_default(default)
+            default.gsub(/(^'|'$)/, "") rescue default
+          end
+          
         end # class Table
         
         class Column

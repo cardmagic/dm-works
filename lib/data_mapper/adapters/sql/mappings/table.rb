@@ -181,6 +181,10 @@ module DataMapper
             name.to_s
           end
           
+          def unquote_default(default)
+            default
+          end
+          
           def get_database_columns
             columns = []            
             @adapter.connection do |db|
@@ -189,7 +193,7 @@ module DataMapper
                 columns = reader.map {
                   @adapter.class::Mappings::Column.new(@adapter, name, reader.item(1), 
                   @adapter.class::TYPES.index(reader.item(2)),reader.item(0).to_i,
-                  :nullable => reader.item(3).to_i != 99, :default => reader.item(4))
+                  :nullable => reader.item(3).to_i != 99, :default => unquote_default(reader.item(4)))
                 }
               end
             end
@@ -224,7 +228,9 @@ module DataMapper
           
           def to_columns_sql
             @to_column_exists_sql || @to_column_exists_sql = <<-EOS.compress_lines
-              SELECT ORDINAL_POSITION, COLUMN_NAME, DATA_TYPE
+              SELECT ORDINAL_POSITION, COLUMN_NAME, DATA_TYPE,
+              (CASE IS_NULLABLE WHEN 'NO' THEN 99 ELSE 0 END),
+              COLUMN_DEFAULT
               FROM INFORMATION_SCHEMA.COLUMNS
               WHERE TABLE_NAME = ?
               AND #{@adapter.database_column_name} = ?

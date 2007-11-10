@@ -76,6 +76,28 @@ module DataMapper
             return sql
           end
           
+          # The logic of this comes from AR; it was modified for smarter typecasting
+          def unquote_default(default)
+            # Boolean types
+            return true if default =~ /true/i
+            return false if default =~ /false/i
+
+            # Char/String/Bytea type values
+            return $1 if default =~ /^'(.*)'::(bpchar|text|character varying|bytea)$/
+
+            # Numeric values
+            return value.to_f if default =~ /^-?[0-9]+(\.[0-9]*)/
+            return value.to_i if default =~ /^-?[0-9]+/
+
+            # Fixed dates / times
+            return Date.parse($1) if default =~ /^'(.+)'::date/
+            return DateTime.parse($1) if default =~ /^'(.+)'::timestamp/            
+
+            # Anything else is blank, some user type, or some function
+            # and we can't know the value of that, so return nil.
+            return nil       
+          end
+          
           # def to_exists_sql
           #   @to_exists_sql || @to_exists_sql = <<-EOS.compress_lines
           #     SELECT TABLE_NAME
