@@ -17,6 +17,8 @@ module DataMapper
             @klass_or_name = klass_or_name
             
             @adapter = adapter
+            
+            @temporary = false
             @columns = SortedSet.new
             @columns_hash = Hash.new { |h,k| h[k] = columns.find { |c| c.name == k } }
             
@@ -37,6 +39,14 @@ module DataMapper
           
           def multi_class?
             @multi_class
+          end
+          
+          def temporary?
+            @temporary
+          end
+          
+          def temporary=(value)
+            @temporary = value
           end
           
           def associations
@@ -83,7 +93,7 @@ module DataMapper
               end
             else
               @adapter.connection do |db|
-                db.create_command(to_create_table_sql).execute_non_query
+                db.create_command(to_create_sql).execute_non_query
                 true
               end
             end
@@ -207,9 +217,11 @@ module DataMapper
           end
           alias_method :database_columns, :get_database_columns          
           
-          def to_create_table_sql
+          def to_create_sql
             @to_create_table_sql || @to_create_table_sql = begin
-              sql = "CREATE TABLE #{to_sql} (#{ columns.map { |c| c.to_long_form }.join(",\n") }"
+              sql = "CREATE"
+              sql << " TEMPORARY" if temporary?
+              sql << " TABLE #{to_sql} (#{ columns.map { |c| c.to_long_form }.join(",\n") }"
               unless keys.blank? || (keys.size == 1 && keys.first.serial?)
                 sql << ", PRIMARY KEY (#{keys.map { |c| c.to_sql }.join(', ') })"
               end

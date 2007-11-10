@@ -102,6 +102,72 @@ module DataMapper
             "#<%s:0x%x @name=%s, @type=%s, @options=%s>" % [self.class.name, (object_id * 2), to_sql, type.inspect, options.inspect]
           end
           
+          def to_create_sql            
+            "ALTER TABLE " <<  table.to_sql << " ADD " << to_long_form
+          end
+          
+          def to_alter_sql
+            "ALTER TABLE " <<  table.to_sql << " ALTER COLUMN " << to_long_form
+          end
+          
+          def to_drop_sql
+            "ALTER TABLE " <<  table.to_sql << " DROP COLUMN " << to_sql
+          end
+                  
+          def create!
+            @adapter.connection do |db|
+              command = db.create_command(to_create_sql)
+              command.execute_non_query
+            end
+          end
+          
+          def drop!
+            @table.columns.delete(self)
+            
+            @adapter.connection do |db|
+              command = db.create_command(to_drop_sql)
+              command.execute_non_query
+            end
+          end
+          
+          def alter!
+            @adapter.connection do |db|
+              command = db.create_command(to_alter_sql)
+              command.execute_non_query
+            end
+          end
+          
+          def rename!(new_name)
+            old_name = name # Store the old_name
+            
+            old_name_sql = to_sql
+            
+            # Create the new column
+            @name = new_name
+            flush_sql_caches!
+            create!
+            new_name_sql = to_sql            
+            
+            # Copy the data from one column to the other.
+            @adapter.connection do |db|
+              command = db.create_command <<-EOS.compress_lines
+                UPDATE #{@table.to_sql} SET
+                #{new_name_sql} = #{old_name_sql}
+              EOS
+              command.execute_non_query
+            end
+            
+            # Drop the original column  
+            @name = old_name
+            flush_sql_caches!
+            drop!
+            
+            # Assume the new column name
+            @name = new_name
+            flush_sql_caches!
+            true
+          end
+          
           def to_long_form
             @to_long_form || begin
               @to_long_form = "#{to_sql} #{type_declaration}"
@@ -110,6 +176,9 @@ module DataMapper
                 @to_long_form << " #{not_null_declaration}"
               end
               
+              # NOTE: We only do inline PRIMARY KEY declarations
+              # if the column is also serial since we know
+              # "there can be only one".
               if key? && serial? && !primary_key_declaration.blank?
                 @to_long_form << " #{primary_key_declaration}"
               end
@@ -160,6 +229,13 @@ module DataMapper
           
           def default_declaration
             @adapter.connection { |db| db.create_command("DEFAULT ?").escape_sql([default]) }
+          end
+          
+          def flush_sql_caches!
+            @to_long_form = nil
+            @to_sql = nil
+            @to_sql_with_table_name = nil
+            @column_name = nil
           end
       
         end

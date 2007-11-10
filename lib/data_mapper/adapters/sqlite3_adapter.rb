@@ -81,6 +81,48 @@ module DataMapper
           def size
             nil
           end
+          
+          def to_backup_and_recreate_sql
+            backup_table = @adapter.table("#{@table.name}_backup")
+            
+            @table.columns.each do |column|
+              backup_table.add_column(column.name, column.type, column.options)
+            end
+            
+            backup_table.temporary = true
+            
+            <<-EOS.compress_lines
+              BEGIN TRANSACTION;
+              #{backup_table.to_create_sql};
+              INSERT INTO #{backup_table.to_sql} SELECT #{@table.columns.map { |c| c.to_sql }.join(', ')} FROM #{@table.to_sql};
+              DROP TABLE #{@table.to_sql};
+              #{@table.to_create_sql};
+              INSERT INTO #{@table.to_sql} SELECT #{backup_table.columns.map { |c| c.to_sql }.join(', ')} FROM #{backup_table.to_sql};
+              DROP TABLE #{backup_table.to_sql};
+              COMMIT;
+            EOS
+          end
+          
+          alias to_drop_sql to_backup_and_recreate_sql
+          alias to_alter_sql to_backup_and_recreate_sql
+                    
+          def backup_and_recreate!
+            @adapter.connection do |db|
+              to_backup_and_recreate_sql.split(';').each do |sql|
+                command = db.create_command(sql)
+                command.execute_non_query
+              end
+            end
+          end
+          
+          alias alter! backup_and_recreate!
+          
+          def drop!
+            @table.columns.delete(self)
+            backup_and_recreate!
+          end
+          
+          
         end # class Column
       end # module Mappings
       

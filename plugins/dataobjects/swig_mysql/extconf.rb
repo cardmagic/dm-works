@@ -7,17 +7,17 @@ end
 
 def mysql_config(type)
 
-  sin, sout, serr = Open3.popen3("mysql_config5 --#{type}")
+  conf = `mysql_config5 --#{type}`
   
-  unless serr.read.empty?
-    sin, sout, serr = Open3.popen3("mysql_config --#{type}")
+  unless $?.success?
+    conf = `mysql_config --#{type}`
   end
   
-  unless serr.read.empty?
+  unless $?.success?
     raise "mysql_config not found"
   end
   
-  sout.readline.chomp[2..-1]
+  conf.readline.chomp[2..-1]
 end
 
 $inc, $lib = dir_config('mysql', config_value('include'), config_value('libs_r')) 
