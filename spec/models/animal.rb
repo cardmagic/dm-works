@@ -1,5 +1,5 @@
 class Animal < DataMapper::Base
-  property :name, :string, :default => "Sam Smoot"
+  property :name, :string, :default => "No Name"
   property :notes, :text
   property :nice, :boolean
   

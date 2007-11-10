@@ -13,7 +13,7 @@ describe DataMapper::Adapters::Sql::Mappings::Table do
     columns = table.database_columns
     
     column1 = columns.detect{|column| column.name == :name }
-    column1.default.should == "Sam Smoot"
+    column1.default.should == "No Name"
     
     column2 = columns.detect{|column| column.name == :nice }
     column2.default.should == nil
