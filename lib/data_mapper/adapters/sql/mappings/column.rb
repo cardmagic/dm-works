@@ -7,8 +7,8 @@ module DataMapper
         # Ordinal, Length/Size, Nullability are just a few.
         class Column
           
-          attr_reader :type
-          attr_accessor :table, :name, :options
+          attr_reader :type, :name
+          attr_accessor :table, :options
           
           def initialize(adapter, table, name, type, ordinal, options = {})
             @adapter = adapter
@@ -31,6 +31,11 @@ module DataMapper
               end
             EOS
             @type
+          end
+          
+          def name=(value)
+            flush_sql_caches!
+            @name = value
           end
           
           def ordinal
@@ -156,8 +161,7 @@ module DataMapper
             old_name_sql = to_sql
             
             # Create the new column
-            @name = new_name
-            flush_sql_caches!
+            self.name = new_name
             create!
             new_name_sql = to_sql            
             
@@ -172,14 +176,11 @@ module DataMapper
             
             # Drop the original column
             flush_sql_caches!
-            @adapter.connection do |db|
-              command = db.create_command(to_drop_sql)
-              command.execute_non_query
-            end
+            drop!
+            @table.columns << self
             
             # Assume the new column name
-            @name = new_name
-            flush_sql_caches!
+            self.name = new_name
             true
           end
           

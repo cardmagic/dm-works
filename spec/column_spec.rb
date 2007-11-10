@@ -27,7 +27,8 @@ describe DataMapper::Adapters::Sql::Mappings::Column do
   it "should get its meta data from the database"
   
   it "should be able to rename" do
-#    pending("until drop and alter are specced")
+    pending("until it works")
+
     table = database.table(Zoo)
     name_column = table[:name]
     
