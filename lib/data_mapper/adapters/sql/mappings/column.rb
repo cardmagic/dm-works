@@ -159,7 +159,7 @@ module DataMapper
           end
           
           def default_declaration
-            @adapter.connection { |db| sql = db.create_command("DEFAULT ?").escape_sql([default]) }
+            @adapter.connection { |db| db.create_command("DEFAULT ?").escape_sql([default]) }
           end
       
         end
