@@ -1,4 +1,5 @@
 require 'date'
+require 'logger'
 
 # Thanks http://www.rubyweeklynews.org/20051120
 class DateTime
@@ -58,7 +59,6 @@ module DataObject
     end
     
     def create_command(text)
-      logger.debug { text }
       Command.new(self, text)
     end
     

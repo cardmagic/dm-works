@@ -116,6 +116,7 @@ module DataObject
       def execute_reader(*args)
         super
         sql = escape_sql(args)
+        @connection.logger.debug { sql }
         result, ptr = Sqlite3_c.sqlite3_prepare_v2(@connection.db, sql, sql.size + 1)
         unless result == Sqlite3_c::SQLITE_OK
           raise QueryError, "Your query failed.\n#{Sqlite3_c.sqlite3_errmsg(@connection.db)}\nQUERY: \"#{sql}\""
@@ -135,6 +136,7 @@ module DataObject
       def execute_non_query(*args)
         super
         sql = escape_sql(args)
+        @connection.logger.debug { sql }
         result, reader = Sqlite3_c.sqlite3_prepare_v2(@connection.db, sql, -1)
         unless result == Sqlite3_c::SQLITE_OK
           Sqlite3_c.sqlite3_finalize(reader)
