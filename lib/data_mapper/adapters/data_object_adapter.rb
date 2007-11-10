@@ -49,7 +49,7 @@ module DataMapper
       
       def initialize(configuration)
         super
-        @connection_pool = Support::ConnectionPool.new(4) { create_connection }
+        @connection_pool = Support::ConnectionPool.new { create_connection }
       end
       
       def create_connection
@@ -129,16 +129,6 @@ module DataMapper
       
       def schema
         @schema || ( @schema = self.class::Mappings::Schema.new(self, @configuration.database) )
-      end
-      
-      def table_exists?(name)
-        connection do |db|
-          table = self.table(name)
-          command = db.create_command(table.to_exists_sql)          
-          command.execute_reader(table.name, table.schema.name) do |reader|
-            reader.has_rows?
-          end
-        end
       end
       
       def column_exists_for_table?(table_name, column_name)

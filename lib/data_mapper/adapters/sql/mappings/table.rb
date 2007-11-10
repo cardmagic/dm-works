@@ -53,7 +53,12 @@ module DataMapper
           end
           
           def exists?
-            @adapter.table_exists?(name)
+            @adapter.connection do |db|
+              command = db.create_command(to_exists_sql)          
+              command.execute_reader(name, schema.name) do |reader|
+                reader.has_rows?
+              end
+            end
           end
           
           def drop!
