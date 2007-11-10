@@ -83,7 +83,7 @@ module DataMapper
               end
             else
               @adapter.connection do |db|
-                db.create_command(to_create_table_sql).execute_non_query
+                db.create_command(to_create_table_sql).execute_non_query(columns.map { |column| column.default }.compact)
                 true
               end
             end

@@ -159,7 +159,7 @@ module DataMapper
           end
           
           def default_declaration
-            "DEFAULT #{default}"
+            "DEFAULT ?"
           end
       
         end
