@@ -167,7 +167,7 @@ module DataMapper
         when Class then table(instance).create!
         when Mappings::Table then instance.create!
         when DataMapper::Base then
-          return false unless instance.dirty? && instance.valid?
+          return false unless instance.valid? && (instance.new_record? || instance.dirty?)
           
           callback(instance, :before_save)           
           
@@ -178,31 +178,33 @@ module DataMapper
             table = self.table(instance)
             attributes = instance.dirty_attributes
             
-            unless attributes.empty?
-              if table.multi_class?
-                instance.instance_variable_set(
-                  table[:type].instance_variable_name,
-                  attributes[:type] = instance.class.name
-                )
-              end
-            
-              keys = []
-              values = []
-              attributes.each_pair do |key, value|
-                keys << table[key].to_sql
-                values << value
-              end
-          
-              # Formatting is a bit off here, but it looks nicer in the log this way.
-              insert_id = connection do |db|
-                db.create_command("INSERT INTO #{table.to_sql} (#{keys.join(', ')}) VALUES ?")\
-                  .execute_non_query(values).last_insert_row
-              end
-              instance.instance_variable_set(:@new_record, false)
-              instance.key = insert_id if table.key.serial? && !attributes.include?(table.key.name)
-              session.identity_map.set(instance)
-              callback(instance, :after_create)
+            if table.multi_class?
+              instance.instance_variable_set(
+                table[:type].instance_variable_name,
+                attributes[:type] = instance.class.name
+              )
             end
+          
+            keys = []
+            values = []
+            attributes.each_pair do |key, value|
+              keys << table[key].to_sql
+              values << value
+            end
+        
+            sql = if keys.size > 0
+              "INSERT INTO #{table.to_sql} (#{keys.join(', ')}) VALUES ?"
+            else
+              "INSERT INTO #{table.to_sql}"
+            end
+            
+            insert_id = connection do |db|
+              db.create_command(sql).execute_non_query(values).last_insert_row
+            end
+            instance.instance_variable_set(:@new_record, false)
+            instance.key = insert_id if table.key.serial? && !attributes.include?(table.key.name)
+            session.identity_map.set(instance)
+            callback(instance, :after_create)
           # UPDATE
           else            
             callback(instance, :before_update)
