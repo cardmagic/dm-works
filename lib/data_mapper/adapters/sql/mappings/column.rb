@@ -6,13 +6,14 @@ module DataMapper
         # TODO: There are of course many more options to add here.
         # Ordinal, Length/Size, Nullability are just a few.
         class Column
-    
-          attr_accessor :table, :name, :type, :options
-    
+          
+          attr_reader :type
+          attr_accessor :table, :name, :options
+          
           def initialize(adapter, table, name, type, ordinal, options = {})
             @adapter = adapter
             @table = table
-            @name, @type, @options = name.to_sym, type, options
+            @name, self.type, @options = name.to_sym, type, options
             @ordinal = ordinal
             
             @key = @options[:key] == true || @options[:serial] == true
@@ -20,12 +21,16 @@ module DataMapper
             @lazy = @options.has_key?(:lazy) ? @options[:lazy] : @type == :text
             @serial = @options[:serial] == true
             @default = @options[:default]
-            
+          end
+          
+          def type=(value)
+            @type = value
             (class << self; self end).class_eval <<-EOS
               def type_cast_value(value)
-                @adapter.type_cast_#{type}(value)
+                @adapter.type_cast_#{@type}(value)
               end
             EOS
+            @type
           end
           
           def ordinal
@@ -115,26 +120,34 @@ module DataMapper
           end
                   
           def create!
+            @table.columns << self
+            
             @adapter.connection do |db|
               command = db.create_command(to_create_sql)
               command.execute_non_query
             end
+            flush_sql_caches!
+            true
           end
           
           def drop!
             @table.columns.delete(self)
+            flush_sql_caches!
             
             @adapter.connection do |db|
               command = db.create_command(to_drop_sql)
               command.execute_non_query
             end
+            true
           end
           
           def alter!
+            flush_sql_caches!
             @adapter.connection do |db|
               command = db.create_command(to_alter_sql)
               command.execute_non_query
             end
+            true
           end
           
           def rename!(new_name)
@@ -157,10 +170,12 @@ module DataMapper
               command.execute_non_query
             end
             
-            # Drop the original column  
-            @name = old_name
+            # Drop the original column
             flush_sql_caches!
-            drop!
+            @adapter.connection do |db|
+              command = db.create_command(to_drop_sql)
+              command.execute_non_query
+            end
             
             # Assume the new column name
             @name = new_name
@@ -232,6 +247,7 @@ module DataMapper
           end
           
           def flush_sql_caches!
+            @table.flush_sql_caches!
             @to_long_form = nil
             @to_sql = nil
             @to_sql_with_table_name = nil

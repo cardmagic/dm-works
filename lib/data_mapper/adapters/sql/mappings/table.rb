@@ -74,8 +74,9 @@ module DataMapper
           def drop!
             if exists?
               @adapter.connection do |db|
-                result = db.create_command("DROP TABLE #{to_sql}").execute_non_query
+                result = db.create_command(to_drop_sql).execute_non_query
                 database.identity_map.clear!(name)
+                schema.delete(self)
                 true
               end
             else
@@ -94,6 +95,7 @@ module DataMapper
             else
               @adapter.connection do |db|
                 db.create_command(to_create_sql).execute_non_query
+                schema << self
                 true
               end
             end
@@ -215,10 +217,10 @@ module DataMapper
             end
             columns
           end
-          alias_method :database_columns, :get_database_columns          
+          alias_method :database_columns, :get_database_columns
           
           def to_create_sql
-            @to_create_table_sql || @to_create_table_sql = begin
+            @to_create_sql || @to_create_sql = begin
               sql = "CREATE"
               sql << " TEMPORARY" if temporary?
               sql << " TABLE #{to_sql} (#{ columns.map { |c| c.to_long_form }.join(",\n") }"
@@ -226,8 +228,12 @@ module DataMapper
                 sql << ", PRIMARY KEY (#{keys.map { |c| c.to_sql }.join(', ') })"
               end
               sql << ")"
-              sql
+              sql.compress_lines
             end
+          end
+          
+          def to_drop_sql
+            @to_drop_sql || @to_drop_sql = "DROP TABLE #{to_sql}"
           end
           
           def to_exists_sql
@@ -273,7 +279,17 @@ module DataMapper
               @columns.inspect
             ]
           end
-      
+          
+          def flush_sql_caches!
+            @to_column_exists_sql = nil
+            @to_column_exists_sql = nil
+            @to_exists_sql = nil
+            @to_create_sql = nil
+            @to_drop_sql = nil
+            @to_sql = nil
+            @name = nil
+          end
+          
         end
         
         class Schema

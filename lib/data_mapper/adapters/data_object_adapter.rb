@@ -103,7 +103,6 @@ module DataMapper
         connection do |db|
         
           command = db.create_command(args.shift)
-          logger.debug { command.text }
           
           command.execute_reader(*args) do |reader|
             fields = reader.fields.map { |field| Inflector.underscore(field).to_sym }

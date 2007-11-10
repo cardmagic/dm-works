@@ -4,6 +4,7 @@ describe DataMapper::Support::Serialization do
   
   before(:all) do
     fixtures(:animals)
+    fixtures(:zoos)
   end
   
   it "should serialize to YAML" do

@@ -24,6 +24,14 @@ module DataMapper
               yield table
             end
           end
+          
+          def delete(table)
+            @tables.delete(table.name)
+          end
+          
+          def <<(table)
+            @tables[table.name] = table
+          end
 
           def to_tables_sql
             @to_column_exists_sql || @to_column_exists_sql = <<-EOS.compress_lines

@@ -5,10 +5,12 @@ describe DataMapper::Property do
   end
   
   it "should map a column" do
+    pending('until Property is implemented')
     @property.column.should eql(database.table(Zoo)[:notes])
   end
   
   it "should determine lazyness" do
+    pending('until Property is implemented')
     @property.should be_lazy
   end
   
@@ -42,6 +44,8 @@ describe DataMapper::Adapters::Sql::Mappings do
   end
   
   it "should have two different sets of mapped properties that point to subsets of the Table columns" do
+    pending('until Property is implemented')
+    
     table = database.table(Person)
     
     # Every property's column should be represented in the Table's column mappings.
