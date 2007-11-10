@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 
+require 'rubygems'
 require 'rake'
 require 'spec/rake/spectask'
 require 'rake/rdoctask'
