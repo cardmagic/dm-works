@@ -68,19 +68,6 @@ module DataMapper
             EOS
           end
           alias_method :to_columns_sql, :to_column_exists_sql
-          def get_database_columns
-            columns = []            
-            @adapter.connection do |db|
-              command = db.create_command(to_columns_sql)
-              command.execute_reader(name) do |reader|
-                columns = reader.map {
-                  @adapter.class::Mappings::Column.new(@adapter, name, reader.item(1), DataMapper::Adapters::Sqlite3Adapter::TYPES.index(reader.item(2)),reader.item(0).to_i)
-                }
-              end
-            end
-            columns
-          end
-          alias_method :database_columns, :get_database_columns
           
         end # class Table
         

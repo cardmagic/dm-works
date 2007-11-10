@@ -131,6 +131,21 @@ module DataMapper
             name.to_s
           end
           
+          def get_database_columns
+            columns = []            
+            @adapter.connection do |db|
+              command = db.create_command(to_columns_sql)
+              command.execute_reader(name, schema.name) do |reader|
+                columns = reader.map {
+                  @adapter.class::Mappings::Column.new(@adapter, name, reader.item(1), 
+                  @adapter.class::TYPES.index(reader.item(2)),reader.item(0).to_i)
+                }
+              end
+            end
+            columns
+          end
+          alias_method :database_columns, :get_database_columns          
+          
           def to_create_table_sql
             @to_create_table_sql || @to_create_table_sql = begin
               "CREATE TABLE #{to_sql} (#{columns.map { |c| c.to_long_form }.join(', ')})"
@@ -154,7 +169,16 @@ module DataMapper
               AND COLUMN_NAME = ?
                 AND #{@adapter.database_column_name} = ?
             EOS
-          end          
+          end   
+          
+          def to_columns_sql
+            @to_column_exists_sql || @to_column_exists_sql = <<-EOS.compress_lines
+              SELECT ORDINAL_POSITION, COLUMN_NAME, DATA_TYPE
+              FROM INFORMATION_SCHEMA.COLUMNS
+              WHERE TABLE_NAME = ?
+              AND #{@adapter.database_column_name} = ?
+            EOS
+          end       
           
           def quote_table
             @adapter.quote_table_name(name)
