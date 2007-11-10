@@ -49,6 +49,11 @@ describe DataMapper::Base do
   it "should return the table for a given model" do
     Person.table.should be_a_kind_of DataMapper::Adapters::Sql::Mappings::Table
   end
+  
+  it "should support boolean accessors" do
+    dolphin = Animal.first(:name => 'Dolphin')
+    dolphin.should be_nice
+  end
 
 end
 

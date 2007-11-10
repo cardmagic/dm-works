@@ -18,7 +18,8 @@ module DataMapper
         :integer => 'INTEGER'.freeze,
         :string => 'TEXT'.freeze,
         :text => 'TEXT'.freeze,
-        :class => 'TEXT'.freeze
+        :class => 'TEXT'.freeze,
+        :boolean => 'INTEGER'.freeze
       })
 
       TABLE_QUOTING_CHARACTER = '"'.freeze

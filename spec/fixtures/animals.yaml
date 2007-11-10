@@ -22,6 +22,7 @@
   notes: I am a Whale!
 - name: Dolphin
   notes: I am a Dolphin!
+  nice: true
 - name: Mouse
   notes: I am a Mouse!
 - name: Rat

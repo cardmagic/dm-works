@@ -7,12 +7,12 @@ describe DataMapper::Support::Serialization do
   end
   
   it "should serialize to YAML" do
-    Animal.first(:name => 'Frog').to_yaml.should == <<-EOS.margin
+    Animal.first(:name => 'Frog').to_yaml.strip.should == <<-EOS.margin
       --- 
       id: 1
       name: Frog
       notes: I am a Frog!
-      
+      nice: false
     EOS
   end
   
@@ -21,6 +21,7 @@ describe DataMapper::Support::Serialization do
       <animal id="1">
         <name>Frog</name>
         <notes>I am a Frog!</notes>
+        <nice>false</nice>
       </animal>
     EOS
     
@@ -40,7 +41,8 @@ describe DataMapper::Support::Serialization do
       {
         "id": 1,
         "name": "Frog",
-        "notes": "I am a Frog!"
+        "notes": "I am a Frog!",
+        "nice": false
       }
     EOS
     

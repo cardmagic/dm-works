@@ -350,7 +350,8 @@ module DataMapper
         :decimal => 'decimal'.freeze,
         :float => 'float'.freeze,
         :datetime => 'datetime'.freeze,
-        :date => 'date'.freeze
+        :date => 'date'.freeze,
+        :boolean => 'boolean'.freeze
       }
 
       include Sql

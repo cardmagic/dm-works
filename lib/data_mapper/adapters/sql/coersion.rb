@@ -14,8 +14,8 @@ module DataMapper
         class CoersionError < StandardError
         end
         
-        TRUE_ALIASES = ['true'.freeze, 'TRUE'.freeze, '1'.freeze]
-        FALSE_ALIASES = [nil, '0'.freeze]
+        TRUE_ALIASES = ['true'.freeze, 'TRUE'.freeze, '1'.freeze, 1]
+        FALSE_ALIASES = [nil, '0'.freeze, 0]
         
         def self.included(base)
           base.const_set('TRUE_ALIASES', TRUE_ALIASES.dup)
@@ -27,7 +27,7 @@ module DataMapper
             when TrueClass, FalseClass then raw_value
             when *self::class::TRUE_ALIASES then true
             when *self::class::FALSE_ALIASES then false
-            else "Can't type-cast #{value.inspect} to a boolean"
+            else "Can't type-cast #{raw_value.inspect} to a boolean"
           end
         end
         

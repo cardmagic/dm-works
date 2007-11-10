@@ -41,7 +41,7 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
 
   it "should join has and belongs to many associtions in the statement" do
     loader_for(Animal, :include => :exhibits).to_parameterized_sql.first.should == <<-EOS.compress_lines
-      SELECT `animals`.`id`, `animals`.`name`,
+      SELECT `animals`.`id`, `animals`.`name`, `animals`.`nice`,
         `exhibits`.`id`, `exhibits`.`name`, `exhibits`.`zoo_id`,
         `animals_exhibits`.`animal_id`, `animals_exhibits`.`exhibit_id`
       FROM `animals`
@@ -52,7 +52,7 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
   
   it "should shallow-join unmapped tables for has-and-belongs-to-many in the statement" do
     loader_for(Animal, :shallow_include => :exhibits).to_parameterized_sql.first.should == <<-EOS.compress_lines
-      SELECT `animals`.`id`, `animals`.`name`,
+      SELECT `animals`.`id`, `animals`.`name`, `animals`.`nice`,
         `animals_exhibits`.`animal_id`, `animals_exhibits`.`exhibit_id`
       FROM `animals`
       JOIN `animals_exhibits` ON `animals_exhibits`.`animal_id` = `animals`.`id`

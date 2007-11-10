@@ -153,6 +153,10 @@ module DataObject
       def quote_symbol(value)
         value.to_s
       end
+      
+      def quote_boolean(value)
+        value ? '1' : '0'
+      end
     end
     
   end

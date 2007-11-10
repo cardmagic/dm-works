@@ -93,9 +93,9 @@ module DataMapper
     #   => AT&T
     #   => 3
     def self.property(name, type, options = {})
-      mapping = database.schema[self].add_column(name, type, options)
-      property_getter(name, mapping)
-      property_setter(name, mapping)
+      mapping = database.schema[self].add_column(name.to_s.sub(/\?$/, '').to_sym, type, options)
+      property_getter(mapping)
+      property_setter(mapping)
       
       if MAGIC_PROPERTIES.has_key?(name)
         class_eval(&MAGIC_PROPERTIES[name])
@@ -115,31 +115,35 @@ module DataMapper
       EmbeddedValue::define(self, class_or_name, &block)
     end
 
-    def self.property_getter(name, mapping)
+    def self.property_getter(mapping)      
       if mapping.lazy?
         class_eval <<-EOS
-          def #{name}
-            lazy_load!(#{name.inspect})
-            @#{name}
+          def #{mapping.name}
+            lazy_load!(#{mapping.name.inspect})
+            @#{mapping.name}
           end
         EOS
       else
-        class_eval("def #{name}; #{mapping.instance_variable_name} end")
+        class_eval("def #{mapping.name}; #{mapping.instance_variable_name} end")
+      end
+      
+      if mapping.type == :boolean
+        class_eval("alias #{mapping.name}? #{mapping.name}")
       end
     end
     
-    def self.property_setter(name, mapping)
+    def self.property_setter(mapping)
       if mapping.lazy?
         class_eval <<-EOS
-          def #{name.to_s.sub(/\?$/, '')}=(value)
+          def #{mapping.name}=(value)
             class << self;
-              attr_accessor #{name.inspect}
+              attr_accessor #{mapping.name.inspect}
             end
-            @#{name} = value
+            @#{mapping.name} = value
           end
         EOS
       else
-        class_eval("def #{name.to_s.sub(/\?$/, '')}=(value); #{mapping.instance_variable_name} = value end")
+        class_eval("def #{mapping.name}=(value); #{mapping.instance_variable_name} = value end")
       end
     end
     
