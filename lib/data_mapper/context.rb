@@ -67,11 +67,11 @@ module DataMapper
     end
     
     def create_table(klass)
-      @adapter.create_table(klass)
+      table(klass).create!
     end
     
     def drop_table(klass)
-      @adapter.drop(self, klass)
+      table(klass).drop!
     end
     
     def table_exists?(klass)

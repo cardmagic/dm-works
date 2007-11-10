@@ -62,7 +62,15 @@ module DataMapper
           end
           
           def drop!
-            @adapter.drop(database, self)
+            if exists?
+              @adapter.connection do |db|
+                result = db.create_command("DROP TABLE #{to_sql}").execute_non_query
+                database.identity_map.clear!(name)
+                true
+              end
+            else
+              false
+            end
           end
           
           def create!(force = false)

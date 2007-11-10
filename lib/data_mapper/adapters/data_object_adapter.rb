@@ -149,20 +149,6 @@ module DataMapper
         end
       end
       
-      def drop(session, name)
-        table = self.table(name)
-        
-        if table.exists?
-          connection do |db|
-            result = db.create_command("DROP TABLE #{table.to_sql}").execute_non_query
-            session.identity_map.clear!(name)
-            true
-          end
-        else
-          false
-        end
-      end
-      
       def create_table(name)
         table = self.table(name)
         
