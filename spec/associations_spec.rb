@@ -232,6 +232,7 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
   it 'should allow association of additional objects' do
     @amazonia.animals << Animal.new(:name => "Buffalo")
     @amazonia.animals.size.should == 2
+    @amazonia.save
   end
 
 end

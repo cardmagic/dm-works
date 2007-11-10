@@ -15,10 +15,10 @@ module DataMapper
             @name, @type, @options = name.to_sym, type, options
             @ordinal = ordinal
             
-            @key = (@options[:key] == true)
+            @key = @options[:key] == true || @options[:serial] == true
             @nullable = @options.has_key?(:nullable) ? @options[:nullable] : !@key
             @lazy = @options.has_key?(:lazy) ? @options[:lazy] : @type == :text
-            @serial = (@key == true && @type == :integer && @options[:serial] != false)
+            @serial = @options[:serial] == true
             @default = @options[:default]
             
             (class << self; self end).class_eval <<-EOS
@@ -110,7 +110,7 @@ module DataMapper
                 @to_long_form << " #{not_null_declaration}"
               end
               
-              if key? && !primary_key_declaration.blank?
+              if key? && serial? && !primary_key_declaration.blank?
                 @to_long_form << " #{primary_key_declaration}"
               end
               

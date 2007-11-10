@@ -64,7 +64,7 @@ module DataMapper
         @left_foreign_key || @left_foreign_key = begin
           join_table.add_column(
             (@options[:left_foreign_key] || table.default_foreign_key),
-            :integer, {})
+            :integer, :key => true)
         end
       end
 
@@ -72,7 +72,7 @@ module DataMapper
         @right_foreign_key || @right_foreign_key = begin
           join_table.add_column(
             (@options[:right_foreign_key] || association_table.default_foreign_key),
-            :integer, {})
+            :integer, :key => true)
         end
       end
       
@@ -92,6 +92,21 @@ module DataMapper
         EOS
       end
       
+      def to_insert_sql
+        <<-EOS.compress_lines
+          INSERT INTO #{join_table.to_sql}
+          (#{left_foreign_key.to_sql}, #{right_foreign_key.to_sql})
+          VALUES
+        EOS
+      end
+      
+      def to_delete_sql
+        <<-EOS
+          DELETE FROM #{join_table.to_sql}
+          WHERE #{left_foreign_key.to_sql} = ?
+        EOS
+      end
+      
       # Define the association instance method (i.e. Project#tasks)
       def define_accessor(klass)
         klass.class_eval <<-EOS
@@ -105,16 +120,13 @@ module DataMapper
         EOS
       end
       
-      class Set
+      class Set < Associations::Reference
         
         include Enumerable
         
-        def initialize(instance, association_name)
-          @instance, @association_name = instance, association_name
-        end
-        
-        def association
-          @association || (@association = @instance.session.schema[@instance.class].associations[@association_name])
+        def initialize(*args)
+          super
+          @new_members = false
         end
         
         def each
@@ -132,6 +144,64 @@ module DataMapper
 
         def empty?
           entries.empty?
+        end
+        
+        def dirty?
+          @entries && @entries.any? { |item| item != @instance && item.dirty? }
+        end
+        
+        def validate_excluding_association(associated, context)
+          @entries.blank? || @entries.all? { |item| item.validate_excluding_association(associated, context) }
+        end
+        
+        def save
+          unless @entries.nil? || @entries.empty?
+            
+            if @new_members || dirty?
+              adapter = @instance.session.adapter
+              
+              adapter.connection do |db|
+                command = db.create_command(association.to_delete_sql)
+                command.execute_non_query(@instance.key)
+              end
+            
+              if adapter.batch_insertable?
+                sql = association.to_insert_sql
+                keys = []
+              
+                @entries.each do |member|
+                  member.save
+                  sql << " (?, ?)"
+                  keys << @instance.key << member.key
+                end
+            
+                adapter.connection do |db|
+                  command = db.create_command(sql)
+                  command.execute_non_query(*keys)
+                end
+              
+              else # adapter doesn't support batch inserts...
+                @entries.each do |member|
+                  member.save                
+                end
+              
+                # Just to keep the same flow as the batch-insert mode.
+                @entries.each do |member|
+                  adapter.connection do |db|
+                    command = db.create_command("#{association.to_insert_sql} (?, ?)")
+                    command.execute_non_query(@instance.key, member.key)
+                  end
+                end
+              end # if adapter.batch_insertable?
+               
+              @new_members = false
+            end # if @new_members || dirty?
+          end
+        end
+        
+        def <<(member)
+          @new_members = true
+          entries << member
         end
         
         def entries

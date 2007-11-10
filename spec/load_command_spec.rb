@@ -4,6 +4,7 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
   
   before(:all) do
     fixtures(:zoos)
+    fixtures(:animals)
   end
   
   def loader_for(klass, options = {})

@@ -56,6 +56,10 @@ module DataMapper
         raise NotImplementedError.new
       end
       
+      def batch_insertable?
+        true
+      end
+      
       # Yields an available connection. Flushes the connection-pool and reconnects
       # if the connection returns an error.
       def connection

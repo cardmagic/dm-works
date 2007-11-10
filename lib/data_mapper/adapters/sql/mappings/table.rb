@@ -122,11 +122,17 @@ module DataMapper
               @key = @columns.find { |column| column.key? }
               
               if @key.nil?
-                @key = add_column(:id, :integer, :key => true, :ordinal => -1)
+                @key = add_column(:id, :integer, :serial => true, :ordinal => -1)
                 @klass.send(:attr_reader, :id) unless @klass.methods.include?(:id)
               end
               
               @key
+            end
+          end
+          
+          def keys
+            @keys || begin
+              @keys = @columns.select { |column| column.key? }
             end
           end
       
@@ -203,7 +209,12 @@ module DataMapper
           
           def to_create_table_sql
             @to_create_table_sql || @to_create_table_sql = begin
-              "CREATE TABLE #{to_sql} (#{columns.map { |c| c.to_long_form }.join(', ')})"
+              sql = "CREATE TABLE #{to_sql} (#{ columns.map { |c| c.to_long_form }.join(",\n") }"
+              unless keys.blank? || (keys.size == 1 && keys.first.serial?)
+                sql << ", PRIMARY KEY (#{keys.map { |c| c.to_sql }.join(', ') })"
+              end
+              sql << ")"
+              sql
             end
           end
           

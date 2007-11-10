@@ -31,7 +31,11 @@ module DataMapper
         conn.open
         return conn
       end
-                
+      
+      def batch_insertable?
+        false
+      end
+      
       module Mappings
         
         class Schema
