@@ -88,7 +88,35 @@ module DataMapper
               end
             end
           end
-      
+          
+          def delete_all!
+            @adapter.connection do |db|
+              db.create_command("DELETE FROM #{to_sql}").execute_non_query
+            end
+            database.identity_map.clear!(name)
+          end
+          
+          def truncate!
+            @adapter.connection do |db|
+              result = db.create_command("TRUNCATE TABLE #{to_sql}").execute_non_query
+              database.identity_map.clear!(name)
+              result.to_i > 0
+            end
+          end
+          
+          def count
+            @adapter.connection do |db|
+              command = db.create_command("SELECT COUNT(*) AS row_count FROM #{to_sql}")          
+              command.execute_reader do |reader|
+                if reader.has_rows?
+                  reader.current_row.first.to_i
+                else
+                  0
+                end
+              end
+            end
+          end
+          
           def key
             @key || begin
               @key = @columns.find { |column| column.key? }

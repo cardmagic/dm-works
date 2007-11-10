@@ -139,24 +139,13 @@ module DataMapper
             reader.any? { reader.item(1) == column_name.to_s }
           end
         end
-      end            
-      
-      def truncate(session, name)
-        connection do |db|
-          result = db.create_command("TRUNCATE TABLE #{table(name).to_sql}").execute_non_query
-          session.identity_map.clear!(name)
-          result.to_i > 0
-        end
       end
             
       def delete(session, instance)
         table = self.table(instance)
         
         if instance.is_a?(Class)
-          connection do |db|
-            db.create_command("DELETE FROM #{table.to_sql}").execute_non_query
-          end
-          session.identity_map.clear!(instance)
+          table.delete_all!
         else
           callback(instance, :before_destroy)
           
@@ -259,10 +248,6 @@ module DataMapper
       
       def load(session, klass, options)
         self.class::Commands::LoadCommand.new(self, session, klass, options).call
-      end
-      
-      def count(klass_or_instance, options)
-        query("SELECT COUNT(*) AS row_count FROM " + table(klass_or_instance).to_sql).first.to_i
       end
       
       def table(instance)
