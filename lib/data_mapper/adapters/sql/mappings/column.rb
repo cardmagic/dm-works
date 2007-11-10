@@ -118,8 +118,8 @@ module DataMapper
                 @to_long_form << " #{serial_declaration}"
               end
               
-              unless default.nil? || default_declaration.blank?
-                @to_long_form << " #{default_declaration}"
+              unless default.nil? || (value = default_declaration).blank?
+                @to_long_form << " #{value}"
               end
         
               @to_long_form
@@ -159,7 +159,7 @@ module DataMapper
           end
           
           def default_declaration
-            @adapter.connection{ |db| db.create_command("").escape_sql(["DEFAULT ?", default]) }
+            @adapter.connection { |db| sql = db.create_command("DEFAULT ?").escape_sql([default]) }
           end
       
         end

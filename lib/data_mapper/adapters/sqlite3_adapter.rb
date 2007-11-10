@@ -31,12 +31,6 @@ module DataMapper
         conn.open
         return conn
       end
-      
-      def truncate(session, name)
-        result = execute("DELETE FROM #{table(name).to_sql}")
-        session.identity_map.clear!(name)
-        result.to_i > 0
-      end
                 
       module Mappings
         
