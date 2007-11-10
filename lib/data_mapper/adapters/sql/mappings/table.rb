@@ -74,9 +74,18 @@ module DataMapper
           end
           
           def create!(force = false)
-            unless exists? || force
-              drop! if force
-              @adapter.create_table(self)
+            if exists?
+              if force
+                drop!
+                create!
+              else
+                false
+              end
+            else
+              @adapter.connection do |db|
+                db.create_command(to_create_table_sql).execute_non_query
+                true
+              end
             end
           end
       

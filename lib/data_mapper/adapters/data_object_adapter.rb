@@ -148,20 +148,7 @@ module DataMapper
           result.to_i > 0
         end
       end
-      
-      def create_table(name)
-        table = self.table(name)
-        
-        if table.exists?
-          false
-        else
-          connection do |db|
-            db.create_command(table.to_create_table_sql).execute_non_query
-            true
-          end
-        end
-      end
-      
+            
       def delete(session, instance)
         table = self.table(instance)
         
@@ -188,7 +175,8 @@ module DataMapper
       
       def save(session, instance)
         case instance
-        when Class, Mappings::Table then create_table(instance)
+        when Class then table(instance).create!
+        when Mappings::Table then instance.create!
         when DataMapper::Base then
           return false unless instance.dirty? && instance.valid?
           
