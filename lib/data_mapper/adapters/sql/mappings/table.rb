@@ -188,7 +188,8 @@ module DataMapper
               command.execute_reader(name, schema.name) do |reader|
                 columns = reader.map {
                   @adapter.class::Mappings::Column.new(@adapter, name, reader.item(1), 
-                  @adapter.class::TYPES.index(reader.item(2)),reader.item(0).to_i)
+                  @adapter.class::TYPES.index(reader.item(2)),reader.item(0).to_i,
+                  :nullable => reader.item(3).to_i != 99, :default => reader.item(4))
                 }
               end
             end
