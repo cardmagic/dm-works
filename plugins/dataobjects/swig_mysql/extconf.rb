@@ -17,7 +17,7 @@ def mysql_config(type)
     raise "mysql_config not found"
   end
   
-  conf.readline.chomp[2..-1]
+  conf.chomp[2..-1]
 end
 
 $inc, $lib = dir_config('mysql', config_value('include'), config_value('libs_r')) 

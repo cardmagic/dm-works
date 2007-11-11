@@ -167,16 +167,17 @@ module DataMapper
             
               if adapter.batch_insertable?
                 sql = association.to_insert_sql
+                values = []
                 keys = []
               
                 @entries.each do |member|
                   member.save
-                  sql << " (?, ?)"
+                  values << "(?, ?)"
                   keys << @instance.key << member.key
                 end
             
                 adapter.connection do |db|
-                  command = db.create_command(sql)
+                  command = db.create_command(sql << ' ' << values.join(', '))
                   command.execute_non_query(*keys)
                 end
               

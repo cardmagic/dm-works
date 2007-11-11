@@ -117,7 +117,7 @@ module DataMapper
           end
           
           def to_alter_sql
-            "ALTER TABLE " <<  table.to_sql << " ALTER COLUMN " << to_long_form
+            "ALTER TABLE " <<  table.to_sql << " MODIFY COLUMN " << to_long_form
           end
           
           def to_drop_sql
