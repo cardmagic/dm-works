@@ -4,8 +4,7 @@ require 'active_record'
 ActiveRecord::Base.establish_connection :adapter => 'mysql',
   :username => 'root',
   :password => '',
-  :database => 'data_mapper_1',
-  :socker => "/tmp/mysql.sock"  
+  :database => 'data_mapper_1'
 
 ActiveRecord::Base.find_by_sql('SELECT 1')
 
@@ -22,8 +21,7 @@ require 'lib/data_mapper'
 DataMapper::Database.setup({
   :adapter => 'mysql',
   :database => 'data_mapper_1',
-  :username => 'root',
-  :socket => "/tmp/mysql.sock"
+  :username => 'root'
 })
 
 class DMAnimal < DataMapper::Base

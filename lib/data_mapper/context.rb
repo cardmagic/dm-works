@@ -63,7 +63,7 @@ module DataMapper
     end
     
     def truncate(klass)
-      @adapter.truncate(self, klass)
+      table(klass).truncate!
     end
     
     def create_table(klass)
