@@ -99,31 +99,35 @@ module DataMapper
         raise NotImplementedError.new
       end
       
-      def query(*args)        
-        connection do |db|
+      def query(*args)
+        db = create_connection
         
-          command = db.create_command(args.shift)
+        command = db.create_command(args.shift)
+        
+        command.execute_reader(*args) do |reader|
+          fields = reader.fields.map { |field| Inflector.underscore(field).to_sym }
           
-          command.execute_reader(*args) do |reader|
-            fields = reader.fields.map { |field| Inflector.underscore(field).to_sym }
+          results = []
+
+          if fields.size > 1
+            struct = Struct.new(*fields)
             
-            results = []
-
-            if fields.size > 1
-              struct = Struct.new(*fields)
-              
-              reader.each do
-                results << struct.new(*reader.current_row)
-              end
-            else
-              reader.each do
-                results << reader.item(0)
-              end
+            reader.each do
+              results << struct.new(*reader.current_row)
             end
-
-            results            
+          else
+            reader.each do
+              results << reader.item(0)
+            end
           end
+
+          results            
         end
+      rescue => e
+        logger.error { e }
+        raise e
+      ensure
+        db.close
       end      
       
       def handle_error(error)

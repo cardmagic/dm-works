@@ -11,24 +11,23 @@ describe DataMapper::Adapters::Sql::Mappings::Column do
     mappings = DataMapper::Adapters::Sql::Mappings
     
     columns = SortedSet.new
-
-    columns << mappings::Column.new(database(:mock).adapter, nil, :one, :string, 1)
-    columns << mappings::Column.new(database(:mock).adapter, nil, :two, :string, 2)
-    columns << mappings::Column.new(database(:mock).adapter, nil, :three, :string, 3)
+    
+    table = mappings::Table.new(database(:mock).adapter, "Cow")
+    columns << mappings::Column.new(database(:mock).adapter, table, :one, :string, 1)
+    columns << mappings::Column.new(database(:mock).adapter, table, :two, :string, 2)
+    columns << mappings::Column.new(database(:mock).adapter, table, :three, :string, 3)
     columns.should have(3).entries
     
-    columns << mappings::Column.new(database(:mock).adapter, nil, :two, :integer, 3)
+    columns << mappings::Column.new(database(:mock).adapter, table, :two, :integer, 3)
     columns.should have(3).entries
     
-    columns << mappings::Column.new(database(:mock).adapter, nil, :id, :integer, -1)
+    columns << mappings::Column.new(database(:mock).adapter, table, :id, :integer, -1)
     columns.should have(4).entries
   end
   
   it "should get its meta data from the database"
   
   it "should be able to rename" do
-    pending("until it works")
-
     table = database.table(Zoo)
     name_column = table[:name]
     
@@ -51,6 +50,8 @@ describe DataMapper::Adapters::Sql::Mappings::Column do
   it "should create, alter and drop a column" do
     lambda { database.query("SELECT moo FROM zoos") }.should raise_error
     
+    database.logger.debug { 'MOO' * 10 }
+    
     table = database.table(Zoo)
     Zoo.property(:moo, :string)
     moo = table[:moo]
@@ -71,9 +72,10 @@ describe DataMapper::Adapters::Sql::Mappings::Column do
     zoo.reload!
     zoo.moo.should eql(4)
     
-    database.logger.debug { 'MOO' * 10 }
     moo.drop!
-    database.logger.debug { 'MOO' * 10 }
+    
+    Zoo.send(:undef_method, :moo)
+    Zoo.send(:undef_method, :moo=)
     
     lambda { database.query("SELECT moo FROM zoos") }.should raise_error
   end

@@ -160,7 +160,9 @@ module DataMapper
             @columns << column
             
             @multi_class = true if column_name == :type
-        
+            
+            self.flush_sql_caches!
+            
             return column
           end
       
@@ -169,22 +171,28 @@ module DataMapper
           end
       
           def name
-            @name || @name = if @klass_or_name.kind_of?(String)
-              @klass_or_name
-            elsif @klass_or_name.kind_of?(Class)
-              if @klass_or_name.superclass != DataMapper::Base \
-                && @klass_or_name.ancestors.include?(DataMapper::Base)
-                @adapter.table(@klass_or_name.superclass).name
+            @name || @name = begin
+              if @custom_name
+                @custom_name
+              elsif @klass_or_name.kind_of?(String)
+                @klass_or_name
+              elsif @klass_or_name.kind_of?(Class)
+                if @klass_or_name.superclass != DataMapper::Base \
+                  && @klass_or_name.ancestors.include?(DataMapper::Base)
+                  @adapter.table(@klass_or_name.superclass).name
+                else
+                  Inflector.tableize(@klass_or_name.name)
+                end
               else
-                Inflector.tableize(@klass_or_name.name)
+                raise "+klass_or_name+ (#{@klass_or_name.inspect}) must be a Class or a string containing the name of a table"
               end
-            else
-              raise "+klass_or_name+ (#{@klass_or_name.inspect}) must be a Class or a string containing the name of a table"
             end.freeze
           end
       
           def name=(value)
-            @name = value
+            flush_sql_caches!
+            @custom_name = value
+            self.name
           end
       
           def default_foreign_key

@@ -126,12 +126,12 @@ module DataMapper
                   
           def create!
             @table.columns << self
+            flush_sql_caches!
             
             @adapter.connection do |db|
               command = db.create_command(to_create_sql)
               command.execute_non_query
             end
-            flush_sql_caches!
             true
           end
           
@@ -158,29 +158,24 @@ module DataMapper
           def rename!(new_name)
             old_name = name # Store the old_name
             
-            old_name_sql = to_sql
+            new_column = @table.add_column(new_name, self.type, self.options)
             
             # Create the new column
-            self.name = new_name
-            create!
-            new_name_sql = to_sql            
+            new_column.create!
             
             # Copy the data from one column to the other.
             @adapter.connection do |db|
               command = db.create_command <<-EOS.compress_lines
                 UPDATE #{@table.to_sql} SET
-                #{new_name_sql} = #{old_name_sql}
+                #{new_column.to_sql} = #{to_sql}
               EOS
               command.execute_non_query
             end
             
-            # Drop the original column
-            flush_sql_caches!
-            drop!
-            @table.columns << self
-            
-            # Assume the new column name
-            self.name = new_name
+            # Swap column names
+            self.name, new_column.name = new_column.name, self.name
+            # Drop the old column
+            new_column.drop!
             true
           end
           
@@ -216,7 +211,7 @@ module DataMapper
           end
           
           def hash
-            name.hash
+            @hash || @hash = to_sql(true).hash
           end
           
           def eql?(other)
@@ -248,11 +243,11 @@ module DataMapper
           end
           
           def flush_sql_caches!
-            @table.flush_sql_caches!
             @to_long_form = nil
             @to_sql = nil
             @to_sql_with_table_name = nil
             @column_name = nil
+            @table.flush_sql_caches!
           end
       
         end
