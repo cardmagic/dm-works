@@ -24,6 +24,7 @@ module DataMapper
           end
           
           def type=(value)
+            self.flush_sql_caches!
             @type = value
             (class << self; self end).class_eval <<-EOS
               def type_cast_value(value)
@@ -67,6 +68,11 @@ module DataMapper
           
           def default
             @default
+          end
+          
+          def default=(value)
+            self.flush_sql_caches!
+            @default = value
           end
           
           def to_sym
@@ -218,7 +224,7 @@ module DataMapper
             name == other.name
           end
           
-          private
+          protected
           
           def primary_key_declaration
             "PRIMARY KEY"

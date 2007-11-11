@@ -140,6 +140,59 @@ module DataMapper
             "SERIAL"
           end
           
+          def to_alter_sql
+            "ALTER TABLE " <<  table.to_sql << " ALTER COLUMN " << to_alter_form
+          end
+          
+          def alter!
+            result = super
+            reset_alter_state!
+            result
+          end
+          
+          def reset_alter_state!
+            @type_changed = false
+            @default_changed = false
+          end
+          
+          def default=(value)
+            @default_changed = true
+            super
+          end
+          
+          def type=(value)
+            @type_changed = true
+            super
+          end
+          
+          def to_alter_form
+            sql = to_sql.dup
+            
+            changes = 0
+            
+            if @type_changed
+              changes += 1
+              sql << " TYPE " << type_declaration
+              case self.type
+              when :integer then sql << " USING #{to_sql}::integer"
+              when :datetime then
+                sql << " USING timestamp with time zone"
+              end
+            end
+            
+            if @default_changed
+              sql << ", " if changes += 1 > 1
+              
+              if default.blank? || default_declaration.blank?
+                sql << " DROP DEFAULT"
+              else
+                sql << " " << default_declaration
+              end
+            end
+            
+            sql
+          end
+          
           def to_long_form
             @to_long_form || begin
               @to_long_form = "#{to_sql}"
@@ -153,7 +206,7 @@ module DataMapper
                   @to_long_form << " #{not_null_declaration}"
                 end
                 
-                if key? && !primary_key_declaration.blank?
+                if key? && serial? && !primary_key_declaration.blank?
                   @to_long_form << " #{primary_key_declaration}"
                 end
 

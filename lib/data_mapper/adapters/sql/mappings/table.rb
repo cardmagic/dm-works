@@ -217,7 +217,7 @@ module DataMapper
               command = db.create_command(to_columns_sql)
               command.execute_reader(name, schema.name) do |reader|
                 columns = reader.map {
-                  @adapter.class::Mappings::Column.new(@adapter, name, reader.item(1), 
+                  @adapter.class::Mappings::Column.new(@adapter, self, reader.item(1), 
                   @adapter.class::TYPES.index(reader.item(2)),reader.item(0).to_i,
                   :nullable => reader.item(3).to_i != 99, :default => unquote_default(reader.item(4)))
                 }
