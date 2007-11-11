@@ -1,10 +1,17 @@
 require 'benchmark'
 require 'active_record'
 
+socket_file = [
+  "/opt/local/var/run/mysql5/mysqld.sock",
+  "tmp/mysqld.sock",
+  "tmp/mysql.sock"
+].find { |path| File.exists?(path) }
+
 ActiveRecord::Base.establish_connection :adapter => 'mysql',
   :username => 'root',
   :password => '',
-  :database => 'data_mapper_1'
+  :database => 'data_mapper_1',
+  :socket => socket_file
 
 ActiveRecord::Base.find_by_sql('SELECT 1')
 
@@ -21,7 +28,8 @@ require 'lib/data_mapper'
 DataMapper::Database.setup({
   :adapter => 'mysql',
   :database => 'data_mapper_1',
-  :username => 'root'
+  :username => 'root',
+  :socket => socket_file
 })
 
 class DMAnimal < DataMapper::Base
