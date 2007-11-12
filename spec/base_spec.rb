@@ -47,7 +47,7 @@ describe DataMapper::Base do
   end 
   
   it "should return the table for a given model" do
-    Person.table.should be_a_kind_of DataMapper::Adapters::Sql::Mappings::Table
+    Person.table.should be_a_kind_of(DataMapper::Adapters::Sql::Mappings::Table)
   end
   
   it "should support boolean accessors" do

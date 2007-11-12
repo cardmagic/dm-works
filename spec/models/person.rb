@@ -6,7 +6,7 @@ class Person < DataMapper::Base
   property :notes, :text
   property :date_of_birth, :date
   
-  embed :address do
+  embed :address, :prefix => true do
     property :street, :string
     property :city, :string
     property :state, :string, :size => 2
@@ -27,6 +27,6 @@ class Person < DataMapper::Base
     end
   end
   
-  embed Location
+  embed Location, :prefix => "address_"
   
 end

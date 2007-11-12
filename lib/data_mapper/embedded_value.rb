@@ -4,10 +4,11 @@ module DataMapper
     
     def initialize(instance)
       @instance = instance
+      @container_prefix = ''
     end
     
     def self.property(name, type, options = {})
-      mapping = database.schema[containing_class].add_column(name, type, options)
+      mapping = database.schema[containing_class].add_column("#{@container_prefix}#{name}", type, options)
       define_property_getter(name, mapping)
       define_property_setter(name, mapping)
     end
@@ -36,8 +37,8 @@ module DataMapper
       end
     end
     
-    def self.define(container, class_or_name, &block)
-       embedded_class, embedded_class_name, accessor_name = nil
+    def self.define(container, class_or_name, options, &block)
+      embedded_class, embedded_class_name, accessor_name = nil
 
       if class_or_name.kind_of?(Class)
         embedded_class = class_or_name
@@ -48,6 +49,11 @@ module DataMapper
         embedded_class_name = Inflector.camelize(accessor_name)
         embedded_class = Class.new(EmbeddedValue)
         container.const_set(embedded_class_name, embedded_class) unless container.const_defined?(embedded_class_name)
+      end
+
+      if options[:prefix]
+        container_prefix = options[:prefix].kind_of?(String) ? options[:prefix] : "#{accessor_name}_"
+        embedded_class.instance_variable_set('@container_prefix', container_prefix)
       end
 
       embedded_class.instance_variable_set('@containing_class', container)

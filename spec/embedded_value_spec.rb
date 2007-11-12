@@ -21,5 +21,25 @@ describe DataMapper::EmbeddedValue do
   it 'should allow you to use your own classes as well as long as they inherit from EmbeddedValue' do
     @bob.location.to_s.should == 'Dallas, TX'
   end
+
+  it 'should not require prefix' do
+    class PointyHeadedBoss < DataMapper::Base
+      set_table_name 'people'
+
+      property :name, :string
+
+      embed :address do
+        # don't provide a prefix option to embed
+        # so the column names of these properties gets nothing auto-prepended
+        property :address_street, :string
+        property :address_city, :string
+      end
+    end
+
+    @sam = PointyHeadedBoss[:name => 'Sam']
+    @sam.address.address_street == '1337 Duck Way'
+  end
+
+  it 'should support lazy loading for all embedded properties'
   
 end

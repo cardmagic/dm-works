@@ -2,10 +2,10 @@
   age: 29
   occupation: Programmer
   type: Person
-  street: 1337 Duck Way
-  city: Galveston
-  state: TX
-  zip_code: "75000"
+  address_street: 1337 Duck Way
+  address_city: Galveston
+  adresss_state: TX
+  address_zip_code: "75000"
   notes: 
   date_of_birth: 2007-10-24
 - name: Amy
@@ -24,9 +24,9 @@
 - name: Bob
   age: 29
   occupation: Peon
-  street: 123 Happy Ln.
-  city: Dallas
-  state: TX
-  zip_code: 75000
+  address_street: 123 Happy Ln.
+  address_city: Dallas
+  address_state: TX
+  address_zip_code: 75000
   type: SalesPerson
   commission: 40
