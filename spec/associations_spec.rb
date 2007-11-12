@@ -232,7 +232,18 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
   it 'should allow association of additional objects' do
     @amazonia.animals << Animal.new(:name => "Buffalo")
     @amazonia.animals.size.should == 2
+    @amazonia.reload
+  end
+  
+  it "should allow updates to associations using _ids" do
+    meerkat = Animal.new(:name => "Meerkat")
+    @amazonia.animals.size.should == 1
+    
+    @amazonia.animal_ids << meerkat.id
     @amazonia.save
+    
+    @amazonia.animals.size.should == 2
+    @amazonia.animals.should include?(meerkat)
   end
 
 end
