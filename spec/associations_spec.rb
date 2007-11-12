@@ -235,7 +235,8 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
     @amazonia.reload
   end
   
-  it "should allow updates to associations using _ids" do
+  it "should allow updates to associations using association_ids[]" do
+    pending "Awaiting implementation of association_ids[]"
     meerkat = Animal.new(:name => "Meerkat")
     @amazonia.animals.size.should == 1
     
