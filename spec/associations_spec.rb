@@ -235,6 +235,50 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
     @amazonia.reload
   end
   
+  it 'should allow you to fill and clear an association' do
+    marcy = Exhibit.create(:name => 'marcy')
+    
+    Animal.all.each do |animal|
+      marcy.animals << animal
+    end
+    
+    marcy.save.should eql(true)
+    marcy.should have(Animal.count).animals
+    
+    marcy.animals.clear
+    marcy.should have(0).animals
+    
+    marcy.save.should eql(true)
+    
+    marcys_stand_in = Exhibit[marcy.id]
+    marcys_stand_in.should have(0).animals
+    
+    marcy.destroy!    
+  end
+  
+  it 'should allow you to delete a specific association member' do
+    walter = Exhibit.create(:name => 'walter')
+
+    Animal.all.each do |animal|
+      walter.animals << animal
+    end
+    
+    walter.save.should eql(true)
+    walter.should have(Animal.count).animals
+    
+    delete_me = walter.animals.entries.first
+    walter.animals.delete(delete_me).should eql(delete_me)
+    walter.animals.delete(delete_me).should eql(nil)
+    
+    walter.should have(Animal.count - 1).animals
+    walter.save.should eql(true)
+    
+    walters_stand_in = Exhibit[walter.id]
+    walters_stand_in.animals.size.should eql(walter.animals.size)
+
+    walter.destroy!
+  end
+  
   it "should allow updates to associations using association_ids[]" do
     pending "Awaiting implementation of association_ids[]"
     meerkat = Animal.new(:name => "Meerkat")

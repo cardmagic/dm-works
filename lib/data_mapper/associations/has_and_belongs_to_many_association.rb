@@ -107,6 +107,14 @@ module DataMapper
         EOS
       end
       
+      def to_delete_member_sql
+        <<-EOS
+          DELETE FROM #{join_table.to_sql}
+          WHERE #{left_foreign_key.to_sql} = ?
+            AND #{right_foreign_key.to_sql} = ?
+        EOS
+      end
+      
       # Define the association instance method (i.e. Project#tasks)
       def define_accessor(klass)
         klass.class_eval <<-EOS
@@ -147,7 +155,7 @@ module DataMapper
         end
         
         def dirty?
-          @entries && @entries.any? { |item| item != @instance && item.dirty? }
+          @new_members || (@entries && @entries.any? { |item| item != @instance && item.dirty? })
         end
         
         def validate_excluding_association(associated, context)
@@ -155,7 +163,7 @@ module DataMapper
         end
         
         def save
-          unless @entries.nil? || @entries.empty?
+          unless @entries.nil?
             
             if @new_members || dirty?
               adapter = @instance.session.adapter
@@ -165,36 +173,38 @@ module DataMapper
                 command.execute_non_query(@instance.key)
               end
             
-              if adapter.batch_insertable?
-                sql = association.to_insert_sql
-                values = []
-                keys = []
+              unless @entries.empty?
+                if adapter.batch_insertable?
+                  sql = association.to_insert_sql
+                  values = []
+                  keys = []
               
-                @entries.each do |member|
-                  member.save
-                  values << "(?, ?)"
-                  keys << @instance.key << member.key
-                end
-            
-                adapter.connection do |db|
-                  command = db.create_command(sql << ' ' << values.join(', '))
-                  command.execute_non_query(*keys)
-                end
-              
-              else # adapter doesn't support batch inserts...
-                @entries.each do |member|
-                  member.save                
-                end
-              
-                # Just to keep the same flow as the batch-insert mode.
-                @entries.each do |member|
-                  adapter.connection do |db|
-                    command = db.create_command("#{association.to_insert_sql} (?, ?)")
-                    command.execute_non_query(@instance.key, member.key)
+                  @entries.each do |member|
+                    member.save
+                    values << "(?, ?)"
+                    keys << @instance.key << member.key
                   end
-                end
-              end # if adapter.batch_insertable?
-               
+            
+                  adapter.connection do |db|
+                    command = db.create_command(sql << ' ' << values.join(', '))
+                    command.execute_non_query(*keys)
+                  end
+              
+                else # adapter doesn't support batch inserts...
+                  @entries.each do |member|
+                    member.save                
+                  end
+              
+                  # Just to keep the same flow as the batch-insert mode.
+                  @entries.each do |member|
+                    adapter.connection do |db|
+                      command = db.create_command("#{association.to_insert_sql} (?, ?)")
+                      command.execute_non_query(@instance.key, member.key)
+                    end
+                  end
+                end # if adapter.batch_insertable?
+              end # unless @entries.empty?
+              
               @new_members = false
             end # if @new_members || dirty?
           end
@@ -203,6 +213,24 @@ module DataMapper
         def <<(member)
           @new_members = true
           entries << member
+        end
+        
+        def clear
+          @new_members = true
+          @entries = []
+        end
+        
+        def delete(member)
+          @new_members = true
+          if entries.delete(member)
+            @instance.session.adapter.connection do |db|
+              command = db.create_command(association.to_delete_member_sql)
+              command.execute_non_query(@instance.key, member.key)
+            end
+            member
+          else
+            nil
+          end
         end
         
         def entries

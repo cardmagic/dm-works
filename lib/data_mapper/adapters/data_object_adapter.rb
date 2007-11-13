@@ -235,6 +235,8 @@ module DataMapper
                 db.create_command(sql).execute_non_query(*parameters).to_i > 0 \
                 && callback(instance, :after_update)
               end
+            else
+              true
             end
           end
           
