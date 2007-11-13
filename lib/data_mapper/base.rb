@@ -112,14 +112,14 @@ module DataMapper
     }
     
     # An embedded value maps the values of an object to fields in the record of the object's owner.
-    # embed takes a class name or a symbol, options, and an optional block. If you wish to pass it
+    # #embed takes a class name or a symbol, options, and an optional block. If you wish to pass it
     # a class, that class must inherit from DataMapper::EmbeddedValue. See examples for use cases.
     # 
     # EXAMPLE:
     #   class CellPhone < DataMapper::Base
     #     property :number, :string
     #
-    #     embed :owner, :prefix => true
+    #     embed :owner, :prefix => true do
     #       property :name, :string
     #       property :address, :string
     #     end
@@ -151,7 +151,7 @@ module DataMapper
     #   column, it would map to 'owner_address' in the example above. If :prefix => true is 
     #   specified, the prefix will be the name of the symbol given as the first parameter. If the
     #   prefix is a string the specified string will be used for the prefix.
-    #  
+    #
     def self.embed(class_or_name, options = {}, &block)
       EmbeddedValue::define(self, class_or_name, options, &block)
     end
