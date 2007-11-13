@@ -5,6 +5,17 @@ describe DataMapper::Adapters::Sql::Mappings::Column do
   before(:all) do
     fixtures(:zoos)
   end
+
+  it "should only lazy loading text columns by default" do
+    table = database.table(Zoo)
+    table.columns.each do  |column|
+      if column.type == :text
+        column.should be_lazy
+      else
+        column.should_not be_lazy
+      end
+    end
+  end
   
   it "should be unique within a set" do
     
