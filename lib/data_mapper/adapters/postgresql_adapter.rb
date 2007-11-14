@@ -28,7 +28,10 @@ module DataMapper
       
       def create_connection
         connection_string = ""
-        builder = lambda { |k,v| connection_string << "#{k}=#{@configuration.send(v)} " unless @configuration.send(v).blank? }
+        builder = lambda do |k,v|
+          connection_string << "#{k}=#{@configuration.send(v)} " unless
+            @configuration.send(v).blank?
+        end
         builder['host', :host]
         builder['user', :username]
         builder['password', :password]
@@ -37,13 +40,12 @@ module DataMapper
         conn = DataObject::Postgres::Connection.new(connection_string.strip)
         conn.logger = self.logger
         conn.open
-        return conn
-             
+
         unless schema_search_path.empty?
           execute("SET search_path TO #{schema_search_path}")
         end
-        
-        return connection
+
+        return conn
       end
       
       def database_column_name
