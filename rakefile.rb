@@ -109,3 +109,10 @@ end
 task :install => :package do
   sh %{sudo gem install pkg/#{PROJECT}-#{PACKAGE_VERSION}}
 end
+
+namespace :dev do
+  desc "Install for development (for windows)"
+  task :winstall => :gem do
+    system %{gem install --no-rdoc --no-ri -l pkg/#{PROJECT}-#{PACKAGE_VERSION}.gem}
+  end
+end
