@@ -27,7 +27,14 @@ module DataMapper
       end
       
       def create_connection
-        conn = DataObject::Postgres::Connection.new("dbname=#{@configuration.database}")
+        connection_string = ""
+        builder = lambda { |k,v| connection_string << "#{k}=#{@configuration.send(v)} " unless @configuration.send(v).blank? }
+        builder['host', :host]
+        builder['user', :username]
+        builder['password', :password]
+        builder['dbname', :database]
+        builder['socket', :socket]
+        conn = DataObject::Postgres::Connection.new(connection_string.strip)
         conn.logger = self.logger
         conn.open
         return conn
