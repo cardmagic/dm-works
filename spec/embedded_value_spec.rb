@@ -37,9 +37,38 @@ describe DataMapper::EmbeddedValue do
     end
 
     @sam = PointyHeadedBoss[:name => 'Sam']
-    @sam.address.address_street == '1337 Duck Way'
+    @sam.address.address_street.should == '1337 Duck Way'
   end
 
-  it 'should support lazy loading for all embedded properties'
-  
+  it 'should add convenience methods to the non-embedded base' do
+    class Employee < DataMapper::Base
+      set_table_name 'people'
+
+      property :name, :string
+
+      embed :address, :prefix => true do
+        property :street, :string
+        property :city, :string
+      end
+    end
+
+    @sam = Employee[:name => 'Sam']
+    @sam.address_street.should == '1337 Duck Way'
+  end
+
+  it 'should support lazy loading of embedded properties' do
+    class Human < DataMapper::Base
+      set_table_name 'people'
+
+      property :name, :string
+
+      embed :address, :lazy => true, :prefix => true do
+        property :street, :string
+        property :city, :string
+      end
+    end
+
+    @sam = Human[:name => 'Sam']
+    @sam.address.street.should == '1337 Duck Way'
+  end
 end

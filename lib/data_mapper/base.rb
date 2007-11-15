@@ -152,6 +152,9 @@ module DataMapper
     #   specified, the prefix will be the name of the symbol given as the first parameter. If the
     #   prefix is a string the specified string will be used for the prefix.
     #
+    #   * <tt>lazy</tt>: lazy-load all embedded values at the same time. :lazy => true to enable.
+    #   Disabled (false) by default.
+    #
     def self.embed(class_or_name, options = {}, &block)
       EmbeddedValue::define(self, class_or_name, options, &block)
     end
