@@ -13,7 +13,7 @@ rescue LoadError
 end
 
 module DataMapper
-  
+
   class Base
     
     # This probably needs to be protected
@@ -80,6 +80,7 @@ module DataMapper
     # Adds property accessors for a field that you'd like to be able to modify.  The DataMapper doesn't
     # use the table schema to infer accessors, you must explicity call #property to add field accessors
     # to your model.
+    #
     # EXAMPLE:
     #   class CellProvider
     #     property :name, :string
@@ -92,10 +93,29 @@ module DataMapper
     #
     #   => AT&T
     #   => 3
+    #
+    # OPTIONS:
+    #   * <tt>lazy</tt>: Lazy load the specified property (:lazy => true). False by default.
+    #   * <tt>accessor</tt>: Set method visibility for the property accessors. Affects both 
+    #   reader and writer. Allowable values are :public, :protected, :private. Defaults to 
+    #   :public
+    #   * <tt>reader</tt>: Like the accessor option but affects only the property reader.
+    #   * <tt>writer</tt>: Like the accessor option but affects only the property writer.
+    #   * <tt>protected</tt>: Alias for :reader => :public, :writer => :protected
+    #   * <tt>private</tt>: Alias for :reader => :public, :writer => :private
     def self.property(name, type, options = {})
+      visibility_options = [:public, :protected, :private]
+      reader_visibility = options[:reader] || options[:accessor] || :public
+      writer_visibility = options[:writer] || options[:accessor] || :public
+      writer_visibility = :protected if options[:protected]
+      writer_visibility = :private if options[:private]
+
+      raise(ArgumentError.new, "property visibility must be :public, :protected, or :private") unless visibility_options.include?(reader_visibility) && visibility_options.include?(writer_visibility)
+
       mapping = database.schema[self].add_column(name.to_s.sub(/\?$/, '').to_sym, type, options)
-      property_getter(mapping)
-      property_setter(mapping)
+
+      property_getter(mapping, reader_visibility)
+      property_setter(mapping, writer_visibility)
       
       if MAGIC_PROPERTIES.has_key?(name)
         class_eval(&MAGIC_PROPERTIES[name])
@@ -112,8 +132,8 @@ module DataMapper
     }
     
     # An embedded value maps the values of an object to fields in the record of the object's owner.
-    # #embed takes a class name or a symbol, options, and an optional block. If you wish to pass it
-    # a class, that class must inherit from DataMapper::EmbeddedValue. See examples for use cases.
+    # #embed takes a symbol to define the embedded class, options, and an optional block. See 
+    # examples for use cases.
     # 
     # EXAMPLE:
     #   class CellPhone < DataMapper::Base
@@ -123,52 +143,43 @@ module DataMapper
     #       property :name, :string
     #       property :address, :string
     #     end
-    #
-    #     class Provider < DataMapper::EmbeddedValue
-    #       property :name, :string
-    #       property :code, :integer
-    #
-    #       def to_s
-    #         "#{code} #{name}"
-    #       end
-    #     end
-    # 
-    #     embed Provider
     #   end
     #
     #   my_phone = CellPhone.new
     #   my_phone.owner.name = "Nick"
-    #   my_phone.provider.name = "T-Mobile"
-    #   my_phone.provider.code = 4444
     #   puts my_phone.owner.name
-    #   puts my_phone.provider.to_s
     #
     #   => Nick
-    #   => 4444 T-Mobile
     #
     # OPTIONS:
     #   * <tt>prefix</tt>: define a column prefix, so instead of mapping :address to an 'address' 
     #   column, it would map to 'owner_address' in the example above. If :prefix => true is 
     #   specified, the prefix will be the name of the symbol given as the first parameter. If the
     #   prefix is a string the specified string will be used for the prefix.
-    #
     #   * <tt>lazy</tt>: lazy-load all embedded values at the same time. :lazy => true to enable.
     #   Disabled (false) by default.
+    #   * <tt>accessor</tt>: Set method visibility for all embedded properties. Affects both
+    #   reader and writer. Allowable values are :public, :protected, :private. Defaults to :public
+    #   * <tt>reader</tt>: Like the accessor option but affects only embedded property readers.
+    #   * <tt>writer</tt>: Like the accessor option but affects only embedded property writers.
+    #   * <tt>protected</tt>: Alias for :reader => :public, :writer => :protected
+    #   * <tt>private</tt>: Alias for :reader => :public, :writer => :private
     #
     def self.embed(class_or_name, options = {}, &block)
       EmbeddedValue::define(self, class_or_name, options, &block)
     end
 
-    def self.property_getter(mapping)      
+    def self.property_getter(mapping, visibility = :public)
       if mapping.lazy?
         class_eval <<-EOS
+          #{visibility.to_s}
           def #{mapping.name}
             lazy_load!(#{mapping.name.inspect})
             @#{mapping.name}
           end
         EOS
       else
-        class_eval("def #{mapping.name}; #{mapping.instance_variable_name} end")
+        class_eval("#{visibility.to_s}; def #{mapping.name}; #{mapping.instance_variable_name} end")
       end
       
       if mapping.type == :boolean
@@ -176,9 +187,10 @@ module DataMapper
       end
     end
     
-    def self.property_setter(mapping)
+    def self.property_setter(mapping, visibility = :public)
       if mapping.lazy?
         class_eval <<-EOS
+          #{visibility.to_s}
           def #{mapping.name}=(value)
             class << self;
               attr_accessor #{mapping.name.inspect}
@@ -187,7 +199,7 @@ module DataMapper
           end
         EOS
       else
-        class_eval("def #{mapping.name}=(value); #{mapping.instance_variable_name} = value end")
+        class_eval("#{visibility.to_s}; def #{mapping.name}=(value); #{mapping.instance_variable_name} = value end")
       end
     end
     
@@ -253,9 +265,11 @@ module DataMapper
       pairs = {}
       
       session.table(self).columns.each do |column|
-        lazy_load!(column.name) if column.lazy?
-        value = instance_variable_get(column.instance_variable_name)
-        pairs[column.name] = column.type == :class ? value.to_s : value
+        if self.class.public_method_defined?(column.name)
+          lazy_load!(column.name) if column.lazy?
+          value = instance_variable_get(column.instance_variable_name)
+          pairs[column.name] = column.type == :class ? value.to_s : value
+        end
       end
       
       pairs
@@ -265,8 +279,8 @@ module DataMapper
     def attributes=(values_hash)
       table = session.schema[self.class]
       
-      values_hash.reject do |key, value|
-        protected_attribute? key
+      values_hash.delete_if do |key, value|
+        !self.class.public_method_defined?("#{key}=")
       end.each_pair do |key, value|
         if respond_to?(key)
           send("#{key}=", value)
@@ -317,14 +331,6 @@ module DataMapper
       @original_values || (@original_values = {})
     end
     
-    def protected_attribute?(key)
-      self.class.protected_attributes.include?(key.kind_of?(Symbol) ? key : key.to_sym)
-    end
-    
-    def self.protected_attributes
-      @protected_attributes ||= []
-    end
-    
     def self.index
       @index || @index = Ferret::Index::Index.new(:path => "#{database.adapter.index_path}/#{name}")
     end
@@ -344,10 +350,6 @@ module DataMapper
         ids << index[document_id][:id]
       end
       return all(:id => ids)
-    end
-    
-    def self.protect(*keys)
-      keys.each { |key| protected_attributes << key.to_sym }
     end
     
     def self.foreign_key
@@ -394,7 +396,6 @@ module DataMapper
         key_column.type_cast_value(instance_variable_get(key_column.instance_variable_name))
       end
     end
-    
     
   end
   

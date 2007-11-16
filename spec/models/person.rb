@@ -17,16 +17,4 @@ class Person < DataMapper::Base
     end
     
   end
-  
-  class Location < DataMapper::EmbeddedValue
-    property :city, :string
-    property :state, :string, :size => 2
-
-    def to_s
-      "#{city}, #{state}"
-    end
-  end
-  
-  embed Location, :prefix => "address_"
-  
 end
