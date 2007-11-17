@@ -15,9 +15,16 @@ module DataMapper
         columns.each do |column|
           table.add_column(column.name, column.type, column.options)
         end
-
-        table.drop!
-        table.create!
+        
+        result = table.create!(true)
+        
+        table.associations.each do |association|
+          if association.is_a?(Associations::HasAndBelongsToManyAssociation)
+            association.join_table.create!(true)
+          end
+        end            
+        
+        return result
       end
     end
     

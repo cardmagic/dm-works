@@ -129,13 +129,30 @@ module DataMapper
             end
           end
           
+          def insert(hash)
+            @adapter.connection do |db|
+              
+              columns_to_insert = []
+              values = []
+              
+              hash.each_pair do |k,v|
+                column = self[k.to_sym]
+                columns_to_insert << (column ? column.to_sql : k)
+                values << v
+              end
+              
+              command = db.create_command("INSERT INTO #{to_sql} (#{columns_to_insert.join(', ')}) VALUES (#{values.map { '?' }.join(', ')})")
+              command.execute_non_query(*values)
+            end
+          end
+          
           def key
             @key || begin
               @key = @columns.find { |column| column.key? }
               
               if @key.nil?
                 @key = add_column(:id, :integer, :serial => true, :ordinal => -1)
-                @klass.send(:attr_reader, :id) unless @klass.methods.include?(:id)
+                @klass.send(:attr_reader, :id) unless @klass.nil? || @klass.methods.include?(:id)
               end
               
               @key
@@ -272,7 +289,7 @@ module DataMapper
               WHERE TABLE_NAME = ?
               AND #{@adapter.database_column_name} = ?
             EOS
-          end       
+          end
           
           def quote_table
             @adapter.quote_table_name(name)

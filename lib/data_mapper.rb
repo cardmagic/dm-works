@@ -29,48 +29,52 @@ require 'data_mapper/support/inflector'
 require 'data_mapper/database'
 require 'data_mapper/base'
 
-# This block of code is for compatibility with Ruby On Rails' or Merb's database.yml
-# file, allowing you to simply require the data_mapper.rb in your
-# Rails application's environment.rb to configure the DataMapper.
-unless defined?(DM_APP_ROOT)
-  application_root, application_environment = *if defined?(MERB_ROOT)
-    [MERB_ROOT, MERB_ENV]
-  elsif defined?(RAILS_ROOT)
-    [RAILS_ROOT, RAILS_ENV]
-  end
-  
-  DM_APP_ROOT = application_root || Dir::pwd
-  
-  if application_root && File.exists?(application_root + '/config/database.yml')
-
-    database_configurations = YAML::load_file(application_root + '/config/database.yml')
-    current_database_config = database_configurations[application_environment] || database_configurations[application_environment.to_sym]
-    
-    config = lambda { |key| current_database_config[key.to_s] || current_database_config[key] }
-    
-    default_database_config = {
-      :adapter  => config[:adapter],
-      :host     => config[:host],
-      :database => config[:database],
-      :username => config[:username],
-      :password => config[:password]
-    }
-  
-    DataMapper::Database.setup(default_database_config)
-    
-  elsif application_root && FileTest.directory?(application_root + '/config')
-    
-    %w(development testing production).map do |environment|
-      <<-EOS.margin
-        #{environment}:
-          adapter: mysql
-          username: root
-          password:
-          host: localhost
-          database: #{File.dirname(DM_APP_ROOT).split('/').last}_#{environment}
-      EOS
+begin
+  # This block of code is for compatibility with Ruby On Rails' or Merb's database.yml
+  # file, allowing you to simply require the data_mapper.rb in your
+  # Rails application's environment.rb to configure the DataMapper.
+  unless defined?(DM_APP_ROOT)
+    application_root, application_environment = *if defined?(MERB_ROOT)
+      [MERB_ROOT, MERB_ENV]
+    elsif defined?(RAILS_ROOT)
+      [RAILS_ROOT, RAILS_ENV]
     end
+  
+    DM_APP_ROOT = application_root || Dir::pwd
+  
+    if application_root && File.exists?(application_root + '/config/database.yml')
+
+      database_configurations = YAML::load_file(application_root + '/config/database.yml')
+      current_database_config = database_configurations[application_environment] || database_configurations[application_environment.to_sym]
     
-    #File::open(application_root + '/config/database.yml')
+      config = lambda { |key| current_database_config[key.to_s] || current_database_config[key] }
+    
+      default_database_config = {
+        :adapter  => config[:adapter],
+        :host     => config[:host],
+        :database => config[:database],
+        :username => config[:username],
+        :password => config[:password]
+      }
+  
+      DataMapper::Database.setup(default_database_config)
+    
+    elsif application_root && FileTest.directory?(application_root + '/config')
+    
+      %w(development testing production).map do |environment|
+        <<-EOS.margin
+          #{environment}:
+            adapter: mysql
+            username: root
+            password:
+            host: localhost
+            database: #{File.dirname(DM_APP_ROOT).split('/').last}_#{environment}
+        EOS
+      end
+    
+      #File::open(application_root + '/config/database.yml')
+    end
   end
+rescue Exception
+  warn "Could not connect to database specified by database.yml."
 end
