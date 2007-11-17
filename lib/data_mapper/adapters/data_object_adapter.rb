@@ -311,7 +311,8 @@ module DataMapper
         :float => 'float'.freeze,
         :datetime => 'datetime'.freeze,
         :date => 'date'.freeze,
-        :boolean => 'boolean'.freeze
+        :boolean => 'boolean'.freeze,
+        :object => 'text'.freeze
       }
 
       include Sql

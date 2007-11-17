@@ -93,6 +93,16 @@ module DataMapper
           end
         end
         
+        def type_cast_object(raw_value)
+          return nil if raw_value.blank?
+
+          begin
+            YAML.load(raw_value)
+          rescue
+            raise CoersionError.new("Can't type-cast #{raw_value.inspect} to an object")
+          end
+        end
+        
         def type_cast_value(type, raw_value)
           return nil if raw_value.blank?
           
@@ -106,6 +116,7 @@ module DataMapper
           when :float then type_cast_float(raw_value)
           when :datetime then type_cast_datetime(raw_value)
           when :date then type_cast_date(raw_value)
+          when :object then type_cast_object(raw_value)
           else
             if respond_to?("type_cast_#{type}")
               send("type_cast_#{type}", raw_value)

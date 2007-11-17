@@ -310,17 +310,10 @@ module DataMapper
     def dirty_attributes
       pairs = {}
       
-      if new_record?
-        session.table(self).columns.each do |column|
-          unless (value = instance_variable_get(column.instance_variable_name)).nil?
-            pairs[column.name] = value
-          end
-        end
-      else
-        session.table(self).columns.each do |column|
-          if (value = instance_variable_get(column.instance_variable_name)) != original_values[column.name]
-            pairs[column.name] = value
-          end
+      session.table(self).columns.each do |column|
+        value = instance_variable_get(column.instance_variable_name)
+        if (new_record? &&  value != original_values[column.name]) || !value.nil?
+          pairs[column.name] = column.type != :object ? value : YAML.dump(value)
         end
       end
       
