@@ -33,7 +33,8 @@ describe('A tree') do
     root.save
 
     grand = Node[:name => 'root']
-    root.should_not == grand # false since +root+ and +grand+ are in different sessions.
+    root.should == grand # true since +root+ and +grand+ are identical objects.
+    root.should_not eql(grand) # false since +root+ and +grand+ are in different sessions.
 
     grand.children[0].children[0].name.should == 'one_one'
   end

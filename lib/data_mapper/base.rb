@@ -230,7 +230,12 @@ module DataMapper
     def new_record?
       @new_record.nil? || @new_record
     end
+
+    def ==(other)
+      private_attributes == other.send("private_attributes")
+    end
     
+    # Returns the difference between two objects, in terms of their attributes. 
     def ^(other)
       results = {}
       
@@ -388,6 +393,21 @@ module DataMapper
         key_column = session.schema[self.class].key
         key_column.type_cast_value(instance_variable_get(key_column.instance_variable_name))
       end
+    end
+
+    private
+
+    # return all attributes, regardless of their visibility
+    def private_attributes
+      pairs = {}
+
+      session.table(self).columns.each do |column|
+        lazy_load!(column.name) if column.lazy?
+        value = instance_variable_get(column.instance_variable_name)
+        pairs[column.name] = column.type == :class ? value.to_s : value
+      end
+
+      pairs
     end
     
   end

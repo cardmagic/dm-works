@@ -55,6 +55,21 @@ describe DataMapper::Base do
     dolphin.should be_nice
   end
 
+  it "should be comparable" do
+    p1 = Person.create(:name => 'Sam')
+    p2 = Person[p1.id]
+
+    p1.should == p2
+  end
+
+  it "should not be equal if attributes have changed" do
+    p1 = Person.create(:name => 'Sam')
+    p2 = Person[p1.id]
+    p2.name = "Paul"
+
+    p1.should_not == p2
+  end
+
 end
 
 describe 'A new record' do
