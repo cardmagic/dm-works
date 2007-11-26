@@ -70,7 +70,7 @@ describe DataMapper::EmbeddedValue do
       set_table_name 'people'
       property :name, :string
 
-      embed :address do
+      embed :address, :prefix => true do
         property :city, :string
       end
     end
@@ -85,7 +85,7 @@ describe DataMapper::EmbeddedValue do
       set_table_name 'people'
       property :name, :string
 
-      embed :address, :reader => :protected do
+      embed :address, :reader => :protected, :prefix => true do
         property :city, :string
         property :street, :string
       end
@@ -101,7 +101,7 @@ describe DataMapper::EmbeddedValue do
       set_table_name 'people'
       property :name, :string, :reader => :private
 
-      embed :address, :writer => :private do
+      embed :address, :writer => :private, :prefix => true do
         property :city, :string
         property :street, :string
       end
@@ -117,7 +117,7 @@ describe DataMapper::EmbeddedValue do
       set_table_name 'people'
       property :name, :string, :reader => :private
   
-      embed :address, :accessor => :private do
+      embed :address, :accessor => :private, :prefix => true do
         property :city, :string
       end
     end
@@ -132,7 +132,7 @@ describe DataMapper::EmbeddedValue do
       set_table_name 'people'
       property :name, :string
 
-      embed :address, :accessor => :private do
+      embed :address, :accessor => :private, :prefix => true do
         property :city, :string
         property :street, :string, :accessor => :public
       end
