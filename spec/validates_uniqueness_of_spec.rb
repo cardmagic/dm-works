@@ -41,4 +41,17 @@ describe DataMapper::Validations::UniqueValidator do
     new_programmer_scott.errors.full_messages.first.should == "Name has already been taken"
   end
   
+  it "should allow custom error messages" do
+    class Animal
+      validations.clear!
+      validates_uniqueness_of :name, :context => :save, :message => 'You try to still my name? I kill you!'
+    end
+    
+    bugaboo = Animal.new
+    bugaboo.valid?.should == true
+
+    bugaboo.name = 'Bear'
+    bugaboo.valid?(:save).should == false
+    bugaboo.errors.full_messages.first.should == 'You try to still my name? I kill you!'
+  end
 end

@@ -5,6 +5,12 @@ module DataMapper
       module Email
         
         module RFC2822
+          
+          def self.included(base)
+            base::FORMATS.merge!( :email_address => [ EmailAddress, 
+                                  lambda { |field, value| '%s is not a valid email address'.t(value) }] )
+          end
+          
           EmailAddress = begin
             alpha = "a-zA-Z"
             digit = "0-9"

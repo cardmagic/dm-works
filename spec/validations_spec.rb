@@ -105,4 +105,15 @@ describe DataMapper::Validations do
     gertie.errors.on(:age).should == nil
   end
   
+  it "should be able to specify custom error messages" do
+    class Cow
+      validations.clear!
+      validates_presence_of :name, :message => 'Give me a name, bub!'
+    end
+    
+    gertie = Cow.new
+    gertie.should_not be_valid
+    gertie.errors.on(:name).should == ['Give me a name, bub!']    
+  end
+  
 end

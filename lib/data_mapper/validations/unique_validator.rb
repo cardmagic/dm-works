@@ -10,7 +10,7 @@ module DataMapper
       
       def call(target)
         unless valid?(target)
-          error_message = '%s has already been taken'.t(Inflector.humanize(@field_name))
+          error_message = @options[:message] || '%s has already been taken'.t(Inflector.humanize(@field_name))
           add_error(target, error_message , @field_name)
           return false
         end

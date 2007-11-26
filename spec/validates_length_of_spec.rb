@@ -101,4 +101,17 @@ describe DataMapper::Validations::LengthValidator do
     betsy.name = 'Smootenstein'
     betsy.valid?(:save).should == true
   end
+  
+  it 'should allow custom error messages' do
+    class Cow
+      validations.clear!
+      validates_length_of :name, :is => 8, :context => :save, :message => '8 letters, no more, no less.'
+    end
+    
+    betsy = Cow.new
+    betsy.valid?.should == true
+    
+    betsy.valid?(:save).should == false
+    betsy.errors.full_messages.first.should == '8 letters, no more, no less.'
+  end
 end

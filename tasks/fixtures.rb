@@ -14,6 +14,10 @@ namespace :dm do
       "#{DM_APP_ROOT}/#{fixture_path}/fixtures"
     end
     
+    task :dm_app_root do
+      p DM_APP_ROOT
+    end
+    
     desc 'Dump database fixtures'
     task :dump do
       ENV['AUTO_MIGRATE'] = 'false'

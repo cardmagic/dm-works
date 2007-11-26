@@ -7,11 +7,16 @@ socket_file = [
   "tmp/mysql.sock"
 ].find { |path| File.exists?(path) }
 
-ActiveRecord::Base.establish_connection :adapter => 'mysql',
+configuration_options = {
+  :adapter => 'mysql',
   :username => 'root',
   :password => '',
-  :database => 'data_mapper_1',
-  :socket => socket_file
+  :database => 'data_mapper_1'
+}
+
+configuration_options[:socket] = socket_file unless socket_file.nil?
+
+ActiveRecord::Base.establish_connection(configuration_options)
 
 ActiveRecord::Base.find_by_sql('SELECT 1')
 
@@ -25,12 +30,7 @@ end
 
 require 'lib/data_mapper'
 
-DataMapper::Database.setup({
-  :adapter => 'mysql',
-  :database => 'data_mapper_1',
-  :username => 'root',
-  :socket => socket_file
-})
+DataMapper::Database.setup(configuration_options)
 
 class DMAnimal < DataMapper::Base
   set_table_name 'animals'

@@ -36,4 +36,20 @@ describe DataMapper::Validations::ConfirmationValidator do
     betsy.valid?(:save).should == true
   end
   
+  it 'should allow allow a custom error message' do
+    class Cow
+      validations.clear!
+      validates_confirmation_of :name, :context => :save, :message => 'You confirm name NOW or else.'
+    end
+    
+    betsy = Cow.new
+    betsy.valid?.should == true
+
+    betsy.name = 'Betsy'
+    betsy.name_confirmation = ''
+    betsy.valid?(:save).should == false
+
+    betsy.errors.full_messages.first.should == 'You confirm name NOW or else.'
+  end
+  
 end
