@@ -118,14 +118,35 @@ describe DataMapper::Associations::HasManyAssociation do
       JOIN `exhibits` ON `exhibits`.`zoo_id` = `zoos`.`id`
     EOS
   end
-  
+
   it "should add an item to an association" do
     bear = Exhibit.new( :name => "Bear")
     @zoo.exhibits << bear
     @zoo.exhibits.should include(bear)
   end
-
   
+  it "should build a new item" do
+    bear = @zoo.exhibits.build( :name => "Bear" )
+    bear.should be_kind_of(Exhibit)
+    @zoo.exhibits.should include(bear)
+  end
+
+  it "should not save the item when building" do
+    bear = @zoo.exhibits.build( :name => "Bear" )
+    bear.should be_new_record
+  end
+  
+  it "should create a new item" do
+    bear = @zoo.exhibits.create( :name => "Bear" )
+    bear.should be_kind_of(Exhibit)
+    @zoo.exhibits.should include(bear)
+  end
+
+  it "should save the item when creating" do
+    bear = @zoo.exhibits.create( :name => "Bear" )
+    bear.should_not be_new_record
+  end
+
   it "should set the association to a saved target when added with <<" do    
     pirahna = Exhibit.new(:name => "Pirahna")
     pirahna.zoo_id.should be_nil

@@ -58,6 +58,18 @@ module DataMapper
           
           return @items
         end
+
+        def build(options)
+          item = association.constant.new(options)
+          self << item          
+          item
+        end
+
+        def create(options)
+          item = build(options)
+          item.save
+          item
+        end
         
         def set(items)
           @items = items
