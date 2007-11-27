@@ -62,3 +62,28 @@ context DataMapper::Validations::FormatValidator do
   end
   
 end
+
+describe DataMapper::Validations::FormatValidator, "implements optional clauses" do
+    before(:all) do
+      class Sheep
+
+        include DataMapper::CallbacksHelper
+        include DataMapper::Validations::ValidationHelper
+
+        attr_accessor :name, :age
+
+        def evaluate?(value = true);value;end
+      end
+    end
+    
+    it "should implement the :if clause" do
+      class Sheep
+        validations.clear!
+        validates_format_of :name, :if => :evaluate?
+      end
+      sheep = Sheep.new
+      sheep.should_receive(:evaluate?).once
+      sheep.valid?        
+    end
+end
+

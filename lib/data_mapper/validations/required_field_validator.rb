@@ -4,6 +4,7 @@ module DataMapper
     class RequiredFieldValidator < GenericValidator
 
       def initialize(field_name, options={})
+        super
         @field_name, @options = field_name, options
       end
       

@@ -12,6 +12,7 @@ module DataMapper
       include DataMapper::Validations::Helpers::Email::RFC2822
       
       def initialize(field_name, options = {}, &b)
+        super(field_name, options)
         @field_name, @options = field_name, options
       end
 

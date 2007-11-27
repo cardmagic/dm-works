@@ -115,3 +115,27 @@ describe DataMapper::Validations::LengthValidator do
     betsy.errors.full_messages.first.should == '8 letters, no more, no less.'
   end
 end
+
+describe DataMapper::Validations::LengthValidator, "implements optional clauses" do
+    before(:all) do
+      class Sheep
+
+        include DataMapper::CallbacksHelper
+        include DataMapper::Validations::ValidationHelper
+
+        attr_accessor :name, :age
+
+        def evaluate?(value = true);value;end
+      end
+    end
+    
+    it "should implement the :if clause" do
+      class Sheep
+        validations.clear!
+        validates_length_of :name, :if => :evaluate?
+      end
+      sheep = Sheep.new
+      sheep.should_receive(:evaluate?).once
+      sheep.valid?        
+    end
+end

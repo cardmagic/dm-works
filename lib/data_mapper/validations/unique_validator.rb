@@ -4,6 +4,7 @@ module DataMapper
     class UniqueValidator < GenericValidator
       
       def initialize(field_name, options = {})
+        super
         @options = options
         @field_name = field_name.to_sym
       end

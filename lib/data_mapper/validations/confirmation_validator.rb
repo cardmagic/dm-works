@@ -8,6 +8,7 @@ module DataMapper
       }
       
       def initialize(field_name, options = {})
+        super
         @options = options
         @field_name, @confirm_field_name = field_name, (options[:confirm] || "#{field_name}_confirmation").to_sym
       end

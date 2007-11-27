@@ -4,6 +4,7 @@ module DataMapper
     class LengthValidator < GenericValidator
       
       def initialize(field_name, options)
+        super
         @field_name = field_name
         @options = options
         

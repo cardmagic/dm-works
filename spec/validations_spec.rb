@@ -117,3 +117,101 @@ describe DataMapper::Validations do
   end
   
 end
+
+describe DataMapper::Validations, ":if clause" do
+  
+  before(:all) do
+    class Sheep
+      
+      include DataMapper::CallbacksHelper
+      include DataMapper::Validations::ValidationHelper
+      
+      attr_accessor :name, :age
+    end
+  end
+  
+  it "should execute a proc found in an :if clause" do
+    class Sheep
+      validations.clear!
+      validates_presence_of :name, :if => Proc.new{ |model| model.evaluate?(false) } 
+      
+      def evaluate?(value = true);value;end
+    end
+    
+    sheep = Sheep.new
+    sheep.should_receive(:evaluate?).once
+    sheep.valid?
+  end
+  
+  it "should execute a method on the target provided as a symbol in an :if clause" do
+    class Sheep
+      validations.clear!
+      validates_presence_of :name, :if => :evaluate?
+      
+      def evaluate?(value = true);value;end
+    end
+    
+    sheep = Sheep.new
+    sheep.should_receive(:evaluate?).once
+    sheep.valid?
+  end
+  
+  it "should not run validation if an :if clause is present as a proc and evaluates to false" do
+    class Sheep
+      validations.clear!
+      validates_presence_of :name, :if => Proc.new{ |model| model.evaluate?(false)}
+      
+      def evaluate?(value = true);value;end
+    end
+    sheep = Sheep.new
+    sheep.valid?
+    sheep.errors.full_messages.should_not include('Name must not be blank')
+  end
+  
+  it "should run validation if an :if clause is present as a proc and evaluates to true" do
+    class Sheep
+      validations.clear!
+      validates_presence_of :name, :if => Proc.new{ |model| model.evaluate?(true)}
+      
+      def evaluate?(value = true);value;end
+    end
+    sheep = Sheep.new
+    sheep.valid?
+    sheep.errors.full_messages.should include('Name must not be blank')
+  end
+  
+  it "should not run validation if an :if clause is present as a symbol of a method name and evaluates to false" do
+    class Sheep
+      validations.clear!
+      validates_presence_of :name, :if => :evaluate? 
+      
+      def evaluate?;false;end
+    end
+    sheep = Sheep.new
+    sheep.valid?
+    sheep.errors.full_messages.should_not include('Name must not be blank')
+  end
+  
+  it "should run validation if an :if clause is present as a symbol of a method name and evaluates to true" do
+    class Sheep
+      validations.clear!
+      validates_presence_of :name, :if => :evaluate?
+      
+      def evaluate?;true;end
+    end
+    sheep = Sheep.new
+    sheep.valid?
+    sheep.errors.full_messages.should include('Name must not be blank')    
+  end
+  
+  it "should run validation if no :if clause is present" do
+    class Sheep
+      validations.clear!
+      validates_presence_of :name
+    end
+    sheep = Sheep.new
+    sheep.valid?
+    sheep.errors.full_messages.should include('Name must not be blank')
+  end
+    
+end

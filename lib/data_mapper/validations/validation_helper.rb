@@ -64,7 +64,7 @@ module DataMapper
           context = options[:context] if options.has_key?(:context)
           context = options.delete(:on) if options.has_key?(:on)
           options[:context] = context
-          
+                    
           options.merge!(defaults) unless defaults.nil?
           return options
         end

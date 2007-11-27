@@ -41,7 +41,11 @@ module DataMapper
       validations += context(:general) unless context_name == :general
       
       validations.inject(true) do |result, validator|
-        result & validator.call(target)
+        if validator.execute_validation?(target)
+          result & validator.call(target)
+        else
+          result
+        end
       end
     end
       
