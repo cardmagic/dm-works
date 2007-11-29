@@ -165,8 +165,8 @@ module DataMapper
     #   * <tt>protected</tt>: Alias for :reader => :public, :writer => :protected
     #   * <tt>private</tt>: Alias for :reader => :public, :writer => :private
     #
-    def self.embed(class_or_name, options = {}, &block)
-      EmbeddedValue::define(self, class_or_name, options, &block)
+    def self.embed(name, options = {}, &block)
+      EmbeddedValue::define(self, name, options, &block)
     end
 
     def self.property_getter(mapping, visibility = :public)
