@@ -25,6 +25,13 @@ describe DataMapper::Base do
     x.should be_dirty
   end
   
+  it "should be dirty when set to nil" do
+    x = Person.create(:name => 'a')
+    x.should_not be_dirty
+    x.name = "asdfasfd"
+    x.should be_dirty    
+  end
+  
   it "should return a diff" do
     x = Person.new(:name => 'Sam', :age => 30, :occupation => 'Programmer')
     y = Person.new(:name => 'Amy', :age => 21, :occupation => 'Programmer')
@@ -95,6 +102,64 @@ describe 'A new record' do
     @bob.id.should == nil
   end
   
+  it "should not have dirty attributes when not dirty" do
+    x = Person.create(:name => 'a')
+    x.should_not be_dirty
+    x.dirty_attributes.should be_empty
+  end
+  
+  it "should only list attributes that have changed in the dirty attributes hash" do
+    x = Person.create(:name => 'a')
+    x.name = "asdfr"
+    x.should be_dirty
+    x.dirty_attributes.keys.should == [:name]
+  end
+  
+  it "should not have original_values when a new record" do
+    x = Person.new(:name => 'a')
+    x.original_values.should be_empty
+  end
+  
+  it "should have original_values after saved" do
+    x = Person.new(:name => 'a')
+    x.save
+    x.original_values.should_not be_empty
+    x.original_values.keys.should include(:name)
+    x.original_values[:name].should == 'a'
+  end
+  
+  it "should have original values when created" do
+    x = Person.create(:name => 'a')
+    x.original_values.should_not be_empty
+    x.original_values.keys.should include(:name)
+    x.original_values[:name].should == "a"
+  end
+  
+  it "should have original values when loaded from the database" do
+    Person.create(:name => 'a')
+    x = Person[:name => 'a']
+    x.original_values.should_not be_empty
+    x.original_values.keys.should include(:name)
+    x.original_values[:name].should == "a"
+  end
+  
+  it "should reset the original values when not new, changed then saved" do
+    x = Person.create(:name => 'a')
+    x.should_not be_new_record
+    x.original_values[:name].should == "a"
+    x.name = "b"
+    x.save
+    x.original_values[:name].should == "b"
+  end
+  
+  it "should allow a value to be set to nil" do
+    x = Person.create(:name => 'a')
+    x.name = nil
+    x.save
+    x.reload!
+    x.name.should be_nil    
+  end
+
 end
 
 describe 'Properties' do

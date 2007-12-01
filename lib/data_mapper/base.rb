@@ -317,7 +317,7 @@ module DataMapper
       
       session.table(self).columns.each do |column|
         value = instance_variable_get(column.instance_variable_name)
-        if (new_record? &&  value != original_values[column.name]) || !value.nil?
+        if value != original_values[column.name] && column.name != :id
           pairs[column.name] = column.type != :object ? value : YAML.dump(value)
         end
       end
