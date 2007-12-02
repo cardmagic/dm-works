@@ -24,6 +24,7 @@ def fixtures(name)
       end
     end
   else
+    # TODO: Get rid of the stupid AnimalsExhibit model...
     table = database.table(name.to_s)
     table.create! true
     
