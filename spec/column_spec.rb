@@ -91,4 +91,11 @@ describe DataMapper::Adapters::Sql::Mappings::Column do
     lambda { database.query("SELECT moo FROM zoos") }.should raise_error
   end
   
+  it "should default the size of an integer column to 11" do
+    mappings = DataMapper::Adapters::Sql::Mappings
+    table    = mappings::Table.new(database(:mock).adapter, "Zebu")
+    integer  = mappings::Column.new(database(:mock).adapter, table, :age, :integer, 1)
+    integer.size.should == 11    
+  end
+  
 end

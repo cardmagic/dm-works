@@ -107,7 +107,7 @@ module DataMapper
               return @size = @options[:length] if @options.has_key?(:length)
           
               @size = case type
-                when :integer then 4
+                when :integer then 11
                 when :string, :class then 50
                 else nil
               end
