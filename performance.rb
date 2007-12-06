@@ -20,11 +20,11 @@ ActiveRecord::Base.establish_connection(configuration_options)
 
 ActiveRecord::Base.find_by_sql('SELECT 1')
 
-class ARAnimal < ActiveRecord::Base
+class ARAnimal < ActiveRecord::Base #:nodoc:
   set_table_name 'animals'
 end
 
-class ARPerson < ActiveRecord::Base
+class ARPerson < ActiveRecord::Base #:nodoc:
   set_table_name 'people'
 end
 
@@ -32,13 +32,13 @@ require 'lib/data_mapper'
 
 DataMapper::Database.setup(configuration_options)
 
-class DMAnimal < DataMapper::Base
+class DMAnimal < DataMapper::Base #:nodoc:
   set_table_name 'animals'
   property :name, :string
   property :notes, :string
 end
 
-class DMPerson < DataMapper::Base
+class DMPerson < DataMapper::Base #:nodoc:
   set_table_name 'people'
   property :name, :string
   property :age, :integer
@@ -50,22 +50,22 @@ class DMPerson < DataMapper::Base
   property :zip_code, :string, :size => 10
 end
 
-class Exhibit < DataMapper::Base
+class Exhibit < DataMapper::Base #:nodoc:
   property :name, :string
   belongs_to :zoo
 end
 
-class Zoo < DataMapper::Base
+class Zoo < DataMapper::Base #:nodoc:
   property :name, :string
   has_many :exhibits
 end
 
-class ARZoo < ActiveRecord::Base
+class ARZoo < ActiveRecord::Base #:nodoc:
   set_table_name 'zoos'
   has_many :exhibits, :class_name => 'ARExhibit', :foreign_key => 'zoo_id'
 end
 
-class ARExhibit < ActiveRecord::Base
+class ARExhibit < ActiveRecord::Base #:nodoc:
   set_table_name 'exhibits'
   belongs_to :zoo, :class_name => 'ARZoo', :foreign_key => 'zoo_id'
 end
