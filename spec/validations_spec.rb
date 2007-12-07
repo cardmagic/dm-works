@@ -1,21 +1,21 @@
 require File.dirname(__FILE__) + "/spec_helper"
 
-describe DataMapper::Validations do
+describe Validatable do
   
   before(:all) do
     class Cow
       
       include DataMapper::CallbacksHelper
-      include DataMapper::Validations::ValidationHelper
+      include DataMapper::Validations
       
       attr_accessor :name, :age
     end
   end
   
-  it 'should allow you to specify not-null fields in different contexts' do
+  it 'should allow you to specify not-null fields for different events' do
     class Cow
-      validations.clear!
-      validates_presence_of :name, :context => :save
+      validations.clear
+      validates_presence_of :name, :event => :save
     end
     
     betsy = Cow.new
@@ -28,9 +28,9 @@ describe DataMapper::Validations do
     betsy.valid?(:save).should == true
   end
   
-  it 'should be able to use ":on" for a context alias' do
+  it 'should be able to use ":on" for an event alias' do
     class Cow
-      validations.clear!
+      validations.clear
       validates_presence_of :name, :age, :on => :create
     end
     
@@ -46,9 +46,9 @@ describe DataMapper::Validations do
     maggie.valid?(:create).should == true
   end
   
-  it 'should default to a general context if unspecified' do
+  it 'should default to a general event if unspecified' do
     class Cow
-      validations.clear!
+      validations.clear
       validates_presence_of :name, :age
     end
     
@@ -64,11 +64,33 @@ describe DataMapper::Validations do
     rhonda.valid?.should == true
   end
   
+  it "should always run validations without a specific event" do
+    class Cow
+      validations.clear
+      validates_presence_of :name
+      validates_presence_of :age, :on => :save
+    end
+
+    isabel = Cow.new
+    isabel.valid?.should == false
+    isabel.errors.should have(1).full_messages
+    isabel.errors.full_messages.should include('Name must not be blank')
+    isabel.errors.on(:name).should == ['Name must not be blank']
+    
+    isabel.valid?(:save).should == false
+    isabel.errors.should have(2).full_messages
+    
+    isabel.errors.full_messages.should include('Age must not be blank')
+    isabel.errors.full_messages.should include('Name must not be blank')
+    isabel.errors.on(:name).should == ['Name must not be blank']
+
+  end
+  
   it 'should have 1 validation error' do    
     class VPOTest
       
       include DataMapper::CallbacksHelper
-      include DataMapper::Validations::ValidationHelper
+      include DataMapper::Validations
       
       attr_accessor :name, :whatever
       
@@ -95,7 +117,7 @@ describe DataMapper::Validations do
 
   it 'should be able to find specific error message' do
     class Cow
-      validations.clear!
+      validations.clear
       validates_presence_of :name
     end
 
@@ -107,7 +129,7 @@ describe DataMapper::Validations do
   
   it "should be able to specify custom error messages" do
     class Cow
-      validations.clear!
+      validations.clear
       validates_presence_of :name, :message => 'Give me a name, bub!'
     end
     
@@ -116,102 +138,4 @@ describe DataMapper::Validations do
     gertie.errors.on(:name).should == ['Give me a name, bub!']    
   end
   
-end
-
-describe DataMapper::Validations, ":if clause" do
-  
-  before(:all) do
-    class Sheep
-      
-      include DataMapper::CallbacksHelper
-      include DataMapper::Validations::ValidationHelper
-      
-      attr_accessor :name, :age
-    end
-  end
-  
-  it "should execute a proc found in an :if clause" do
-    class Sheep
-      validations.clear!
-      validates_presence_of :name, :if => Proc.new{ |model| model.evaluate?(false) } 
-      
-      def evaluate?(value = true);value;end
-    end
-    
-    sheep = Sheep.new
-    sheep.should_receive(:evaluate?).once
-    sheep.valid?
-  end
-  
-  it "should execute a method on the target provided as a symbol in an :if clause" do
-    class Sheep
-      validations.clear!
-      validates_presence_of :name, :if => :evaluate?
-      
-      def evaluate?(value = true);value;end
-    end
-    
-    sheep = Sheep.new
-    sheep.should_receive(:evaluate?).once
-    sheep.valid?
-  end
-  
-  it "should not run validation if an :if clause is present as a proc and evaluates to false" do
-    class Sheep
-      validations.clear!
-      validates_presence_of :name, :if => Proc.new{ |model| model.evaluate?(false)}
-      
-      def evaluate?(value = true);value;end
-    end
-    sheep = Sheep.new
-    sheep.valid?
-    sheep.errors.full_messages.should_not include('Name must not be blank')
-  end
-  
-  it "should run validation if an :if clause is present as a proc and evaluates to true" do
-    class Sheep
-      validations.clear!
-      validates_presence_of :name, :if => Proc.new{ |model| model.evaluate?(true)}
-      
-      def evaluate?(value = true);value;end
-    end
-    sheep = Sheep.new
-    sheep.valid?
-    sheep.errors.full_messages.should include('Name must not be blank')
-  end
-  
-  it "should not run validation if an :if clause is present as a symbol of a method name and evaluates to false" do
-    class Sheep
-      validations.clear!
-      validates_presence_of :name, :if => :evaluate? 
-      
-      def evaluate?;false;end
-    end
-    sheep = Sheep.new
-    sheep.valid?
-    sheep.errors.full_messages.should_not include('Name must not be blank')
-  end
-  
-  it "should run validation if an :if clause is present as a symbol of a method name and evaluates to true" do
-    class Sheep
-      validations.clear!
-      validates_presence_of :name, :if => :evaluate?
-      
-      def evaluate?;true;end
-    end
-    sheep = Sheep.new
-    sheep.valid?
-    sheep.errors.full_messages.should include('Name must not be blank')    
-  end
-  
-  it "should run validation if no :if clause is present" do
-    class Sheep
-      validations.clear!
-      validates_presence_of :name
-    end
-    sheep = Sheep.new
-    sheep.valid?
-    sheep.errors.full_messages.should include('Name must not be blank')
-  end
-    
 end

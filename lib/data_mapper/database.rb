@@ -27,10 +27,12 @@ module DataMapper
     unless block_given?
       Database.context.last || Context.new(Database[name].adapter)
     else
-      Database.context.push(Context.new(Database[name].adapter))
-      result = yield(Database.context.last)
-      Database.context.pop
-      result
+      begin
+        Database.context.push(Context.new(Database[name].adapter))
+        return yield(Database.context.last)
+      ensure
+        Database.context.pop
+      end
     end
   end
   

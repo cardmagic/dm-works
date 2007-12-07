@@ -34,13 +34,13 @@ module DataMapper
         def type_cast_string(raw_value)
           return nil if raw_value.blank?
           # type-cast values should be immutable for memory conservation
-          raw_value.freeze
+          raw_value
         end
         
         def type_cast_text(raw_value)
           return nil if raw_value.blank?
           # type-cast values should be immutable for memory conservation
-          raw_value.freeze
+          raw_value
         end
         
         def type_cast_class(raw_value)
@@ -75,7 +75,7 @@ module DataMapper
           return nil if raw_value.blank?
           
           case raw_value
-            when DateTime then raw_value.freeze
+            when DateTime then raw_value
             when Date then DateTime.new(raw_value)
             when String then DateTime::parse(raw_value)
             else raise CoersionError.new("Can't type-cast #{raw_value.inspect} to a datetime")
@@ -86,7 +86,7 @@ module DataMapper
           return nil if raw_value.blank?
           
           case raw_value
-            when Date then raw_value.freeze
+            when Date then raw_value
             when DateTime, Time then Date::civil(raw_value.year, raw_value.month, raw_value.day)
             when String then Date::parse(raw_value)
             else raise CoersionError.new("Can't type-cast #{raw_value.inspect} to a date")

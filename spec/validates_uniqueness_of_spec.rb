@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + "/spec_helper"
 
-describe DataMapper::Validations::UniqueValidator do
+describe Validatable::ValidatesUniquenessOf do
   
   before(:all) do 
     fixtures('people')
@@ -8,8 +8,8 @@ describe DataMapper::Validations::UniqueValidator do
   
   it 'must have a unique name' do
     class Animal
-      validations.clear!
-      validates_uniqueness_of :name, :context => :save
+      validations.clear
+      validates_uniqueness_of :name, :event => :save
     end
     
     bugaboo = Animal.new
@@ -25,8 +25,8 @@ describe DataMapper::Validations::UniqueValidator do
   
   it 'must have a unique name for their occupation' do
     class Person
-      validations.clear!
-      validates_uniqueness_of :name, :context => :save, :scope => :occupation
+      validations.clear
+      validates_uniqueness_of :name, :event => :save, :scope => :occupation
     end
     
     new_programmer_scott = Person.new(:name => 'Scott', :age => 29, :occupation => 'Programmer')
@@ -43,8 +43,8 @@ describe DataMapper::Validations::UniqueValidator do
   
   it "should allow custom error messages" do
     class Animal
-      validations.clear!
-      validates_uniqueness_of :name, :context => :save, :message => 'You try to still my name? I kill you!'
+      validations.clear
+      validates_uniqueness_of :name, :event => :save, :message => 'You try to steal my name? I kill you!'
     end
     
     bugaboo = Animal.new
@@ -52,6 +52,6 @@ describe DataMapper::Validations::UniqueValidator do
 
     bugaboo.name = 'Bear'
     bugaboo.valid?(:save).should == false
-    bugaboo.errors.full_messages.first.should == 'You try to still my name? I kill you!'
+    bugaboo.errors.full_messages.first.should == 'You try to steal my name? I kill you!'
   end
 end

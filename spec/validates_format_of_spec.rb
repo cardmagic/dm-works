@@ -1,12 +1,12 @@
 require File.dirname(__FILE__) + "/spec_helper"
 
-context DataMapper::Validations::FormatValidator do
+context Validatable::ValidatesFormatOf do
   
   before(:all) do
     class Employee
 
       include DataMapper::CallbacksHelper
-      include DataMapper::Validations::ValidationHelper
+      include DataMapper::Validations
       
       attr_accessor :email
     end
@@ -14,8 +14,8 @@ context DataMapper::Validations::FormatValidator do
   
   it 'must have a valid email address' do
     class Employee
-      validations.clear!
-      validates_format_of :email, :as => :email_address, :on => :save
+      validations.clear
+      validates_format_of :email, :with => :email_address, :on => :save
     end
     
     e = Employee.new
@@ -26,6 +26,7 @@ context DataMapper::Validations::FormatValidator do
       'tester@exampl$.com', '[scizzle]@example.com', '.test@example.com'
     ].all? { |test_email|
       e.email = test_email
+      puts "Email is: #{test_email}"
       e.valid?(:save).should == false
       e.errors.full_messages.first.should == "#{test_email} is not a valid email address"
     }
@@ -36,15 +37,13 @@ context DataMapper::Validations::FormatValidator do
   
   it 'must have a valid organization code' do
     class Employee
-      validations.clear!
+      validations.clear
       
       attr_accessor :organization_code
       
       # WARNING: contrived example
       # The organization code must be A#### or B######X12
-      validates_format_of :organization_code, :on => :save, :with => lambda { |code|
-        (code =~ /A\d{4}/) || (code =~ /[B-Z]\d{6}X12/)
-      }
+      validates_format_of :organization_code, :on => :save, :with => /(A\d{4}|[B-Z]\d{6}X12)/
     end
     
     e = Employee.new
@@ -61,29 +60,19 @@ context DataMapper::Validations::FormatValidator do
     e.valid?(:save).should == true
   end
   
-end
-
-describe DataMapper::Validations::FormatValidator, "implements optional clauses" do
-    before(:all) do
-      class Sheep
-
-        include DataMapper::CallbacksHelper
-        include DataMapper::Validations::ValidationHelper
-
-        attr_accessor :name, :age
-
-        def evaluate?(value = true);value;end
-      end
+  
+  it 'should allow custom error messages' do
+    class Employee
+      validations.clear
+      validates_format_of :email, :with => :email_address, :on => :save, :message => "Me needs good email, m'kay?"
     end
     
-    it "should implement the :if clause" do
-      class Sheep
-        validations.clear!
-        validates_format_of :name, :if => :evaluate?
-      end
-      sheep = Sheep.new
-      sheep.should_receive(:evaluate?).once
-      sheep.valid?        
-    end
+    e = Employee.new
+    e.valid?.should == true
+    
+    e.valid?(:save).should == false
+    e.errors.full_messages.first.should == "Me needs good email, m'kay?"
+    
+  end
+  
 end
-

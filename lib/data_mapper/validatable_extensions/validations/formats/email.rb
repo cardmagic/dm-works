@@ -1,14 +1,15 @@
-# http://www.faqs.org/rfcs/rfc2822.html
-module DataMapper
-  module Validations
-    module Helpers
+module Validatable
+  module Helpers #:nodoc:
+    module Formats #:nodoc:
+      
+      # Allows you to validate fields as email addresses
+      #   validates_format_of :email_field, :with => :email_address
+
       module Email
-        
-        module RFC2822
           
           def self.included(base)
             base::FORMATS.merge!( :email_address => [ EmailAddress, 
-                                  lambda { |field, value| '%s is not a valid email address'.t(value) }] )
+                                  lambda { |attribute| lambda { "%s is not a valid email address".t(self.send(attribute)) } }] )
           end
           
           EmailAddress = begin
@@ -35,50 +36,8 @@ module DataMapper
             addr_spec = "#{local_part}\@#{domain}"
             pattern = /^#{addr_spec}$/
           end
-        end
-        
+          
       end
     end
   end
 end
-
-=begin
-addresses = [
-  '-- dave --@example.com', # (spaces are invalid unless enclosed in quotation marks)
-  '[dave]@example.com', # (square brackets are invalid, unless contained within quotation marks)
-  '.dave@example.com', # (the local part of a domain name cannot start with a period)
-  'Max@Job 3:14', 
-  'Job@Book of Job',
-  'J. P. \'s-Gravezande, a.k.a. The Hacker!@example.com',
-  ]
-addresses.each do |address|
-  if address =~ RFC2822::EmailAddress
-    puts "#{address} deveria ter sido rejeitado, ERRO"
-  else
-    puts "#{address} rejeitado, OK"
-  end
-end
-
-
-addresses = [
-  '+1~1+@example.com',
-  '{_dave_}@example.com',
-  '"[[ dave ]]"@example.com',
-  'dave."dave"@example.com',
-  'test@localhost',
-  'test@example.com', 
-  'test@example.co.uk',
-  'test@example.com.br',
-  '"J. P. \'s-Gravezande, a.k.a. The Hacker!"@example.com',
-  'me@[187.223.45.119]',
-  'someone@123.com',
-  'simon&garfunkel@songs.com'
-  ]
-addresses.each do |address|
-  if address =~ RFC2822::EmailAddress
-    puts "#{address} aceito, OK"
-  else
-    puts "#{address} deveria ser aceito, ERRO"
-  end
-end
-=end

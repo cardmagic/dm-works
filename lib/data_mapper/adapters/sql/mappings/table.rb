@@ -25,10 +25,19 @@ module DataMapper
             @associations = AssociationsSet.new
             
             @multi_class = false
+            @paranoid = false
+            @paranoid_column = nil
             
             if @klass && @klass.ancestors.include?(DataMapper::Base) && @klass.superclass != DataMapper::Base
-              @adapter.table(@klass.superclass).columns.each do |column|
+              
+              super_table = @adapter.table(@klass.superclass)
+              
+              super_table.columns.each do |column|
                 self.add_column(column.name, column.type, column.options)
+              end
+              
+              super_table.associations.each do |association|
+                @associations << association
               end
             end
           end
@@ -37,8 +46,20 @@ module DataMapper
             @schema || @schema = @adapter.schema
           end
           
+          def paranoid?
+            @paranoid
+          end
+          
+          def paranoid_column
+            @paranoid_column
+          end
+          
           def multi_class?
             @multi_class
+          end
+          
+          def type_column
+            @type_column
           end
           
           def temporary?
@@ -116,9 +137,12 @@ module DataMapper
             end
           end
           
-          def count
+          def count(*args)
             @adapter.connection do |db|
-              command = db.create_command("SELECT COUNT(*) AS row_count FROM #{to_sql}")          
+              sql = "SELECT COUNT(*) AS row_count FROM #{to_sql}"
+              sql << "WHERE #{args}" unless args.empty?
+              
+              command = db.create_command(sql)
               command.execute_reader do |reader|
                 if reader.has_rows?
                   reader.current_row.first.to_i
@@ -176,7 +200,15 @@ module DataMapper
             column = @adapter.class::Mappings::Column.new(@adapter, self, column_name, type, column_ordinal, options)
             @columns << column
             
-            @multi_class = true if column_name == :type
+            if column_name == :type
+              @multi_class = true
+              @type_column = column
+            end
+            
+            if column_name.to_s =~ /^deleted\_(at|on)$/
+              @paranoid = true
+              @paranoid_column = column
+            end
             
             self.flush_sql_caches!
             

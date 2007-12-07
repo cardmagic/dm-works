@@ -1,12 +1,12 @@
 require File.dirname(__FILE__) + "/spec_helper"
 
-describe DataMapper::Validations::LengthValidator do
+describe Validatable::ValidatesLengthOf do
   
   before(:all) do
     class Cow
       
       include DataMapper::CallbacksHelper
-      include DataMapper::Validations::ValidationHelper
+      include DataMapper::Validations
       
       attr_accessor :name, :age
     end
@@ -14,19 +14,19 @@ describe DataMapper::Validations::LengthValidator do
   
   it 'should not have a name shorter than 3 characters' do
     class Cow
-      validations.clear!
-      validates_length_of :name, :min => 3, :context => :save
+      validations.clear
+      validates_length_of :name, :minimum => 3, :event => :save
     end
     
     betsy = Cow.new
     betsy.valid?.should == true
 
     betsy.valid?(:save).should == false
-    betsy.errors.full_messages.first.should == 'Name must be more than 3 characters long'
+    betsy.errors.full_messages.first.should == 'Name must be more than 2 characters long'
 
     betsy.name = 'Be'
     betsy.valid?(:save).should == false
-    betsy.errors.full_messages.first.should == 'Name must be more than 3 characters long'
+    betsy.errors.full_messages.first.should == 'Name must be more than 2 characters long'
 
     betsy.name = 'Bet'
     betsy.valid?(:save).should == true
@@ -38,8 +38,8 @@ describe DataMapper::Validations::LengthValidator do
 
   it 'should not have a name longer than 10 characters' do
     class Cow
-      validations.clear!
-      validates_length_of :name, :max => 10, :context => :save
+      validations.clear
+      validates_length_of :name, :maximum => 10, :event => :save
     end
     
     betsy = Cow.new
@@ -48,7 +48,7 @@ describe DataMapper::Validations::LengthValidator do
 
     betsy.name = 'Testicular Fortitude'
     betsy.valid?(:save).should == false
-    betsy.errors.full_messages.first.should == 'Name must be less than 10 characters long'
+    betsy.errors.full_messages.first.should == 'Name must be less than 11 characters long'
 
     betsy.name = 'Betsy'
     betsy.valid?(:save).should == true
@@ -56,8 +56,8 @@ describe DataMapper::Validations::LengthValidator do
 
   it 'should have a name that is 8 characters long' do
     class Cow
-      validations.clear!
-      validates_length_of :name, :is => 8, :context => :save
+      validations.clear
+      validates_length_of :name, :is => 8, :event => :save
     end
     
     # Context is not save
@@ -77,8 +77,8 @@ describe DataMapper::Validations::LengthValidator do
 
   it 'should have a name that is between 10 and 15 characters long' do
     class Cow
-      validations.clear!
-      validates_length_of :name, :in => (10..15), :context => :save
+      validations.clear
+      validates_length_of :name, :within => (10..15), :event => :save
     end
     
     # Context is not save
@@ -104,8 +104,8 @@ describe DataMapper::Validations::LengthValidator do
   
   it 'should allow custom error messages' do
     class Cow
-      validations.clear!
-      validates_length_of :name, :is => 8, :context => :save, :message => '8 letters, no more, no less.'
+      validations.clear
+      validates_length_of :name, :is => 8, :event => :save, :message => '8 letters, no more, no less.'
     end
     
     betsy = Cow.new
@@ -114,28 +114,4 @@ describe DataMapper::Validations::LengthValidator do
     betsy.valid?(:save).should == false
     betsy.errors.full_messages.first.should == '8 letters, no more, no less.'
   end
-end
-
-describe DataMapper::Validations::LengthValidator, "implements optional clauses" do
-    before(:all) do
-      class Sheep
-
-        include DataMapper::CallbacksHelper
-        include DataMapper::Validations::ValidationHelper
-
-        attr_accessor :name, :age
-
-        def evaluate?(value = true);value;end
-      end
-    end
-    
-    it "should implement the :if clause" do
-      class Sheep
-        validations.clear!
-        validates_length_of :name, :if => :evaluate?
-      end
-      sheep = Sheep.new
-      sheep.should_receive(:evaluate?).once
-      sheep.valid?        
-    end
 end

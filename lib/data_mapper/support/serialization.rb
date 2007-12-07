@@ -28,6 +28,10 @@ module DataMapper
       end
       
       def to_xml
+        to_xml_document.to_s
+      end
+      
+      def to_xml_document
         doc = REXML::Document.new
         
         table = session.table(self.class)
@@ -49,7 +53,7 @@ module DataMapper
           node << REXML::Text.new(copy_frozen_value(value).to_s) unless value.nil?
         end
         
-        doc.to_s
+        doc
       end
       
       def to_json(*a)

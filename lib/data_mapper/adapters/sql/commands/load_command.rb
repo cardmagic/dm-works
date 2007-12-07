@@ -40,11 +40,13 @@ module DataMapper
             def materialize(values)
 
               instance_id = @key.type_cast_value(values[@key_index])
-              instance = if @type_override_present
-                create_instance(instance_id, @type_override.type_cast_value(values[@type_override_index]))
-              else
-                create_instance(instance_id)
-              end
+              instance = create_instance(instance_id,
+                if @type_override_present
+                  @type_override.type_cast_value(values[@type_override_index]) || @klass
+                else
+                  @klass
+                end
+              )
 
               @klass.callbacks.execute(:before_materialize, instance)
 
@@ -55,10 +57,16 @@ module DataMapper
                 # setting both the original_value, and the
                 # instance-variable through method chaining to avoid
                 # lots of extra short-lived local variables.
-                original_values[column.name] = instance.instance_variable_set(
+                type_cast_value = instance.instance_variable_set(
                   column.instance_variable_name,
                   column.type_cast_value(values[index])
                 )
+                
+                original_values[column.name] = case type_cast_value
+                  when String, Date, Time then type_cast_value.dup
+                  when column.type == :object then Marshal.dump(type_cast_value)
+                  else type_cast_value
+                end
               end
 
               instance.instance_variable_set(:@loaded_set, @set)
@@ -67,6 +75,9 @@ module DataMapper
               @klass.callbacks.execute(:after_materialize, instance)
 
               return instance
+              
+            rescue => e
+              raise MaterializationError.new("Failed to materialize row: #{values.inspect}\n#{e.to_yaml}")
             end
 
             def loaded_set
@@ -74,8 +85,10 @@ module DataMapper
             end
 
             private
-
-              def create_instance(instance_id, instance_type = @klass)
+              
+              class MaterializationError < StandardError; end
+                
+              def create_instance(instance_id, instance_type)
                 instance = @session.identity_map.get(@klass, instance_id)
 
                 if instance.nil? || @reload
@@ -347,7 +360,7 @@ module DataMapper
             when Symbol then
               collector << ["#{primary_class_table[clause].to_sql(qualify_columns)} #{equality_operator(value)} ?", value]
             when String then
-              collector << [clause, value]
+              collector << [clause, *value]
             when Mappings::Column then
               collector << ["#{clause.to_sql(qualify_columns)} #{equality_operator(value)} ?", value]
             else raise "CAN HAS CRASH? #{clause.inspect}"
@@ -486,7 +499,11 @@ module DataMapper
               else
                 raise "Unable to parse conditions: #{x.inspect}" if x
               end
-
+              
+              if primary_class_table.paranoid?
+                conditions_hash[primary_class_table.paranoid_column.name] = nil
+              end
+              
               conditions_hash.each_pair do |key,value|
                 expression_to_sql(key, value, collection)
               end

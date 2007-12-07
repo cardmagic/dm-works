@@ -1,4 +1,7 @@
-module DataMapper
+module DataMapper                        
+  
+  class ForeignKeyNotFoundError < StandardError; end
+    
   module Associations
     
     class HasNAssociation
@@ -29,8 +32,10 @@ module DataMapper
           associated_class_name = (@options[:class] || @options[:class_name])
           if associated_class_name.kind_of?(String)
             Kernel.const_get(Inflector.classify(associated_class_name))
-          else
+          elsif associated_class_name.kind_of?(Class)
             associated_class_name
+          else
+            raise MissingConstantError, associated_class_name
           end
         else            
           Kernel.const_get(Inflector.classify(@association_name))
@@ -38,9 +43,15 @@ module DataMapper
       end
       
       def foreign_key
-        @foreign_key || @foreign_key = begin
-          association_table[@options[:foreign_key] || table.default_foreign_key]
+        @foreign_key || begin
+          @foreign_key = association_table[foreign_key_name]
+          raise(ForeignKeyNotFoundError.new(foreign_key_name)) unless @foreign_key
+          @foreign_key
         end
+      end
+      
+      def foreign_key_name
+        @foreign_key_name || @foreign_key_name = (@options[:foreign_key] || table.default_foreign_key)
       end
       
       def association_table

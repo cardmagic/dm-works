@@ -20,12 +20,14 @@ require 'rubygems'
 require 'yaml'
 require 'set'
 require 'fastthread'
+require 'validatable'
 require 'data_mapper/support/blank'
 require 'data_mapper/support/enumerable'
 require 'data_mapper/support/symbol'
 require 'data_mapper/support/string'
 require 'data_mapper/support/silence'
 require 'data_mapper/support/inflector'
+require 'data_mapper/support/errors'
 require 'data_mapper/database'
 require 'data_mapper/base'
 
@@ -34,9 +36,7 @@ begin
   # file, allowing you to simply require the data_mapper.rb in your
   # Rails application's environment.rb to configure the DataMapper.
   unless defined?(DM_APP_ROOT)
-    application_root, application_environment = *if defined?(MERB_ROOT)
-      [MERB_ROOT, MERB_ENV]
-    elsif defined?(RAILS_ROOT)
+    application_root, application_environment = *if defined?(RAILS_ROOT)
       [RAILS_ROOT, RAILS_ENV]
     end
   
@@ -54,7 +54,8 @@ begin
         :host     => config[:host],
         :database => config[:database],
         :username => config[:username],
-        :password => config[:password]
+        :password => config[:password],
+        :socket => config[:socket]
       }
   
       DataMapper::Database.setup(default_database_config)

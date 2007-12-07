@@ -26,8 +26,8 @@ module DataMapper
           @items && @items.any? { |item| item != @instance && item.dirty? }
         end
         
-        def validate_excluding_association(associated, context)
-          @items.blank? || @items.all? { |item| item.validate_excluding_association(associated, context) }
+        def validate_excluding_association(associated, event)
+          @items.blank? || @items.all? { |item| item.validate_excluding_association(associated, event) }
         end
         
         def save

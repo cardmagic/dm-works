@@ -156,16 +156,21 @@ module DataMapper
         else
           callback(instance, :before_destroy)
           
-          if connection do |db|
-              command = db.create_command("DELETE FROM #{table.to_sql} WHERE #{table.key.to_sql} = ?")
-              command.execute_non_query(instance.key).to_i > 0
-            end # connection do...end # if continued below:
-            instance.instance_variable_set(:@new_record, true)
-            instance.session = session
-            instance.original_values.clear
-            session.identity_map.delete(instance)
-            callback(instance, :after_destroy)
-          end          
+          if table.paranoid?
+            instance.instance_variable_set(table.paranoid_column.instance_variable_name, Time::now)
+            instance.save
+          else
+            if connection do |db|
+                command = db.create_command("DELETE FROM #{table.to_sql} WHERE #{table.key.to_sql} = ?")
+                command.execute_non_query(instance.key).to_i > 0
+              end # connection do...end # if continued below:
+              instance.instance_variable_set(:@new_record, true)
+              instance.session = session
+              instance.original_values.clear
+              session.identity_map.delete(instance)
+              callback(instance, :after_destroy)
+            end
+          end        
         end
       end
       
@@ -174,12 +179,12 @@ module DataMapper
         when Class then table(instance).create!
         when Mappings::Table then instance.create!
         when DataMapper::Base then
-          return false unless instance.valid? && (instance.new_record? || instance.dirty?)
-          
-          callback(instance, :before_save)           
+          return false unless instance.new_record? || instance.dirty?
           
           # INSERT
           result = if instance.new_record?
+            return false unless instance.valid?(:create)
+            callback(instance, :before_save)
             callback(instance, :before_create)
 
             table = self.table(instance)
@@ -213,7 +218,9 @@ module DataMapper
             session.identity_map.set(instance)
             callback(instance, :after_create)
           # UPDATE
-          else            
+          else
+            return false unless instance.valid?(:update)
+            callback(instance, :before_save)
             callback(instance, :before_update)
             
             table = self.table(instance)

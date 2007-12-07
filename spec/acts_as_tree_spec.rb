@@ -30,7 +30,7 @@ describe('A tree') do
     two_two = Node.new(:name => 'two_two')
     two.children << two_one << two_two
 
-    root.save
+    root.save.should == true
 
     grand = Node[:name => 'root']
     root.should == grand # true since +root+ and +grand+ are identical objects.

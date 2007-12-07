@@ -1,7 +1,7 @@
 require 'data_mapper/property'
 require 'data_mapper/support/active_record_impersonation'
 require 'data_mapper/support/serialization'
-require 'data_mapper/validations/validation_helper'
+require 'data_mapper/validations'
 require 'data_mapper/associations'
 require 'data_mapper/callbacks'
 require 'data_mapper/embedded_value'
@@ -22,7 +22,7 @@ module DataMapper
     include CallbacksHelper
     include Support::ActiveRecordImpersonation
     include Support::Serialization
-    include Validations::ValidationHelper
+    include Validations
     include Associations
     
     # Track classes that inherit from DataMapper::Base.
@@ -50,9 +50,28 @@ module DataMapper
         end
         
         def self.inherited(subclass)
+          
+          super_table = database.table(self)
+          
+          if super_table.type_column.nil?
+            super_table.add_column(:type, :class, {})
+          end
+          
           self::subclasses << subclass
         end
       end
+    end
+    
+    def self.logger
+      database.logger
+    end
+    
+    def logger
+      self.class.logger
+    end
+    
+    def self.transaction
+      yield
     end
     
     def self.properties
@@ -298,7 +317,11 @@ module DataMapper
     def dirty?(name = nil)
       if name.nil?
         session.table(self).columns.any? do |column|
-          self.instance_variable_get(column.instance_variable_name) != original_values[column.name]
+          if column.type == :object
+            Marshal.dump(self.instance_variable_get(column.instance_variable_name)) != original_values[column.name]
+          else
+            self.instance_variable_get(column.instance_variable_name) != original_values[column.name]
+          end
         end || loaded_associations.any? do |loaded_association|
           if loaded_association.respond_to?(:dirty?)
             loaded_association.dirty?

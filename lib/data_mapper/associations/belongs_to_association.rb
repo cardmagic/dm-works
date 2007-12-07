@@ -34,11 +34,17 @@ module DataMapper
       end
       
       def foreign_key
-        @foreign_key || @foreign_key = begin
-          table[@options[:foreign_key] || "#{name}_id".to_sym]
+        @foreign_key || begin
+          @foreign_key = table[foreign_key_name]
+          raise(ForeignKeyNotFoundError.new(foreign_key_name)) unless @foreign_key
+          @foreign_key
         end
       end
 
+      def foreign_key_name
+        @foreign_key_name || @foreign_key_name = (@options[:foreign_key] || "#{name}_id".to_sym)
+      end
+      
       class Instance < Associations::Reference
          
         def instance
@@ -78,6 +84,12 @@ module DataMapper
         def set(val)
           @instance.instance_variable_set(association.foreign_key.instance_variable_name, val.key)
           @associated = val
+        end
+        
+        def ensure_foreign_key!
+          if @associated
+            @instance.instance_variable_set(association.foreign_key.instance_variable_name, @associated.key)
+          end
         end
             
       end # class Instance

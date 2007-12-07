@@ -8,7 +8,7 @@ module DataMapper
       end
       
       def save
-        self.valid?
+#        self.valid?  # why is this call even here?  valid? twice?
         session.save(self)
       end
       
@@ -69,6 +69,12 @@ module DataMapper
         def create(attributes)
           instance = self.new(attributes)
           instance.save
+          instance
+        end
+        
+        def create!(attributes)
+          instance = self.new(attributes)
+          raise InvalidRecord.new(instance) unless instance.save
           instance
         end
       end

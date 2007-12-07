@@ -145,7 +145,11 @@ module DataMapper
           entries.size
         end
         alias length size
-
+        
+        def count
+          1
+        end
+        
         def [](key)
           entries[key]
         end
@@ -158,8 +162,8 @@ module DataMapper
           @new_members || (@entries && @entries.any? { |item| item != @instance && item.dirty? })
         end
         
-        def validate_excluding_association(associated, context)
-          @entries.blank? || @entries.all? { |item| item.validate_excluding_association(associated, context) }
+        def validate_excluding_association(associated, event)
+          @entries.blank? || @entries.all? { |item| item.validate_excluding_association(associated, event) }
         end
         
         def save
