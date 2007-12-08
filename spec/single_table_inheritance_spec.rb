@@ -14,8 +14,14 @@ describe 'Single Table Inheritance' do
       clone = Person.first(:name => 'Ted')
       ted.should == clone
       
-      ted.should be_a_kind_of(SalesPerson)
+      clone.class.should eql(SalesPerson)      
     end
+    
+    # Since we're not executing within the same database context
+    # this is not the same object instance as the previous ones.
+    clone2 = Person.first(:name => 'Ted')
+    
+    clone2.class.should eql(SalesPerson)    
   end
   
   it "secondary database should inherit the same attributes" do

@@ -4,7 +4,7 @@ begin
 rescue LoadError
   STDERR.puts <<-EOS
 You must install the DataObjects::SQLite3 driver.
-  rake dm:install:sqlite3
+  gem install do_sqlite3
 EOS
   exit
 end

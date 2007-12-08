@@ -14,6 +14,6 @@ class Project < DataMapper::Base
   private
   
   def create_main_section
-    sections << Section.new(:title => "Main") if sections.empty?
+    sections << Section.find_or_create(:title => "Main") if sections.empty?
   end
 end

@@ -10,9 +10,12 @@ describe('A tree') do
       has_many :children, :class => 'Node', :foreign_key => 'parent_id'
     end
     
-    database.schema[Node].drop!
-    database.save(Node)
-  end    
+    Node.auto_migrate!
+  end
+  
+  after(:all) do
+    database.table(Node).drop!
+  end
 
   it 'should work' do
     root = Node.new(:name => 'root')

@@ -17,4 +17,6 @@ class Person < DataMapper::Base
     end
     
   end
+  
+  belongs_to :career
 end

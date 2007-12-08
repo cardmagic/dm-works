@@ -4,7 +4,7 @@ begin
 rescue LoadError
   STDERR.puts <<-EOS
 You must install the DataObjects::Mysql driver.
-  rake dm:install:mysql
+  gem install do_mysql
 EOS
   exit
 end

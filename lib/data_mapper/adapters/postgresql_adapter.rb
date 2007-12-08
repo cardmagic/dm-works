@@ -3,8 +3,8 @@ begin
   require 'do_postgres'
 rescue LoadError
   STDERR.puts <<-EOS
-You must install the DataObjects::PostgreSQL driver.
-  rake dm:install:postgresql
+You must install the DataObjects::Postgres driver.
+  gem install do_postgres
 EOS
   exit
 end
