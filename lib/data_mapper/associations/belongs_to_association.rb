@@ -41,6 +41,10 @@ module DataMapper
         @foreign_key_name || @foreign_key_name = (@options[:foreign_key] || "#{name}_#{key_table.key.name}".to_sym)
       end
       
+      def to_sql
+        "JOIN #{key_table.to_sql} ON #{foreign_key_column.to_sql(true)} = #{primary_key_column.to_sql(true)}"
+      end
+      
       class Instance < Associations::Reference
          
         def instance
