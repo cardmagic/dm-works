@@ -234,14 +234,17 @@ module DataMapper
     # for the named methods so that the lazy_loading is skipped the second time.
     def lazy_load!(*names)
       
+      names = names.map { |name| name.to_sym }.reject { |name| lazy_loaded_attributes.include?(name) }
+      
       reset_attribute = lambda do |instance|
         singleton_class = (class << instance; self end)
         names.each do |name|
+          instance.lazy_loaded_attributes << name
           singleton_class.send(:attr_accessor, name)
         end
       end
       
-      unless new_record? || loaded_set.nil?
+      unless names.empty? || new_record? || loaded_set.nil?
         
         key = session.table(self.class).key.to_sym
         keys_to_select = loaded_set.map do |instance|
@@ -284,6 +287,10 @@ module DataMapper
       results      
     end
     
+    def lazy_loaded_attributes
+      @lazy_loaded_attributes || @lazy_loaded_attributes = Set.new
+    end
+    
     def loaded_attributes
       pairs = {}
       
@@ -304,11 +311,8 @@ module DataMapper
       
       session.table(self).columns.each do |column|
         if self.class.public_method_defined?(column.name)
-          value = if column.lazy?
-            self.send(column.name)
-          else
-            instance_variable_get(column.instance_variable_name)
-          end
+          lazy_load!(column.name) if column.lazy?
+          value = instance_variable_get(column.instance_variable_name)
           pairs[column.name] = column.type == :class ? value.to_s : value
         end
       end
