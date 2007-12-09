@@ -199,6 +199,9 @@ module DataMapper
           #{visibility.to_s}
           def #{mapping.name}
             lazy_load!(#{mapping.name.inspect})
+            class << self;
+              attr_accessor #{mapping.name.inspect}
+            end
             @#{mapping.name}
           end
         EOS
@@ -239,11 +242,17 @@ module DataMapper
       end
       
       unless new_record? || loaded_set.nil?
+        
+        key = session.table(self.class).key.to_sym
+        keys_to_select = loaded_set.map do |instance|
+          instance.send(key)
+        end
+        
         session.all(
           self.class,
-          :select => ([:id] + names),
+          :select => ([key] + names),
           :reload => true,
-          :id => loaded_set.map(&:id)
+          key => keys_to_select
         ).each(&reset_attribute)
       else
         reset_attribute[self]
@@ -295,8 +304,11 @@ module DataMapper
       
       session.table(self).columns.each do |column|
         if self.class.public_method_defined?(column.name)
-          lazy_load!(column.name) if column.lazy?
-          value = instance_variable_get(column.instance_variable_name)
+          value = if column.lazy?
+            self.send(column.name)
+          else
+            instance_variable_get(column.instance_variable_name)
+          end
           pairs[column.name] = column.type == :class ? value.to_s : value
         end
       end
