@@ -208,6 +208,9 @@ module DataMapper
               
               if serial? && !serial_declaration.blank?
                 @to_long_form << " #{serial_declaration}"
+                if key? && !primary_key_declaration.blank?
+                  @to_long_form << " #{primary_key_declaration}"
+                end
               else
                 @to_long_form << " #{type_declaration}"
                 
@@ -215,10 +218,6 @@ module DataMapper
                   @to_long_form << " #{not_null_declaration}"
                 end
                 
-                if key? && serial? && !primary_key_declaration.blank?
-                  @to_long_form << " #{primary_key_declaration}"
-                end
-
                 if default && !default_declaration.blank?
                   @to_long_form << " #{default_declaration}"
                 end
