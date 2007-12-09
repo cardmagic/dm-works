@@ -52,6 +52,15 @@ module DataMapper
         @connection_pool = Support::ConnectionPool.new { create_connection }
       end
       
+      def activated?
+        @activated
+      end
+      
+      def activate!
+        @activated = true
+        schema.activate!
+      end
+      
       def create_connection
         raise NotImplementedError.new
       end

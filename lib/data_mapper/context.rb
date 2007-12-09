@@ -20,16 +20,18 @@ module DataMapper
     def first(klass, *args)
       id = nil
       options = nil
+      table = self.table(klass)
+      key = table.key
       
       if args.empty? # No id, no options
         options = { :limit => 1 }
       elsif args.size == 2 && args.last.kind_of?(Hash) # id AND options
-        options = args.last.merge(:id => args.first)
+        options = args.last.merge(key => args.first)
       elsif args.size == 1 # id OR options
         if args.first.kind_of?(Hash)
           options = args.first.merge(:limit => 1) # no id, add limit
         else
-          options = { :id => args.first } # no options, set id
+          options = { key => args.first } # no options, set id
         end
       else
         raise ArgumentError.new('Session#first takes a class, and optional type_or_id and/or options arguments')
@@ -37,7 +39,7 @@ module DataMapper
       
       # Account for undesired behaviour in MySQL that returns the
       # last inserted row when the WHERE clause contains a "#{primary_key} IS NULL".
-      return nil if options.has_key?(:id) && options[:id] == nil
+      return nil if options.has_key?(key.name) && options[key.name] == nil
       
       @adapter.load(self, klass, options).first
     end

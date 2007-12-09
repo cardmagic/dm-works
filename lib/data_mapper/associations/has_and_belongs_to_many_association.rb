@@ -38,8 +38,12 @@ module DataMapper
           
         end
       end
+      
+      def activate!
+        join_table.create!
+      end
 
-      def association_columns
+      def associated_columns
         association_table.columns.reject { |column| column.lazy? } + join_columns
       end
       
@@ -234,6 +238,22 @@ module DataMapper
             member
           else
             nil
+          end
+        end
+        
+        def method_missing(symbol, *args, &block)
+          if entries.respond_to?(symbol)
+            entries.send(symbol, *args, &block)
+          elsif association.associated_table.associations.any? { |assoc| assoc.name == symbol }
+            results = []
+            each do |item|
+              unless (val = item.send(symbol)).blank?
+                results << (val.is_a?(Enumerable) ? val.entries : val)
+              end
+            end
+            results.flatten
+          else
+            super
           end
         end
         

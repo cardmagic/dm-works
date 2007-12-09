@@ -175,6 +175,7 @@ module DataMapper
     end
     
     attr_reader :name, :adapter
+    
     attr_accessor :host, :database, :schema_search_path, :username, :password, :log_stream, :log_level, :index_path, :socket
     
     # Allows us to set the adapter for this database object. It can only be set once, and expects two types of values.

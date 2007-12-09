@@ -253,7 +253,7 @@ module DataMapper
             @to_sql = nil
             @to_sql_with_table_name = nil
             @column_name = nil
-            @table.flush_sql_caches!
+            @table.flush_sql_caches!(false)
           end
       
         end

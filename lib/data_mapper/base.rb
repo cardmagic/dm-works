@@ -6,6 +6,7 @@ require 'data_mapper/associations'
 require 'data_mapper/callbacks'
 require 'data_mapper/embedded_value'
 require 'data_mapper/auto_migrations'
+require 'data_mapper/dependency_queue'
 
 begin
   require 'ferret'
@@ -36,12 +37,16 @@ module DataMapper
       end
     end
     
+    def self.dependencies
+      @dependency_queue || (@dependency_queue = DependencyQueue.new) 
+    end
+    
     def self.inherited(klass)
       klass.instance_variable_set('@properties', [])
       
       klass.send :extend, AutoMigrations
       DataMapper::Base::subclasses << klass
-      klass.send(:undef_method, :id)      
+      klass.send(:undef_method, :id)
       
       # When this class is sub-classed, copy the declared columns.
       klass.class_eval do

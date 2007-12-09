@@ -40,12 +40,12 @@ module DataMapper
             else
               # Temp variable for the instance variable name.
               setter_method = "#{@association_name}=".to_sym
-              instance_variable_name = "@#{association.foreign_key}".to_sym
+              instance_variable_name = "@#{association.foreign_key_column}".to_sym
           
               set = @instance.loaded_set.group_by { |instance| instance.key }
           
               # Fetch the foreign objects for all instances in the current object's loaded-set.
-              @instance.session.all(association.constant, association.foreign_key => set.keys).each do |assoc|
+              @instance.session.all(association.associated_constant, association.foreign_key_column => set.keys).each do |assoc|
                 set[assoc.instance_variable_get(instance_variable_name)].first.send(setter_method, assoc)
               end
               

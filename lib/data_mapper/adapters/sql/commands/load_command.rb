@@ -395,7 +395,7 @@ module DataMapper
                 @columns += included_columns
                 
                 included_associations.each do |assoc|
-                  @columns += assoc.association_columns
+                  @columns += assoc.associated_columns
                 end
                 
                 shallow_included_associations.each do |assoc|

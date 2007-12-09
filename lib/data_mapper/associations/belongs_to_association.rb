@@ -5,9 +5,7 @@ module DataMapper
     
     class BelongsToAssociation < HasNAssociation
 
-      def define_accessor(klass)
-        klass.property((@options[:foreign_key] || "#{name}_id").to_sym, :integer)
-        
+      def define_accessor(klass)        
         klass.class_eval <<-EOS
           
           def create_#{@association_name}(options = {})
@@ -33,16 +31,14 @@ module DataMapper
         EOS
       end
       
-      def foreign_key
-        @foreign_key || begin
-          @foreign_key = table[foreign_key_name]
-          raise(ForeignKeyNotFoundError.new(foreign_key_name)) unless @foreign_key
-          @foreign_key
-        end
+      # Reverse the natural order for BelongsToAssociations
+      alias constant associated_constant
+      def associated_constant
+        @constant
       end
-
+      
       def foreign_key_name
-        @foreign_key_name || @foreign_key_name = (@options[:foreign_key] || "#{name}_id".to_sym)
+        @foreign_key_name || @foreign_key_name = (@options[:foreign_key] || "#{name}_#{key_table.key.name}".to_sym)
       end
       
       class Instance < Associations::Reference
@@ -54,11 +50,11 @@ module DataMapper
             else
               
               # Temp variable for the instance variable name.
-              fk = association.foreign_key.to_sym
+              fk = association.foreign_key_column.to_sym
               
               set = @instance.loaded_set.group_by { |instance| instance.send(fk) }
 
-              @instance.session.all(association.constant, association.association_table.key.to_sym => set.keys).each do |assoc|
+              @instance.session.all(association.constant, association.associated_table.key.to_sym => set.keys).each do |assoc|
                 set[assoc.key].each do |primary_instance|
                   primary_instance.send(setter_method, assoc)
                 end
@@ -70,11 +66,11 @@ module DataMapper
         end
       
         def create(options)
-          @associated = association.constant.create(options)
+          @associated = association.associated_constant.create(options)
         end
       
         def build(options)
-          @associated = association.constant.new(options)
+          @associated = association.associated_constant.new(options)
         end
       
         def setter_method
@@ -82,7 +78,7 @@ module DataMapper
         end
         
         def set(val)
-          @instance.instance_variable_set(association.foreign_key.instance_variable_name, val.key)
+          @instance.instance_variable_set(association.foreign_key_column.instance_variable_name, val.key)
           @associated = val
         end
         
@@ -93,46 +89,6 @@ module DataMapper
         end
             
       end # class Instance
-      
-      
-      # def find
-      #   return @result unless @result.nil?
-      #   
-      #   unless @instance.loaded_set.nil?
-      #     
-      #     # Temp variable for the instance variable name.
-      #     setter_method = "#{@association_name}=".to_sym
-      #     instance_variable_name = "@#{foreign_key}".to_sym
-      #     
-      #     set = @instance.loaded_set.group_by { |instance| instance.instance_variable_get(instance_variable_name) }
-      #     
-      #     # Fetch the foreign objects for all instances in the current object's loaded-set.
-      #     @instance.session.all(constant, :id => set.keys).each do |owner|
-      #       set[owner.key].each do |instance|
-      #         instance.send(setter_method, owner)
-      #       end
-      #     end
-      #   end
-      #   
-      #   return @result
-      # end
-
-      # def create(options = {})
-      #   associated = constant.new(options)
-      #   if associated.save
-      #     @instance.send("#{constant.foreign_key}=", associated.id)
-      #     @result = associated
-      #   end
-      # end
-      # 
-      # def build(options = {})
-      #   @result = constant.new(options)
-      # end
-      # 
-      # def set(val)
-      #   @result = val
-      # end
-            
     end
     
   end

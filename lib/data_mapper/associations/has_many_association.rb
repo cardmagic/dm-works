@@ -33,7 +33,7 @@ module DataMapper
         def save
           unless @items.nil? || @items.empty?
             setter_method = "#{@association_name}=".to_sym
-            ivar_name = association.foreign_key.instance_variable_name
+            ivar_name = association.foreign_key_column.instance_variable_name
             @items.each do |item|
               item.instance_variable_set(ivar_name, @instance.key)
               item.save
@@ -49,9 +49,9 @@ module DataMapper
           items << associated_item
           
           # TODO: Optimize!
-          fk = association.foreign_key
-          foreign_association = association.association_table.associations.find do |mapping|
-            mapping.is_a?(BelongsToAssociation) && mapping.foreign_key == fk
+          fk = association.foreign_key_column
+          foreign_association = association.associated_table.associations.find do |mapping|
+            mapping.is_a?(BelongsToAssociation) && mapping.foreign_key_column == fk
           end
           
           associated_item.send("#{foreign_association.name}=", @instance) if foreign_association
@@ -60,8 +60,8 @@ module DataMapper
         end
 
         def build(options)
-          item = association.constant.new(options)
-          self << item          
+          item = association.associated_constant.new(options)
+          self << item
           item
         end
 
@@ -78,7 +78,7 @@ module DataMapper
         def method_missing(symbol, *args, &block)
           if items.respond_to?(symbol)
             items.send(symbol, *args, &block)
-          elsif association.association_table.associations.any? { |assoc| assoc.name == symbol }
+          elsif association.associated_table.associations.any? { |assoc| assoc.name == symbol }
             results = []
             each do |item|
               unless (val = item.send(symbol)).blank?
@@ -100,13 +100,13 @@ module DataMapper
             if @instance.loaded_set.nil?
               @items = []
             else
-              fk = association.foreign_key.to_sym
+              fk = association.foreign_key_column.to_sym
               
-              finder_options = { association.foreign_key.to_sym => @instance.loaded_set.map { |item| item.key } }
+              finder_options = { association.foreign_key_column.to_sym => @instance.loaded_set.map { |item| item.key } }
               finder_options.merge!(association.finder_options)
               
               associated_items = @instance.session.all(
-                association.constant,
+                association.associated_constant,
                 finder_options
               ).group_by { |entry| entry.send(fk) }
               

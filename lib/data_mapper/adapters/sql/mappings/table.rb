@@ -80,7 +80,11 @@ module DataMapper
           
           def columns
             key if @key.nil?
-            @columns
+            class << self
+              attr_reader :columns
+            end
+            
+            self.columns
           end
           
           def exists?
@@ -170,7 +174,7 @@ module DataMapper
             end
           end
           
-          def key
+          def key            
             @key || begin
               @key = @columns.find { |column| column.key? }
               
@@ -181,6 +185,13 @@ module DataMapper
               
               @key
             end
+            
+            class << self
+              attr_accessor :key
+            end
+            Base::dependencies.resolve!
+            
+            self.key
           end
           
           def keys
@@ -211,6 +222,7 @@ module DataMapper
             end
             
             self.flush_sql_caches!
+            @columns_hash.clear
             
             return column
           end
@@ -276,7 +288,7 @@ module DataMapper
           end
           alias_method :database_columns, :get_database_columns
           
-          def to_create_sql
+          def to_create_sql            
             @to_create_sql || @to_create_sql = begin
               sql = "CREATE"
               sql << " TEMPORARY" if temporary?
@@ -337,7 +349,7 @@ module DataMapper
             ]
           end
           
-          def flush_sql_caches!
+          def flush_sql_caches!(flush_columns = true)
             @to_column_exists_sql = nil
             @to_column_exists_sql = nil
             @to_exists_sql = nil
@@ -345,6 +357,25 @@ module DataMapper
             @to_drop_sql = nil
             @to_sql = nil
             @name = nil
+            
+            if flush_columns
+              @columns.each do |column|
+                column.send(:flush_sql_caches!)
+              end
+            end
+            
+            true
+          end
+          
+          def activate!
+            @activated = true
+            @associations.each do |association|
+              association.activate!
+            end
+          end
+          
+          def activated?
+            @activated
           end
           
         end

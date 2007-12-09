@@ -2,8 +2,12 @@ module DataMapper
   module AutoMigrations
     def auto_migrate!
       if self::subclasses.empty?
-        database.schema[self].drop!
-        database.save(self)
+        table = database.table(self)
+        table.associations.each do |association|
+          association.activate!
+        end
+        
+        table.create!(true)
       else
         schema = database.schema
         columns = self::subclasses.inject(schema[self].columns) do |span, subclass|
@@ -16,25 +20,21 @@ module DataMapper
           table.add_column(column.name, column.type, column.options)
         end
         
-        result = table.create!(true)
-        
         table.associations.each do |association|
-          if association.is_a?(Associations::HasAndBelongsToManyAssociation)
-            association.join_table.create!(true)
-          end
-        end            
+          association.activate!
+        end
         
-        return result
+        return table.create!(true)
       end
     end
     
     private
     def create_table(table)
-      
+      raise NotImplementedError.new
     end
     
     def modify_table(table, columns)
-      
+      raise NotImplementedError.new
     end
   end
 end
