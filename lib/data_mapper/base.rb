@@ -222,6 +222,9 @@ module DataMapper
       if mapping.type == :boolean
         class_eval("#{visibility.to_s}; def #{mapping.name}?; #{mapping.instance_variable_name} end")
       end
+      
+    rescue SyntaxError
+      raise SyntaxError.new(mapping)
     end
     
     def self.property_setter(mapping, visibility = :public)
@@ -238,6 +241,8 @@ module DataMapper
       else
         class_eval("#{visibility.to_s}; def #{mapping.name}=(value); #{mapping.instance_variable_name} = value end")
       end
+    rescue SyntaxError
+      raise SyntaxError.new(mapping)
     end
     
     # Lazy-loads the attributes for a loaded_set, then overwrites the accessors

@@ -124,3 +124,10 @@
 * Added Base#update_attributes
 * MAJOR: Queries are now passed to the database drivers in a parameterized fashion
 * Updated PostgreSQL driver and adapter to current
+
+-- 0.2.4
+* Bug fixes
+* Added paranoia
+
+-- 0.2.5
+* has_one bugfixes

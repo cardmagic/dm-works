@@ -362,8 +362,8 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
     u1.comments.should be_empty
     
     c1 = Comment.create(:comment => "c", :author => u1)
-    p u1
-    p c1
+    # p u1
+    # p c1
     
     u1.comments.should_not be_empty
     u1.comments.should include(c1)
