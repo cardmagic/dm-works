@@ -283,7 +283,7 @@ module DataMapper
     end
 
     def ==(other)
-      private_attributes == other.send("private_attributes")
+      other.is_a?(self.class) && private_attributes == other.send(:private_attributes)
     end
     
     # Returns the difference between two objects, in terms of their attributes. 
