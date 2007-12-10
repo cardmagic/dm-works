@@ -49,8 +49,6 @@ module DataMapper
               @instance.key
             )
             
-            p('COW'*40)
-            p @instance.key, @associated
             @instance.database_context.adapter.save_without_validation(database_context, @associated)
           end
         end
