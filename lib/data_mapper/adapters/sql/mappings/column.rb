@@ -18,7 +18,7 @@ module DataMapper
             
             @key = @options[:key] == true || @options[:serial] == true
             @nullable = @options.has_key?(:nullable) ? @options[:nullable] : !@key
-            @lazy = @options.has_key?(:lazy) ? @options[:lazy] : @type == :text
+            @lazy = @options.has_key?(:lazy) ? @options[:lazy] : (@type == :text && !@key)
             @serial = @options[:serial] == true
             @default = @options[:default]
           end

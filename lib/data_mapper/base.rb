@@ -356,7 +356,7 @@ module DataMapper
       
       database_context.table(self).columns.each do |column|
         value = instance_variable_get(column.instance_variable_name)
-        if value != original_values[column.name] && column.name != :id
+        if value != original_values[column.name] && (!new_record? || !column.serial?)
           pairs[column.name] = column.type != :object ? value : YAML.dump(value)
         end
       end
