@@ -210,7 +210,7 @@ module DataMapper
       end
       
       if mapping.type == :boolean
-        class_eval("alias #{mapping.name}? #{mapping.name}")
+        class_eval("#{visibility.to_s}; def #{mapping.name}?; #{mapping.instance_variable_name} end")
       end
     end
     
