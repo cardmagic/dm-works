@@ -75,9 +75,10 @@ module DataMapper
           return nil if raw_value.blank?
           
           case raw_value
+            when "0000-00-00 00:00:00" then nil
             when DateTime then raw_value
-            when Date then DateTime.new(raw_value)
-            when String then DateTime::parse(raw_value)
+            when Date then DateTime.new(raw_value) rescue nil
+            when String then DateTime::parse(raw_value) rescue nil
             else raise CoersionError.new("Can't type-cast #{raw_value.inspect} to a datetime")
           end
         end
