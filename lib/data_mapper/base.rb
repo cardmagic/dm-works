@@ -7,6 +7,7 @@ require 'data_mapper/callbacks'
 require 'data_mapper/embedded_value'
 require 'data_mapper/auto_migrations'
 require 'data_mapper/dependency_queue'
+require 'data_mapper/support/struct'
 
 begin
   require 'ferret'
@@ -96,7 +97,8 @@ module DataMapper
       
       case details
       when Hash then self.attributes = details
-      when DataMapper::Base then self.attributes = details.attributes
+      when DataMapper::Base then self.unsafe_attributes = details.attributes
+      when Struct then self.unsafe_attributes = details.attributes
       when NilClass then nil
       end
     end
@@ -342,6 +344,18 @@ module DataMapper
       values_hash.delete_if do |key, value|
         !self.class.public_method_defined?("#{key}=")
       end.each_pair do |key, value|
+        if respond_to?(key)
+          send("#{key}=", value)
+        elsif column = table[key]
+          instance_variable_set(column.instance_variable_name, value)          
+        end
+      end
+    end
+    
+    def unsafe_attributes=(values_hash)
+      table = database_context.table(self.class)
+      
+      values_hash.each_pair do |key, value|
         if respond_to?(key)
           send("#{key}=", value)
         elsif column = table[key]
