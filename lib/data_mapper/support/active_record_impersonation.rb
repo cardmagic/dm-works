@@ -13,6 +13,8 @@ module DataMapper
       
       def reload!
         database_context.first(self.class, key, :select => original_values.keys, :reload => true)
+        self.loaded_associations.each { |association| association.reload! }
+        self
       end
       
       def reload

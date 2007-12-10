@@ -29,6 +29,15 @@ describe DataMapper::Support::ActiveRecordImpersonation do
       frog.reload!
       frog.name.should == 'Frog'
     end
+    
+    it "should prepare it's associations for reload" do
+      chippy = Animal.first(:name => 'Cup')
+      amazonia = Exhibit.first(:name => 'Amazonia')
+      amazonia.animals << chippy
+      amazonia.animals.should include(chippy)
+      amazonia.reload!
+      amazonia.animals.should_not include(chippy)
+    end
 
     it 'should be destroyed!' do
       capybara = Animal.create(:name => 'Capybara')

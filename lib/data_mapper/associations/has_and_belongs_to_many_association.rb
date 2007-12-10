@@ -232,6 +232,11 @@ module DataMapper
           @entries = []
         end
         
+        def reload!
+          @new_members = false
+          @entries = nil
+        end
+        
         def delete(member)
           @new_members = true
           if entries.delete(member)

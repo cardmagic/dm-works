@@ -108,6 +108,10 @@ module DataMapper
         def respond_to?(symbol)
           items.respond_to?(symbol) || super
         end
+        
+        def reload!
+          @items = nil
+        end
 
         def items
           @items || begin

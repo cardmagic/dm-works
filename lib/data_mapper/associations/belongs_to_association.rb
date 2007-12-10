@@ -66,6 +66,12 @@ module DataMapper
           end
         end
         
+        def reload!
+          @new_member = false
+          @associated = nil
+          instance
+        end
+        
         def instance
           @associated || @associated = begin                    
             if @instance.loaded_set.nil?
