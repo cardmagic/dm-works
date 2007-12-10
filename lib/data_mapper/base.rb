@@ -101,6 +101,11 @@ module DataMapper
       end
     end
     
+    PROPERTY_OPTIONS = [
+      :public, :protected, :private, :accessor, :reader, :writer,
+      :lazy, :default, :nullable, :key, :serial, :column
+    ]
+    
     # Adds property accessors for a field that you'd like to be able to modify.  The DataMapper doesn't
     # use the table schema to infer accessors, you must explicity call #property to add field accessors
     # to your model.
@@ -128,6 +133,11 @@ module DataMapper
     #   * <tt>protected</tt>: Alias for :reader => :public, :writer => :protected
     #   * <tt>private</tt>: Alias for :reader => :public, :writer => :private
     def self.property(name, type, options = {})
+      
+      options.each_pair do |k,v|
+        raise ArgumentError.new("#{k.inspect} is not a supported option in DataMapper::Base::PROPERTY_OPTIONS") unless PROPERTY_OPTIONS.include?(k)
+      end
+      
       visibility_options = [:public, :protected, :private]
       reader_visibility = options[:reader] || options[:accessor] || :public
       writer_visibility = options[:writer] || options[:accessor] || :public

@@ -249,5 +249,14 @@ describe 'Properties' do
     AudioEngineer.public_instance_methods.should include("name")
     AudioEngineer.private_instance_methods.should include("name=")
   end
+  
+  it 'should raise an error when invalid options are passsed' do
+    lambda do
+      class JumpyCow < DataMapper::Base
+        set_table_name 'animals'
+        property :name, :string, :laze => true
+      end
+    end.should raise_error(ArgumentError)
+  end
 
 end
