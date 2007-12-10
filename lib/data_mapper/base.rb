@@ -206,7 +206,7 @@ module DataMapper
           end
         EOS
       else
-        class_eval("#{visibility.to_s}; def #{mapping.name}; #{mapping.instance_variable_name} end")
+        class_eval("#{visibility.to_s}; def #{mapping.name}; #{mapping.instance_variable_name} end") unless [ :public, :private, :protected ].include?(mapping.name)
       end
       
       if mapping.type == :boolean
