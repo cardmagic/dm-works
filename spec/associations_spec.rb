@@ -215,6 +215,16 @@ end
 
 describe DataMapper::Associations::HasOneAssociation do
   
+  before(:all) do
+    fixtures(:fruit)
+    fixtures(:animals)
+  end
+  
+  after(:all) do
+    fixtures(:fruit)
+    fixtures(:animals)
+  end
+  
   it "should generate the SQL for a join statement" do
     fruit_association = database(:mock).schema[Animal].associations.find { |a| a.name == :favourite_fruit }
   
@@ -223,6 +233,20 @@ describe DataMapper::Associations::HasOneAssociation do
     EOS
   end
 
+  it "is assigned a devourer_id" do
+    bob = Animal.new(:name => 'bob')
+    fruit = Fruit.first
+    bob.favourite_fruit = fruit
+    
+    bob.save
+    
+    bob.reload!
+    fruit.devourer_id.should eql(bob.id)
+    bob.favourite_fruit.should == fruit
+    
+    fruit.reload!
+    fruit.devourer_of_souls.should == bob
+  end
 end
 
 describe DataMapper::Associations::HasAndBelongsToManyAssociation do

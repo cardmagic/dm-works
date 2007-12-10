@@ -32,7 +32,35 @@ module DataMapper
       end
       
       class Instance < Associations::Reference
-      
+        
+        def dirty?
+          @associated && @associated.dirty?
+        end
+        
+        def validate_recursively(event, cleared)
+          @associated.nil? || cleared.include?(@associated) || @associated.validate_recursively(event, cleared)
+        end
+        
+        def save_without_validation(database_context)
+          @new_member = false
+          unless @associated.nil?
+            @associated.instance_variable_set(
+              association.foreign_key_column.instance_variable_name,
+              @instance.key
+            )
+            
+            p('COW'*40)
+            p @instance.key, @associated
+            @instance.database_context.adapter.save_without_validation(database_context, @associated)
+          end
+        end
+        
+        def reload!
+          @new_member = false
+          @associated = nil
+          instance
+        end
+        
         def instance
           @associated || @associated = begin                    
             if @instance.loaded_set.nil?
@@ -67,6 +95,8 @@ module DataMapper
         end
       
         def set(val)
+          @new_member = true
+          val.instance_variable_set(association.foreign_key_column.instance_variable_name, @instance.key)
           @associated = val
         end
             
