@@ -134,7 +134,7 @@ module DataMapper
         logger.error { e }
         raise e
       ensure
-        reader.close
+        reader.close if reader
         db.close
       end      
       
