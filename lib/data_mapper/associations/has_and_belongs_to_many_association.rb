@@ -155,7 +155,7 @@ module DataMapper
         alias length size
         
         def count
-          1
+          entries.size
         end
         
         def [](key)
