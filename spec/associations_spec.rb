@@ -332,5 +332,21 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
     @amazonia.animals.size.should == 2
     @amazonia.animals.should include?(meerkat)
   end
+  
+  it "Should handle setting complementary associations" do
+    u1 = User.create(:name => "u1")
+    u1.comments.should be_empty
+    
+    c1 = Comment.create(:comment => "c", :author => u1)
+    p u1
+    p c1
+    
+    u1.comments.should_not be_empty
+    u1.comments.should include(c1)
+    
+    u1.reload!
+    u1.comments.should_not be_empty
+    u1.comments.should include(c1)
+  end
 
 end
