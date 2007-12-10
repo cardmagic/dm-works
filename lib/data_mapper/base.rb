@@ -103,7 +103,7 @@ module DataMapper
     
     PROPERTY_OPTIONS = [
       :public, :protected, :private, :accessor, :reader, :writer,
-      :lazy, :default, :nullable, :key, :serial, :column
+      :lazy, :default, :nullable, :key, :serial, :column, :size, :length
     ]
     
     # Adds property accessors for a field that you'd like to be able to modify.  The DataMapper doesn't
