@@ -3,9 +3,9 @@ require File.dirname(__FILE__) + "/spec_helper"
 describe DataMapper::Adapters::Sql::Commands::LoadCommand do
   
   def conditions_for(klass, options = {})
-    session = database(:mock)
+    database_context = database(:mock)
     DataMapper::Adapters::Sql::Commands::LoadCommand.new(
-      session.adapter, session, klass, options
+      database_context.adapter, database_context, klass, options
     ).conditions
   end
   

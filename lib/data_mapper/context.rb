@@ -34,7 +34,7 @@ module DataMapper
           options = { key => args.first } # no options, set id
         end
       else
-        raise ArgumentError.new('Session#first takes a class, and optional type_or_id and/or options arguments')
+        raise ArgumentError.new('Context#first takes a class, and optional type_or_id and/or options arguments')
       end
       
       # Account for undesired behaviour in MySQL that returns the

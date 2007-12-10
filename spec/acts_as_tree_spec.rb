@@ -24,7 +24,9 @@ describe('A tree') do
     two = Node.new(:name => 'two')
 
     root.children << one << two
-
+    
+    root.parent_id.should be_nil
+    
     one_one = Node.new(:name => 'one_one')
     one_two = Node.new(:name => 'one_two')
     one.children << one_one << one_two
@@ -34,11 +36,21 @@ describe('A tree') do
     two.children << two_one << two_two
 
     root.save.should == true
+    root.parent_id.should be_nil
+    
+    root.should have(2).children
+    one.should have(2).children
+    two.should have(2).children
 
-    grand = Node[:name => 'root']
-    root.should == grand # true since +root+ and +grand+ are identical objects.
+    Node.all(:name => 'root').should have(1).entries
+    
+    grand = Node.first(:name => 'root')
+    
+    grand.should have(2).children
+    
+    root.should == grand # true since +root+ and +grand+ are objects with identical types and attributes.
     root.should_not eql(grand) # false since +root+ and +grand+ are in different sessions.
-
+    
     grand.children[0].children[0].name.should == 'one_one'
   end
   

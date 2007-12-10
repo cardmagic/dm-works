@@ -113,29 +113,28 @@ module DataMapper
         
         command = db.create_command(args.shift)
         
-        command.execute_reader(*args) do |reader|
-          fields = reader.fields.map { |field| Inflector.underscore(field).to_sym }
+        reader = command.execute_reader(*args)
+        fields = reader.fields.map { |field| Inflector.underscore(field).to_sym }
+        results = []
+
+        if fields.size > 1
+          struct = Struct.new(*fields)
           
-          results = []
-
-          if fields.size > 1
-            struct = Struct.new(*fields)
-            
-            reader.each do
-              results << struct.new(*reader.current_row)
-            end
-          else
-            reader.each do
-              results << reader.item(0)
-            end
+          reader.each do
+            results << struct.new(*reader.current_row)
           end
-
-          results            
+        else
+          reader.each do
+            results << reader.item(0)
+          end
         end
+
+        return results
       rescue => e
         logger.error { e }
         raise e
       ensure
+        reader.close
         db.close
       end      
       
@@ -157,7 +156,7 @@ module DataMapper
         end
       end
             
-      def delete(session, instance)
+      def delete(database_context, instance)
         table = self.table(instance)
         
         if instance.is_a?(Class)
@@ -174,97 +173,38 @@ module DataMapper
                 command.execute_non_query(instance.key).to_i > 0
               end # connection do...end # if continued below:
               instance.instance_variable_set(:@new_record, true)
-              instance.session = session
+              instance.database_context = database_context
               instance.original_values.clear
-              session.identity_map.delete(instance)
+              database_context.identity_map.delete(instance)
               callback(instance, :after_destroy)
             end
           end        
         end
       end
       
-      def save(session, instance)
+      def save(database_context, instance, validate = true)
         case instance
         when Class then table(instance).create!
         when Mappings::Table then instance.create!
         when DataMapper::Base then
           return false unless instance.new_record? || instance.dirty?
           
-          # INSERT
-          result = if instance.new_record?
-            return false unless instance.valid?(:create)
-            callback(instance, :before_save)
-            callback(instance, :before_create)
-
-            table = self.table(instance)
-            attributes = instance.dirty_attributes
-            
-            if table.multi_class?
-              instance.instance_variable_set(
-                table[:type].instance_variable_name,
-                attributes[:type] = instance.class.name
-              )
-            end
+          event = instance.new_record? ? :create : :update
           
-            keys = []
-            values = []
-            attributes.each_pair do |key, value|
-              keys << table[key].to_sql
-              values << value
-            end
-        
-            sql = if keys.size > 0
-              "INSERT INTO #{table.to_sql} (#{keys.join(', ')}) VALUES ?"
-            else
-              "INSERT INTO #{table.to_sql}"
-            end
-            
-            insert_id = connection do |db|
-              db.create_command(sql).execute_non_query(values).last_insert_row
-            end
-            instance.instance_variable_set(:@new_record, false)
-            instance.key = insert_id if table.key.serial? && !attributes.include?(table.key.name)
-            session.identity_map.set(instance)
-            callback(instance, :after_create)
-          # UPDATE
-          else
-            return false unless instance.valid?(:update)
-            callback(instance, :before_save)
-            callback(instance, :before_update)
-            
-            table = self.table(instance)
-            attributes = instance.dirty_attributes
-            parameters = []
-            
-            unless attributes.empty?
-              sql = "UPDATE " << table.to_sql << " SET "
-      
-              sql << attributes.map do |key, value|
-                parameters << value
-                "#{table[key].to_sql} = ?"
-              end.join(', ')
-      
-              sql << " WHERE #{table.key.to_sql} = ?"
-              parameters << instance.key
-              
-              connection do |db|
-                db.create_command(sql).execute_non_query(*parameters).to_i > 0 \
-                && callback(instance, :after_update)
-              end
-            else
-              true
-            end
-          end
+          return false if validate && !instance.validate_recursively(event, Set.new)
           
+          callback(instance, :before_save)
+          result = send(event, database_context, instance)
+          
+          instance.database_context = database_context
           instance.attributes.each_pair do |name, value|
             instance.original_values[name] = value
           end
           
           instance.loaded_associations.each do |association|
-            association.save if association.respond_to?(:save)
+            association.save_without_validation(database_context) if association.dirty?
           end
           
-          instance.session = session
           callback(instance, :after_save)
           result
         end
@@ -273,8 +213,74 @@ module DataMapper
         raise error
       end
       
-      def load(session, klass, options)
-        self.class::Commands::LoadCommand.new(self, session, klass, options).call
+      def save_without_validation(database_context, instance)
+        save(database_context, instance, false)
+      end
+      
+      def update(database_context, instance)
+        callback(instance, :before_update)
+        
+        table = self.table(instance)
+        attributes = instance.dirty_attributes
+        parameters = []
+        
+        unless attributes.empty?
+          sql = "UPDATE " << table.to_sql << " SET "
+  
+          sql << attributes.map do |key, value|
+            parameters << value
+            "#{table[key].to_sql} = ?"
+          end.join(', ')
+  
+          sql << " WHERE #{table.key.to_sql} = ?"
+          parameters << instance.key
+          
+          connection do |db|
+            db.create_command(sql).execute_non_query(*parameters).to_i > 0 \
+            && callback(instance, :after_update)
+          end
+        else
+          true
+        end
+      end
+      
+      def create(database_context, instance)
+        callback(instance, :before_create)
+
+        table = self.table(instance)
+        attributes = instance.dirty_attributes
+        
+        if table.multi_class?
+          instance.instance_variable_set(
+            table[:type].instance_variable_name,
+            attributes[:type] = instance.class.name
+          )
+        end
+      
+        keys = []
+        values = []
+        attributes.each_pair do |key, value|
+          keys << table[key].to_sql
+          values << value
+        end
+    
+        sql = if keys.size > 0
+          "INSERT INTO #{table.to_sql} (#{keys.join(', ')}) VALUES ?"
+        else
+          "INSERT INTO #{table.to_sql}"
+        end
+        
+        insert_id = connection do |db|
+          db.create_command(sql).execute_non_query(values).last_insert_row
+        end
+        instance.instance_variable_set(:@new_record, false)
+        instance.key = insert_id if table.key.serial? && !attributes.include?(table.key.name)
+        database_context.identity_map.set(instance)
+        callback(instance, :after_create)
+      end
+      
+      def load(database_context, klass, options)
+        self.class::Commands::LoadCommand.new(self, database_context, klass, options).call
       end
       
       def table(instance)

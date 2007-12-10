@@ -15,7 +15,7 @@ module DataMapper
               @type_override_present = false
               @type_override_index = nil
               @type_override = nil
-              @session = load_command.session
+              @database_context = load_command.database_context
               @reload = load_command.reload?
               @set = []
             end
@@ -89,19 +89,19 @@ module DataMapper
               class MaterializationError < StandardError; end
                 
               def create_instance(instance_id, instance_type)
-                instance = @session.identity_map.get(@klass, instance_id)
+                instance = @database_context.identity_map.get(@klass, instance_id)
 
                 if instance.nil? || @reload
                   instance = instance_type.new() if instance.nil?
                   instance.instance_variable_set(:@__key, instance_id)
                   instance.instance_variable_set(:@new_record, false)
-                  @session.identity_map.set(instance)
+                  @database_context.identity_map.set(instance)
                 elsif instance.new_record?
                   instance.instance_variable_set(:@__key, instance_id)
                   instance.instance_variable_set(:@new_record, false)
                 end
 
-                instance.session = @session
+                instance.database_context = @database_context
 
                 return instance
               end
@@ -126,10 +126,10 @@ module DataMapper
 
           end
           
-          attr_reader :conditions, :session, :options
+          attr_reader :conditions, :database_context, :options
           
-          def initialize(adapter, session, primary_class, options = {})
-            @adapter, @session, @primary_class = adapter, session, primary_class
+          def initialize(adapter, database_context, primary_class, options = {})
+            @adapter, @database_context, @primary_class = adapter, database_context, primary_class
             
             # BEGIN: Partion out the options hash into general options,
             # and conditions.
@@ -205,7 +205,7 @@ module DataMapper
             # just skip that and go straight for the query.
             unless reload? || @instance_id.blank? || @instance_id.is_a?(Array)
               # If the id is for only a single record, attempt to find it.
-              if instance = @session.identity_map.get(@primary_class, @instance_id)
+              if instance = @database_context.identity_map.get(@primary_class, @instance_id)
                 return [instance]
               end
             end

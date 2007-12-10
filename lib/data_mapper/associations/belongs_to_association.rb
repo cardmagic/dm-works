@@ -46,7 +46,26 @@ module DataMapper
       end
       
       class Instance < Associations::Reference
-         
+        
+        def dirty?
+          @associated && @new_member
+        end
+        
+        def validate_recursively(event, cleared)
+          @associated.nil? || cleared.include?(@associated) || @associated.validate_recursively(event, cleared)
+        end
+        
+        def save_without_validation(database_context)
+          @new_member = false
+          unless @associated.nil?
+            @instance.instance_variable_set(
+              association.foreign_key_column.instance_variable_name,
+              @associated.key
+            )
+            @instance.database_context.adapter.save_without_validation(database_context, @instance)
+          end
+        end
+        
         def instance
           @associated || @associated = begin                    
             if @instance.loaded_set.nil?
@@ -58,7 +77,7 @@ module DataMapper
               
               set = @instance.loaded_set.group_by { |instance| instance.send(fk) }
 
-              @instance.session.all(association.constant, association.associated_table.key.to_sym => set.keys).each do |assoc|
+              @instance.database_context.all(association.constant, association.associated_table.key.to_sym => set.keys).each do |assoc|
                 set[assoc.key].each do |primary_instance|
                   primary_instance.send(setter_method, assoc)
                 end
@@ -82,6 +101,8 @@ module DataMapper
         end
         
         def set(val)
+          raise "RecursionError" if val == @instance
+          @new_member = true
           @instance.instance_variable_set(association.foreign_key_column.instance_variable_name, val.key)
           @associated = val
         end

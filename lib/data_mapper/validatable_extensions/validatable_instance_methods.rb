@@ -27,16 +27,19 @@ module Validatable
 
   # Returns true if no errors were added otherwise false. Only executes validations that have no :groups option specified
   def valid?(event = :validate)
-    validate_excluding_association(nil, event)
+    validate_recursively(event, Set.new)
   end
   
   #TODO should callbacks really affect the flow? shouldn't validations themselves do that?
-  def validate_excluding_association(associated, event = :validate) #:nodoc:
+  def validate_recursively(event, cleared) #:nodoc:
+    return true if cleared.include?(self)
+    cleared << self
+    
     self.class.callbacks.execute(:before_validation, self)
 
     # Validatable clears the errors list when running valid_for_some_group?, so we save general errors
     # and then merge them back in after we've validated for events
-    generally_valid = valid_in_all_cases?
+    generally_valid = valid_for_group?(nil)
     general_errors = self.errors.errors.dup
     
     if respond_to?(:"valid_for_#{event}?")
@@ -49,11 +52,7 @@ module Validatable
     
     if self.respond_to?(:loaded_associations)
       return false unless self.loaded_associations.all? do |association|
-        if association != associated && association.respond_to?(:validate_excluding_association)
-          association.validate_excluding_association(self, event)
-        else
-          true
-        end
+        association.validate_recursively(event, cleared)
       end
     end
     

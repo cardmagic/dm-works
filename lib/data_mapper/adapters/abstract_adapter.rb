@@ -21,11 +21,11 @@ module DataMapper
         raise NotImplementedError.new
       end
       
-      def save(session, instance)
+      def save(database_context, instance)
         raise NotImplementedError.new
       end
       
-      def load(session, klass, options)
+      def load(database_context, klass, options)
         raise NotImplementedError.new
       end
       

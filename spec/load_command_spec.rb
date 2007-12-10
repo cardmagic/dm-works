@@ -8,8 +8,8 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
   end
   
   def loader_for(klass, options = {})
-    session = database(:mock)
-    DataMapper::Adapters::Sql::Commands::LoadCommand.new(session.adapter, session, klass, options)
+    database_context = database(:mock)
+    DataMapper::Adapters::Sql::Commands::LoadCommand.new(database_context.adapter, database_context, klass, options)
   end
   
   it "should return a Struct for custom queries" do

@@ -8,12 +8,11 @@ module DataMapper
       end
       
       def save
-#        self.valid?  # why is this call even here?  valid? twice?
-        session.save(self)
+        database_context.save(self)
       end
       
       def reload!
-        session.first(self.class, key, :select => original_values.keys, :reload => true)
+        database_context.first(self.class, key, :select => original_values.keys, :reload => true)
       end
       
       def reload
@@ -21,7 +20,7 @@ module DataMapper
       end
       
       def destroy!
-        session.destroy(self)
+        database_context.destroy(self)
       end
       
       module ClassMethods

@@ -7,10 +7,10 @@ class MockAdapter < DataMapper::Adapters::DataObjectAdapter
   def delete(instance_or_klass, options = nil)
   end
   
-  def save(session, instance)
+  def save(database_context, instance)
   end
   
-  def load(session, klass, options)
+  def load(database_context, klass, options)
   end
   
   def table_exists?(name)

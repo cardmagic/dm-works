@@ -3,23 +3,27 @@ module DataMapper
     
     class HasAndBelongsToManyAssociation
       
-      attr_reader :adapter, :table
+      attr_reader :adapter
       
       def initialize(klass, association_name, options)
         @adapter = database.adapter
-        @table = adapter.table(klass)
+        @key_table = adapter.table(klass)
         @association_name = association_name.to_sym
         @options = options
         
         define_accessor(klass)
       end
       
+      # def key_table
+      #   @key_table
+      # end
+      
       def name
         @association_name
       end
 
       def foreign_name
-        @foreign_name || (@foreign_name = (@options[:foreign_name] || @table.name).to_sym)
+        @foreign_name || (@foreign_name = (@options[:foreign_name] || @key_table.name).to_sym)
       end
       
       def constant
@@ -44,21 +48,21 @@ module DataMapper
       end
 
       def associated_columns
-        association_table.columns.reject { |column| column.lazy? } + join_columns
+        associated_table.columns.reject { |column| column.lazy? } + join_columns
       end
       
       def join_columns
         [ left_foreign_key, right_foreign_key ]
       end
       
-      def association_table
-        @association_table || (@association_table = adapter.table(constant))
+      def associated_table
+        @associated_table || (@associated_table = adapter.table(constant))
       end
       
       def join_table
         @join_table || @join_table = begin 
           join_table_name = @options[:join_table] || 
-            [ table.name.to_s, database.schema[constant].name.to_s ].sort.join('_')
+            [ @key_table.name.to_s, database.schema[constant].name.to_s ].sort.join('_')
             
           adapter.table(join_table_name)
         end        
@@ -67,7 +71,7 @@ module DataMapper
       def left_foreign_key
         @left_foreign_key || @left_foreign_key = begin
           join_table.add_column(
-            (@options[:left_foreign_key] || table.default_foreign_key),
+            (@options[:left_foreign_key] || @key_table.default_foreign_key),
             :integer, :key => true)
         end
       end
@@ -75,7 +79,7 @@ module DataMapper
       def right_foreign_key
         @right_foreign_key || @right_foreign_key = begin
           join_table.add_column(
-            (@options[:right_foreign_key] || association_table.default_foreign_key),
+            (@options[:right_foreign_key] || associated_table.default_foreign_key),
             :integer, :key => true)
         end
       end
@@ -83,16 +87,16 @@ module DataMapper
       def to_sql
         <<-EOS.compress_lines
           JOIN #{join_table.to_sql} ON
-            #{left_foreign_key.to_sql(true)} = #{table.key.to_sql(true)}
-          JOIN #{association_table.to_sql} ON
-            #{association_table.key.to_sql(true)} = #{right_foreign_key.to_sql(true)}
+            #{left_foreign_key.to_sql(true)} = #{@key_table.key.to_sql(true)}
+          JOIN #{associated_table.to_sql} ON
+            #{associated_table.key.to_sql(true)} = #{right_foreign_key.to_sql(true)}
         EOS
       end
       
       def to_shallow_sql
         <<-EOS.compress_lines
           JOIN #{join_table.to_sql} ON
-            #{left_foreign_key.to_sql(true)} = #{table.key.to_sql(true)}
+            #{left_foreign_key.to_sql(true)} = #{@key_table.key.to_sql(true)}
         EOS
       end
       
@@ -166,15 +170,15 @@ module DataMapper
           @new_members || (@entries && @entries.any? { |item| item != @instance && item.dirty? })
         end
         
-        def validate_excluding_association(associated, event)
-          @entries.blank? || @entries.all? { |item| item.validate_excluding_association(associated, event) }
+        def validate_recursively(event, cleared)
+          @entries.blank? || @entries.all? { |item| cleared.include?(item) || item.validate_recursively(event, cleared) }
         end
         
-        def save
+        def save_without_validation(database_context)
           unless @entries.nil?
             
             if @new_members || dirty?
-              adapter = @instance.session.adapter
+              adapter = @instance.database_context.adapter
               
               adapter.connection do |db|
                 command = db.create_command(association.to_delete_sql)
@@ -188,7 +192,7 @@ module DataMapper
                   keys = []
               
                   @entries.each do |member|
-                    member.save
+                    adapter.save_without_validation(database_context, member)
                     values << "(?, ?)"
                     keys << @instance.key << member.key
                   end
@@ -200,7 +204,7 @@ module DataMapper
               
                 else # adapter doesn't support batch inserts...
                   @entries.each do |member|
-                    member.save                
+                    adapter.save_without_validation(database_context, member)          
                   end
               
                   # Just to keep the same flow as the batch-insert mode.
@@ -231,7 +235,7 @@ module DataMapper
         def delete(member)
           @new_members = true
           if entries.delete(member)
-            @instance.session.adapter.connection do |db|
+            @instance.database_context.adapter.connection do |db|
               command = db.create_command(association.to_delete_member_sql)
               command.execute_non_query(@instance.key, member.key)
             end
@@ -286,7 +290,7 @@ module DataMapper
                 end
               end
                 
-              @instance.session.all(association.constant,
+              @instance.database_context.all(association.constant,
                 left_foreign_key => @instance.loaded_set.map(&:key),
                 :shallow_include => association.foreign_name,
                 :intercept_load => matcher

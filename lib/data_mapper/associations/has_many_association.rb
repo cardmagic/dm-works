@@ -18,25 +18,39 @@ module DataMapper
         EOS
       end
       
+      def to_disassociate_sql
+        "UPDATE #{associated_table.to_sql} SET #{foreign_key_column.to_sql} = NULL WHERE #{foreign_key_column.to_sql} = ?"
+      end
+      
       class Set < Associations::Reference
         
         include Enumerable
         
         def dirty?
-          @items && @items.any? { |item| item != @instance && item.dirty? }
+          @items && @items.any? { |item| item.dirty? }
         end
         
-        def validate_excluding_association(associated, event)
-          @items.blank? || @items.all? { |item| item.validate_excluding_association(associated, event) }
+        def validate_recursively(event, cleared)
+          @items.blank? || @items.all? { |item| cleared.include?(item) || item.validate_recursively(event, cleared) }
         end
         
-        def save
+        def save_without_validation(database_context)
+          
+          adapter = @instance.database_context.adapter
+          
+          adapter.connection do |db|
+            command = db.create_command(association.to_disassociate_sql)
+            command.execute_non_query(@instance.key)
+          end
+          
           unless @items.nil? || @items.empty?
+            
+            
             setter_method = "#{@association_name}=".to_sym
             ivar_name = association.foreign_key_column.instance_variable_name
             @items.each do |item|
               item.instance_variable_set(ivar_name, @instance.key)
-              item.save
+              @instance.database_context.adapter.save_without_validation(database_context, item)
             end
           end
         end
@@ -105,7 +119,7 @@ module DataMapper
               finder_options = { association.foreign_key_column.to_sym => @instance.loaded_set.map { |item| item.key } }
               finder_options.merge!(association.finder_options)
               
-              associated_items = @instance.session.all(
+              associated_items = @instance.database_context.all(
                 association.associated_constant,
                 finder_options
               ).group_by { |entry| entry.send(fk) }

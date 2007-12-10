@@ -246,12 +246,12 @@ module DataMapper
       
       unless names.empty? || new_record? || loaded_set.nil?
         
-        key = session.table(self.class).key.to_sym
+        key = database_context.table(self.class).key.to_sym
         keys_to_select = loaded_set.map do |instance|
           instance.send(key)
         end
         
-        session.all(
+        database_context.all(
           self.class,
           :select => ([key] + names),
           :reload => true,
@@ -294,7 +294,7 @@ module DataMapper
     def loaded_attributes
       pairs = {}
       
-      session.table(self).columns.each do |column|
+      database_context.table(self).columns.each do |column|
         pairs[column.name] = instance_variable_get(column.instance_variable_name)
       end
       
@@ -309,7 +309,7 @@ module DataMapper
     def attributes
       pairs = {}
       
-      session.table(self).columns.each do |column|
+      database_context.table(self).columns.each do |column|
         if self.class.public_method_defined?(column.name)
           lazy_load!(column.name) if column.lazy?
           value = instance_variable_get(column.instance_variable_name)
@@ -322,7 +322,7 @@ module DataMapper
     
     # Mass-assign mapped fields.
     def attributes=(values_hash)
-      table = session.schema[self.class]
+      table = database_context.table(self.class)
       
       values_hash.delete_if do |key, value|
         !self.class.public_method_defined?("#{key}=")
@@ -335,31 +335,26 @@ module DataMapper
       end
     end
     
-    def dirty?(name = nil)
-      if name.nil?
-        session.table(self).columns.any? do |column|
-          if column.type == :object
-            Marshal.dump(self.instance_variable_get(column.instance_variable_name)) != original_values[column.name]
-          else
-            self.instance_variable_get(column.instance_variable_name) != original_values[column.name]
-          end
-        end || loaded_associations.any? do |loaded_association|
-          if loaded_association.respond_to?(:dirty?)
-            loaded_association.dirty?
-          else
-            false
-          end
+    def dirty?
+      result = database_context.table(self).columns.any? do |column|
+        if column.type == :object
+          Marshal.dump(self.instance_variable_get(column.instance_variable_name)) != original_values[column.name]
+        else
+          self.instance_variable_get(column.instance_variable_name) != original_values[column.name]
         end
-      else
-        key = name.kind_of?(Symbol) ? name : name.to_sym
-        self.instance_variable_get("@#{name}") != original_values[key]
+      end
+      
+      return true if result
+      
+      loaded_associations.any? do |loaded_association|
+        loaded_association.dirty?
       end
     end
 
     def dirty_attributes
       pairs = {}
       
-      session.table(self).columns.each do |column|
+      database_context.table(self).columns.each do |column|
         value = instance_variable_get(column.instance_variable_name)
         if value != original_values[column.name] && column.name != :id
           pairs[column.name] = column.type != :object ? value : YAML.dump(value)
@@ -418,23 +413,23 @@ module DataMapper
       @loaded_associations || @loaded_associations = []
     end
     
-    def session=(value)
-      @session = value
+    def database_context=(value)
+      @database_context = value
     end
     
-    def session
-      @session || ( @session = database )
+    def database_context
+      @database_context || ( @database_context = database )
     end
     
     def key=(value)
-      key_column = session.schema[self.class].key
+      key_column = database_context.table(self.class).key
       @__key = key_column.type_cast_value(value)
       instance_variable_set(key_column.instance_variable_name, @__key)
     end
     
     def key
       @__key || @__key = begin
-        key_column = session.schema[self.class].key
+        key_column = database_context.table(self.class).key
         key_column.type_cast_value(instance_variable_get(key_column.instance_variable_name))
       end
     end
@@ -445,7 +440,7 @@ module DataMapper
     def private_attributes
       pairs = {}
 
-      session.table(self).columns.each do |column|
+      database_context.table(self).columns.each do |column|
         lazy_load!(column.name) if column.lazy?
         value = instance_variable_get(column.instance_variable_name)
         pairs[column.name] = column.type == :class ? value.to_s : value

@@ -62,8 +62,8 @@ if ENV['ADAPTER'] == 'postgresql' && false
     end
     
     def table_mapping_for(klass)
-      session = database
-      DataMapper::Adapters::PostgresqlAdapter::Commands::SaveCommand.new(session.adapter, session, klass)
+      database_context = database
+      DataMapper::Adapters::PostgresqlAdapter::Commands::SaveCommand.new(database_context.adapter, database_context, klass)
     end
   
     it "should create a schema if it doesn't already exist" do

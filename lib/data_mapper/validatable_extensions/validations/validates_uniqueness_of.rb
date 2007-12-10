@@ -25,8 +25,8 @@ module Validatable
         finder_options.merge! scope => scope_value
       end
       
-      finder_options.merge!({ instance.session.table(instance.class).key.name.not => instance.key }) unless instance.new_record?
-      instance.session.first(instance.class, finder_options).nil?
+      finder_options.merge!({ instance.database_context.table(instance.class).key.name.not => instance.key }) unless instance.new_record?
+      instance.database_context.first(instance.class, finder_options).nil?
     end  
   end
   

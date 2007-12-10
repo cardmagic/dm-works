@@ -15,7 +15,7 @@ describe DataMapper::Associations::BelongsToAssociation do
   end
   
   it 'belongs to a zoo' do
-    @aviary.zoo.should == @aviary.session.first(Zoo, :name => 'San Diego')
+    @aviary.zoo.should == @aviary.database_context.first(Zoo, :name => 'San Diego')
   end
   
   it "is assigned a zoo_id" do

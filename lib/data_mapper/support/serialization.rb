@@ -14,7 +14,7 @@ module DataMapper
         
         YAML::quick_emit( object_id, opts ) do |out|
           out.map(nil, to_yaml_style ) do |map|
-            session.table(self).columns.each do |column|
+            database_context.table(self).columns.each do |column|
               lazy_load!(column.name) if column.lazy?
               value = instance_variable_get(column.instance_variable_name)
               map.add(column.to_s, value.is_a?(Class) ? value.to_s : value)
@@ -34,7 +34,7 @@ module DataMapper
       def to_xml_document
         doc = REXML::Document.new
         
-        table = session.table(self.class)
+        table = database_context.table(self.class)
         root = doc.add_element(Inflector.underscore(self.class.name))
         
         key_attribute = root.attributes << REXML::Attribute.new(table.key.to_s, key)
@@ -57,7 +57,7 @@ module DataMapper
       end
       
       def to_json(*a)
-        table = session.table(self.class)
+        table = database_context.table(self.class)
         
         result = '{ '
         
