@@ -75,7 +75,8 @@ module DataMapper
         
         def create!(attributes)
           instance = self.new(attributes)
-          raise InvalidRecord.new(instance) unless instance.save
+          instance.save
+          raise InvalidRecord.new(instance) if instance.new_record?
           instance
         end
       end
