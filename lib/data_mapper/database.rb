@@ -174,9 +174,13 @@ module DataMapper
       @log_stream = nil
     end
     
-    attr_reader :name, :adapter
+    attr_reader :name, :adapter, :log_stream
     
-    attr_accessor :host, :database, :schema_search_path, :username, :password, :log_stream, :log_level, :index_path, :socket
+    attr_accessor :host, :database, :schema_search_path, :username, :password, :log_level, :index_path, :socket
+    
+    def log_stream=(val)
+      @log_stream = (val.is_a?(String) && val =~ /STDOUT/ ? STDOUT : val)
+    end
     
     # Allows us to set the adapter for this database object. It can only be set once, and expects two types of values.
     #
@@ -209,17 +213,21 @@ module DataMapper
     
     # Default Logger from Ruby's logger.rb
     def logger
-      @logger = Logger.new(@log_stream, File::WRONLY | File::APPEND | File::CREAT)
-      @logger.level = @log_level
-      at_exit { @logger.close }
-      
+      @logger = create_logger
+    
       class << self
         attr_reader :logger
       end
-      
+    
       return @logger
     end
     
+    def create_logger
+      x = Logger.new(@log_stream, File::WRONLY | File::APPEND | File::CREAT)
+      x.level = @log_level
+      at_exit { x.close }
+      return x
+    end
   end
   
 end
