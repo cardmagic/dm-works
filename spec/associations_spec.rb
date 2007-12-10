@@ -1,6 +1,10 @@
 require File.dirname(__FILE__) + "/spec_helper"
 
 describe DataMapper::Associations::BelongsToAssociation do
+  before(:all) do
+    fixtures(:zoos)
+  end
+  
   before(:each) do
     @aviary = Exhibit[:name => 'Monkey Mayhem']
   end
@@ -18,7 +22,24 @@ describe DataMapper::Associations::BelongsToAssociation do
     zoo = Zoo.first
     exhibit = Exhibit.new(:name => 'bob')
     exhibit.zoo = zoo
-    exhibit.instance_variable_get("@zoo_id").should == zoo.id    
+    exhibit.instance_variable_get("@zoo_id").should == zoo.id
+    
+    exhibit.save.should eql(true)
+    
+    zoo2 = Zoo.first
+    zoo2.exhibits.should include(exhibit)
+    
+    exhibit.destroy!
+    
+    zoo = Zoo.new(:name => 'bob')
+    bob = Exhibit.new(:name => 'bob')
+    zoo.exhibits << bob
+    zoo.save.should eql(true)
+    
+    zoo.exhibits.first.should_not be_a_new_record
+    
+    bob.destroy!
+    zoo.destroy!
   end
   
   it 'can build its zoo' do
