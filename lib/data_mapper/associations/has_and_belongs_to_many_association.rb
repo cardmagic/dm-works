@@ -184,7 +184,7 @@ module DataMapper
                 command = db.create_command(association.to_delete_sql)
                 command.execute_non_query(@instance.key)
               end
-            
+              
               unless @entries.empty?
                 if adapter.batch_insertable?
                   sql = association.to_insert_sql
@@ -224,7 +224,7 @@ module DataMapper
         
         def <<(member)
           @new_members = true
-          entries << member
+          entries << member unless member.nil?
         end
         
         def clear
