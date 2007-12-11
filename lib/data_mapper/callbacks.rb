@@ -60,7 +60,7 @@ module DataMapper
     def initialize
       @callbacks = Hash.new do |h,k|
         raise 'Callback names must be Symbols' unless k.kind_of?(Symbol)
-        h[k] = []
+        h[k] = Set.new
       end
     end
     
@@ -89,8 +89,18 @@ module DataMapper
     # the instance executed against (as a method call).
     def add(name, block)
       callback = @callbacks[name]
-      raise ArgumentError.new("You didn't specify a callback in String, Symbol or Proc form.") if block.nil?
+      raise ArgumentError.new("You didn't specify a callback in String, Symbol or Proc form.") unless [String, Proc, Symbol].detect { |type| block.is_a?(type) }
       callback << block
+    end
+
+    def dup
+      copy = self.class.new
+      @callbacks.each_pair do |name, callbacks|
+        callbacks.each do |callback|
+          copy.add(name, callback)
+        end
+      end
+      return copy
     end
   end
   

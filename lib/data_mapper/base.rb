@@ -63,6 +63,8 @@ module DataMapper
             super_table.add_column(:type, :class, {})
           end
           
+          subclass.instance_variable_set("@callbacks", self.callbacks.dup)
+          
           self::subclasses << subclass
         end
       end
