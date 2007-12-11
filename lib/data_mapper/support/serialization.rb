@@ -48,7 +48,7 @@ module DataMapper
         
         table.columns.each do |column|
           next if column.key?
-          value = send(column.name)
+          value = send(column.type == :boolean ? column.name.to_s.ensure_ends_with('?') : column.name)
           node = root.add_element(column.to_s)
           node << REXML::Text.new(copy_frozen_value(value).to_s) unless value.nil?
         end
