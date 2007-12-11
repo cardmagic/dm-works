@@ -19,4 +19,11 @@ class Person < DataMapper::Base
   end
   
   belongs_to :career
+
+  before_save :before_save_callback
+
+  def before_save_callback
+    @notes = "Lorem ipsum dolor sit amet"
+  end
+
 end

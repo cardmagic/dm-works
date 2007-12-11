@@ -32,4 +32,14 @@ describe 'Single Table Inheritance' do
     
   end
   
+  it "should inherit the callbacks of the parent class" do
+    database do
+      SalesPerson.callbacks.should eql(Person.callbacks)
+      
+      adam = SalesPerson.new(:name => 'adam')
+      adam.save
+      adam.reload.notes.should eql("Lorem ipsum dolor sit amet")
+    end
+  end
+  
 end
