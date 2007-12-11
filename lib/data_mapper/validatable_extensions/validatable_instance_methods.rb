@@ -39,7 +39,7 @@ module Validatable
 
     # Validatable clears the errors list when running valid_for_some_group?, so we save general errors
     # and then merge them back in after we've validated for events
-    generally_valid = valid_for_group?(:validate)
+    generally_valid = valid_for_group?(nil)
     general_errors = self.errors.errors.dup
     
     if respond_to?(:"valid_for_#{event}?")
