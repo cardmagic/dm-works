@@ -16,7 +16,7 @@ module DataMapper
           out.map(nil, to_yaml_style ) do |map|
             database_context.table(self).columns.each do |column|
               lazy_load!(column.name) if column.lazy?
-              value = instance_variable_get(column.instance_variable_name)
+              value = get_value_for_column(column)
               map.add(column.to_s, value.is_a?(Class) ? value.to_s : value)
             end
             (self.instance_variable_get("@yaml_added") || []).each do |k,v|
@@ -48,9 +48,9 @@ module DataMapper
         
         table.columns.each do |column|
           next if column.key?
-          value = send(column.type == :boolean ? column.name.to_s.ensure_ends_with('?') : column.name)
+          value = get_value_for_column(column)
           node = root.add_element(column.to_s)
-          node << REXML::Text.new(copy_frozen_value(value).to_s) unless value.nil?
+          node << REXML::Text.new(value.to_s) unless value.nil?
         end
         
         doc
@@ -62,20 +62,17 @@ module DataMapper
         result = '{ '
         
         result << table.columns.map do |column|
-          "#{column.name.to_json}: #{copy_frozen_value(send(column.name)).to_json(*a)}"
+          "#{column.name.to_json}: #{get_value_for_column(column).to_json(*a)}"
         end.join(', ')
         
         result << ' }'
         result
       end
       
-      def copy_frozen_value(value)
-        case value
-        when Date, DateTime, Time, String then value.dup
-        when Fixnum, Class then value
-        else value
-        end
+      def get_value_for_column(column)
+        send(column.type == :boolean ? column.name.to_s.ensure_ends_with('?') : column.name)
       end
+
     end
   end # module Support
 end # module DataMapper
