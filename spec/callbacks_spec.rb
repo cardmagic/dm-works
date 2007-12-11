@@ -44,4 +44,20 @@ describe DataMapper::Callbacks do
     
   end
   
+  it "should execute before_save regardless of dirty state" do
+    
+    Post.before_save do |post|
+      post.instance_variable_set("@moo", 'cow')
+    end
+    
+    post = Post.new(:title => 'bob')
+    post.save
+    
+    post = Post.first(:title => 'bob')
+    post.instance_variable_get("@moo").should be_nil
+    
+    post.save
+    post.instance_variable_get("@moo").should eql('cow')
+  end
+  
 end

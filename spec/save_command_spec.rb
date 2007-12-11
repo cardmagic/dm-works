@@ -2,6 +2,10 @@ require File.dirname(__FILE__) + "/spec_helper"
 
 describe "Save Commands" do
   
+  before(:all) do
+    fixtures(:zoos)
+  end
+  
   it "should create a new row" do
     total = Zoo.all.length
     Zoo.create({ :name => 'bob' })

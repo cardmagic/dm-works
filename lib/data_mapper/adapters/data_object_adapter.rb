@@ -186,14 +186,15 @@ module DataMapper
         case instance
         when Class then table(instance).create!
         when Mappings::Table then instance.create!
-        when DataMapper::Base then
-          return false unless instance.new_record? || instance.dirty?
-          
+        when DataMapper::Base then          
           event = instance.new_record? ? :create : :update
           
           return false if validate && !instance.validate_recursively(event, Set.new)
           
           callback(instance, :before_save)
+          
+          return false unless instance.new_record? || instance.dirty?
+          
           result = send(event, database_context, instance)
           
           instance.database_context = database_context
