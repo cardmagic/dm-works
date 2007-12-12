@@ -194,7 +194,7 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
      total = Animal.count
      count = 0
      
-     Animal.each(:name.not => nil) do |animal|
+     Animal.batch(:name.not => nil) do |animal|
        count += 1
      end
      

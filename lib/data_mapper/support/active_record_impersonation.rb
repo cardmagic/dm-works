@@ -35,8 +35,8 @@ module DataMapper
           database.all(self, options)
         end
         
-        def each(options = {}, &b)
-          raise ArgumentError.new("LIMIT and OFFSET are not supported with DataMapper::Base::each") if options.has_key?(:limit) or options.has_key?(:offset)
+        def batch(options = {}, &b)
+          raise ArgumentError.new("LIMIT and OFFSET are not supported with the #batch method") if options.has_key?(:limit) or options.has_key?(:offset)
 
           offset = 0
           limit = self::const_defined?('DEFAULT_LIMIT') ? self::DEFAULT_LIMIT : 500
