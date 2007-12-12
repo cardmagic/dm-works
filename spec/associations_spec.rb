@@ -385,7 +385,7 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
   end
 
   it "should raise an error when attempting to associate an object not of the correct type (assuming added model doesn't inherit from the correct type)" do
-    pending("need to create an error which indicated objects of the wrong Type")
+    pending("see: http://wm.lighthouseapp.com/projects/4819-datamapper/tickets/91")
     @amazonia.animals.should_not be_empty
     chuck = Person.new(:name => "Chuck")
     
@@ -395,7 +395,7 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
   end
 
   it "should associate an object which has inherited from the correct type into an association" do
-    pending("need to create an error which indicated objects of the wrong Type")
+    pending("see: http://wm.lighthouseapp.com/projects/4819-datamapper/tickets/91")
     programmer = Career.first(:name => 'Programmer')
     programmer.followers.should_not be_empty
     
