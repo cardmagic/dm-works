@@ -6,8 +6,7 @@ module DataMapper
         # TODO: There are of course many more options to add here.
         # Ordinal, Length/Size, Nullability are just a few.
         class Column
-          
-          attr_reader :type, :name
+          attr_reader :type, :name, :check
           attr_accessor :table, :options
           
           def initialize(adapter, table, name, type, ordinal, options = {})
@@ -21,6 +20,8 @@ module DataMapper
             @lazy = @options.has_key?(:lazy) ? @options[:lazy] : (@type == :text && !@key)
             @serial = @options[:serial] == true
             @default = @options[:default]
+            
+            @check = @options[:check] # only for postgresql
             
             @size = if @options.has_key?(:size)
               @options[:size]

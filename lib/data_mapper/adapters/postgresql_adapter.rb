@@ -149,6 +149,10 @@ module DataMapper
             "SERIAL"
           end
           
+          def check_declaration
+          	"CHECK (" << check << ")"
+          end
+          
           def to_alter_sql
             "ALTER TABLE " <<  table.to_sql << " ALTER COLUMN " << to_alter_form
           end
@@ -220,6 +224,10 @@ module DataMapper
                 
                 if default && !default_declaration.blank?
                   @to_long_form << " #{default_declaration}"
+                end
+                
+                if check && !check_declaration.blank?
+                  @to_long_form << " #{check_declaration}"
                 end
               end
                       
