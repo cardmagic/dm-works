@@ -93,10 +93,10 @@ Ruby on Rails project, and have a database.yml, DataMapper should pick it up aut
 
 If you'd like to set the database connection manually before using it, do something like this:
   DataMapper::Database.setup({
-    :adapter  => 'mysql'
-    :host     => 'localhost'
-    :username => 'root'
-    :password => 'R00tPaswooooord'
+    :adapter  => 'mysql',
+    :host     => 'localhost',
+    :username => 'root',
+    :password => 'R00tPaswooooord',
     :database => 'selecta_development'
   })
   

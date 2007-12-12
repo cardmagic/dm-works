@@ -212,10 +212,10 @@ module DataMapper
     end
     
     # Creates indexes for an arbitrary number of database columns. Note that
-    # it also is possible to specify indexes directly for each property.
+    # it also is possible to specify indexes directly for each property (quick-indexes).
+    # Note: If you want composite indexes, supply an array!
     # 
     # === EXAMPLE:
-    #
     #   class Person < DataMapper::Base
     #     property :name, :string
     #     property :age, :integer, :nullable => false
@@ -225,14 +225,34 @@ module DataMapper
     #     add_index :age, :occupation
     #   end
     #
+    # === EXAMPLE WITH COMPOSITE INDEX:
+    #   class Person < DataMapper::Base
+    #     property :server_id, :integer
+    #     property :name, :string
+    #
+    #     add_index [:server_id, :name]
+    #   end
+    #
+    # === EXAMPLE WITH COMPOSITE UNIQUE INDEX:
+    #   class Person < DataMapper::Base
+    #     property :server_id, :integer
+    #     property :name, :string
+    #
+    #     add_index [:server_id, :name], :unique => true
+    #   end
+    #
     # === QUICK INDEX EXAMPLES:
     # * property :name, :index => true
     # * property :name, :index => :unique
     def self.add_index(*indexes)
-      database.schema[self].columns.each do |column|
-        if indexes.include? column.name
-          column.index = true # let the column know that it should be indexed
-          next                # now lets look at the next one
+      if indexes.first.kind_of?(Array) # if given an index of multiple columns 
+        database.schema[self].add_composite_index(indexes[0], indexes[1] ? true : false)
+      else
+        database.schema[self].columns.each do |column|
+          if indexes.include? column.name
+            column.index = true # let the column know that it should be indexed
+            next                # now lets look at the next one
+          end
         end
       end
     end

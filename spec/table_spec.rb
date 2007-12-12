@@ -30,4 +30,27 @@ describe DataMapper::Adapters::Sql::Mappings::Table do
     column2.nullable?.should be_true
   end
   
+  it "should create sql for composite unique indexes" do
+    class Cage < DataMapper::Base
+      property :name, :string
+      property :cage_id, :integer
+      
+      add_index [:name, :cage_id], :unique => true
+    end
+    
+    table_sql = database.adapter.table(Cage).to_create_sql
+    table_sql.should match(/CREATE UNIQUE INDEX cages_name_cage_id_index/)
+  end
+  
+  it "should create sql for composite indexes" do
+    class Lion < DataMapper::Base
+      property :name, :string
+      property :tamer_id, :integer
+      
+      add_index [:name, :tamer_id]
+    end
+    
+    table_sql = database.adapter.table(Lion).to_create_sql
+    table_sql.should match(/CREATE INDEX lions_name_tamer_id_index/)
+  end
 end

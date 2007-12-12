@@ -8,7 +8,7 @@ module DataMapper
     
         class Table
       
-          attr_reader :klass, :name, :indexes
+          attr_reader :klass, :name, :indexes, :composite_indexes
       
           def initialize(adapter, klass_or_name)
             raise "\"klass_or_name\" must not be nil!" if klass_or_name.nil?
@@ -206,6 +206,13 @@ module DataMapper
           	end
           end
           
+          # Add a composite index to the table.
+          # +index_columns+ should be an array including each column name.
+          def add_composite_index(index_columns = [], unique = false)
+            @composite_indexes ||= []
+            @composite_indexes << [index_columns, unique] # add paired tuple with the index
+          end
+          
           def add_column(column_name, type, options = {})
 
             column_ordinal = if options.is_a?(Hash) && options.has_key?(:ordinal)
@@ -305,11 +312,20 @@ module DataMapper
               sql << ")"
               
               unless indexes.blank?
-                @indexes.each do |column|
-                  sql << "; CREATE INDEX #{to_s.downcase}_#{column}_index ON \
-                            #{to_sql} (#{column.to_sql})"
+                indexes.each do |column|
+                  sql << "; CREATE INDEX #{to_s.downcase}_#{column}_index ON "
+                  sql << "#{to_sql} (#{column.to_sql})"
                 end
               end
+              
+              unless composite_indexes.blank?
+                composite_indexes.each do |columns, unique|
+                  sql << "; CREATE #{unique ? 'UNIQUE ' : ''}INDEX "
+                  sql << "#{to_s.downcase}_#{columns.join('_')}_index ON "
+                  sql << "#{to_sql} (#{columns.join(', ')})"
+                end
+              end
+              
               sql.compress_lines
             end
           end

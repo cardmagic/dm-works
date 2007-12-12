@@ -132,5 +132,5 @@
 -- 0.2.5
 * has_one bugfixes
 * Added syntax for setting CHECK-constraints directly in your properties (Postgres)
-* You can now set indexes with :index => true and :index => :unique, or add_index(*args) for composite indexes
-
+* You can now set indexes with :index => true and :index => :unique, or add_index(*cols)
+* Support for composite indexes (thanks to Jeffrey Gelens)
