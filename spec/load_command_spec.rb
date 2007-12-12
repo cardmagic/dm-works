@@ -188,6 +188,18 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
      two.title.should eql('Two')
      one.next.next.previous.previous.next.previous.next.next.title.should eql('Three')
    end
+   
+   it "should iterate in batches" do
+     
+     total = Animal.count
+     count = 0
+     
+     Animal.each(:name.not => nil) do |animal|
+       count += 1
+     end
+     
+     count.should == total     
+   end
 end
 
 =begin

@@ -1,5 +1,6 @@
 require File.dirname(__FILE__) + "/spec_helper"
-require 'data_mapper/adapters/postgresql_adapter'
+
+if ENV['ADAPTER'] == 'postgresql'
 
 describe DataMapper::Adapters::PostgresqlAdapter::Mappings::Column do
   it "should be able to set check-constraints on columns" do
@@ -9,4 +10,6 @@ describe DataMapper::Adapters::PostgresqlAdapter::Mappings::Column do
                  :integer, 1, { :check => "age > 18"})
     column.to_long_form.should match(/CHECK \(age > 18\)/)
   end
+end
+
 end

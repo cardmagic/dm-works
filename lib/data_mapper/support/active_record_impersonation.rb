@@ -35,6 +35,18 @@ module DataMapper
           database.all(self, options)
         end
         
+        def each(options = {}, &b)
+          raise ArgumentError.new("LIMIT and OFFSET are not supported with DataMapper::Base::each") if options.has_key?(:limit) or options.has_key?(:offset)
+
+          offset = 0
+          limit = self::const_defined?('DEFAULT_LIMIT') ? self::DEFAULT_LIMIT : 500
+
+          until (results = all(options.merge(:limit => limit, :offset => offset))).empty?
+            results.each(&b)
+            offset += limit
+          end
+        end
+        
         def first(*args)
           database.first(self, *args)
         end

@@ -7,4 +7,6 @@ class Animal < DataMapper::Base
   
   has_one :favourite_fruit, :class => 'Fruit', :foreign_key => 'devourer_id'
   has_and_belongs_to_many :exhibits
+  
+  DEFAULT_LIMIT = 5
 end

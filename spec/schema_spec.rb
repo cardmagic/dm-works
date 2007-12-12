@@ -8,7 +8,7 @@ describe DataMapper::Adapters::Sql::Mappings::Schema do
 end
 
 
-if ENV['ADAPTER'] == 'postgresql' && false
+if ENV['ADAPTER'] == 'postgresql'
   
   describe DataMapper::Adapters::PostgresqlAdapter::Mappings::Table do
     
