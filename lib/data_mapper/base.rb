@@ -105,9 +105,13 @@ module DataMapper
       end
     end
     
+    # NOTE: check is only for psql, so maybe the postgres adapter should define
+    # its own property options. currently it will produce a warning tho since
+    # PROPERTY_OPTIONS is a constant
     PROPERTY_OPTIONS = [
       :public, :protected, :private, :accessor, :reader, :writer,
-      :lazy, :default, :nullable, :key, :serial, :column, :size, :length
+      :lazy, :default, :nullable, :key, :serial, :column, :size, :length,
+      :index, :check
     ]
     
     # Adds property accessors for a field that you'd like to be able to modify.  The DataMapper doesn't
@@ -205,6 +209,32 @@ module DataMapper
     #
     def self.embed(name, options = {}, &block)
       EmbeddedValue::define(self, name, options, &block)
+    end
+    
+    # Creates indexes for an arbitrary number of database columns. Note that
+    # it also is possible to specify indexes directly for each property.
+    # 
+    # === EXAMPLE:
+    #
+    #   class Person < DataMapper::Base
+    #     property :name, :string
+    #     property :age, :integer, :nullable => false
+    #     property :occupation, :string
+    #     property :notes, :text, :lazy => true
+    #
+    #     add_index :age, :occupation
+    #   end
+    #
+    # === QUICK INDEX EXAMPLES:
+    # * property :name, :index => true
+    # * property :name, :index => :unique
+    def self.add_index(*indexes)
+      database.schema[self].columns.each do |column|
+        if indexes.include? column.name
+          column.index = true # let the column know that it should be indexed
+          next                # now lets look at the next one
+        end
+      end
     end
 
     def self.property_getter(mapping, visibility = :public)

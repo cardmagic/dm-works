@@ -7,7 +7,7 @@ module DataMapper
         # Ordinal, Length/Size, Nullability are just a few.
         class Column
           attr_reader :type, :name, :ordinal, :size, :default, :check
-          attr_writer :lazy
+          attr_writer :lazy, :index
           attr_accessor :table, :options
           
           def initialize(adapter, table, name, type, ordinal, options = {})
@@ -21,7 +21,8 @@ module DataMapper
             @lazy = @options.has_key?(:lazy) ? @options[:lazy] : (@type == :text && !@key)
             @serial = @options[:serial] == true
             @default = @options[:default]
-            
+            @unique = @options.has_value?(:unique)
+            @index = @options[:index]
             @check = @options[:check] # only for postgresql
             
             @size = if @options.has_key?(:size)
@@ -70,6 +71,14 @@ module DataMapper
           
           def serial?
             @serial
+          end
+          
+          def unique?
+          	@unique
+          end
+          
+          def index?
+          	@index
           end
 
           def default=(value)
@@ -201,7 +210,11 @@ module DataMapper
               unless default.nil? || (value = default_declaration).blank?
                 @to_long_form << " #{value}"
               end
-        
+              
+              if unique? && !unique_declaration.blank?
+                @to_long_form << " #{unique_declaration}"
+              end
+              
               @to_long_form
             end
           end
@@ -236,6 +249,10 @@ module DataMapper
           
           def serial_declaration
             "AUTO_INCREMENT"
+          end
+          
+          def unique_declaration
+          	"UNIQUE"
           end
           
           def default_declaration

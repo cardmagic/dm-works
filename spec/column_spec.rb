@@ -3,7 +3,12 @@ require File.dirname(__FILE__) + "/spec_helper"
 describe DataMapper::Adapters::Sql::Mappings::Column do
   
   before(:all) do
+    @mappings = DataMapper::Adapters::Sql::Mappings
     fixtures(:zoos)
+  end
+  
+  def table
+  	@table ||= @mappings::Table.new(database(:mock).adapter, "Cow")
   end
 
   it "should only lazy loading text columns by default" do
@@ -18,21 +23,17 @@ describe DataMapper::Adapters::Sql::Mappings::Column do
   end
   
   it "should be unique within a set" do
-    
-    mappings = DataMapper::Adapters::Sql::Mappings
-    
     columns = SortedSet.new
     
-    table = mappings::Table.new(database(:mock).adapter, "Cow")
-    columns << mappings::Column.new(database(:mock).adapter, table, :one, :string, 1)
-    columns << mappings::Column.new(database(:mock).adapter, table, :two, :string, 2)
-    columns << mappings::Column.new(database(:mock).adapter, table, :three, :string, 3)
+    columns << @mappings::Column.new(database(:mock).adapter, table, :one, :string, 1)
+    columns << @mappings::Column.new(database(:mock).adapter, table, :two, :string, 2)
+    columns << @mappings::Column.new(database(:mock).adapter, table, :three, :string, 3)
     columns.should have(3).entries
     
-    columns << mappings::Column.new(database(:mock).adapter, table, :two, :integer, 3)
+    columns << @mappings::Column.new(database(:mock).adapter, table, :two, :integer, 3)
     columns.should have(3).entries
     
-    columns << mappings::Column.new(database(:mock).adapter, table, :id, :integer, -1)
+    columns << @mappings::Column.new(database(:mock).adapter, table, :id, :integer, -1)
     columns.should have(4).entries
   end
   
@@ -92,10 +93,19 @@ describe DataMapper::Adapters::Sql::Mappings::Column do
   end
   
   it "should default the size of an integer column to 11" do
-    mappings = DataMapper::Adapters::Sql::Mappings
-    table    = mappings::Table.new(database(:mock).adapter, "Zebu")
-    integer  = mappings::Column.new(database(:mock).adapter, table, :age, :integer, 1)
+    integer  = @mappings::Column.new(database(:mock).adapter, table, :age, :integer, 1)
     integer.size.should == 11    
   end
   
+  it "should be able to create a column with unique index" do
+    column = table.add_column("name", :string, :index => :unique)
+    column.unique?.should be_true
+    table.to_create_sql.should match(/UNIQUE/)
+  end
+  
+  it "should be able to create an indexed column" do
+    column = table.add_column("age", :integer, :index => true)
+    column.index?.should be_true
+    table.to_create_sql.should match(/CREATE INDEX cow_age_index/)
+  end
 end

@@ -8,7 +8,7 @@ module DataMapper
     
         class Table
       
-          attr_reader :klass, :name
+          attr_reader :klass, :name, :indexes
       
           def initialize(adapter, klass_or_name)
             raise "\"klass_or_name\" must not be nil!" if klass_or_name.nil?
@@ -199,8 +199,14 @@ module DataMapper
               @keys = @columns.select { |column| column.key? }
             end
           end
-      
-          def add_column(column_name, type, options)
+          
+          def indexes
+          	@indexes || begin
+          	  @indexes = @columns.select { |column| column.index? }
+          	end
+          end
+          
+          def add_column(column_name, type, options = {})
 
             column_ordinal = if options.is_a?(Hash) && options.has_key?(:ordinal)
               options.delete(:ordinal)
@@ -297,6 +303,13 @@ module DataMapper
                 sql << ", PRIMARY KEY (#{keys.map { |c| c.to_sql }.join(', ') })"
               end
               sql << ")"
+              
+              unless indexes.blank?
+                @indexes.each do |column|
+                  sql << "; CREATE INDEX #{to_s.downcase}_#{column}_index ON \
+                            #{to_sql} (#{column.to_sql})"
+                end
+              end
               sql.compress_lines
             end
           end

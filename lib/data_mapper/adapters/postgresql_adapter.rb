@@ -226,6 +226,10 @@ module DataMapper
                   @to_long_form << " #{default_declaration}"
                 end
                 
+                if unique? && !unique_declaration.blank?
+                  @to_long_form << " #{unique_declaration}"
+                end
+                
                 if check && !check_declaration.blank?
                   @to_long_form << " #{check_declaration}"
                 end
