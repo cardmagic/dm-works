@@ -160,6 +160,12 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
      Zoo.find(1).should be_a_kind_of(Zoo)
    end
    
+   it "should return a CLEAN object" do
+     # Animal[2].original_values[:nice].should_not include("\004\b")
+     Animal[2].should_not be_dirty 
+   end
+   
+   
    it "should be able to search on UTF-8 strings" do
      Zoo.create(:name => 'Danish Vowels: Smoot!') # øø
      Zoo.first(:name.like => '%Smoot%').should be_a_kind_of(Zoo)

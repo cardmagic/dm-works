@@ -26,7 +26,8 @@ end
 
 require 'irb'
 
-database { IRB::start }
+# database { IRB::start }
+IRB::start
 
 if false
 

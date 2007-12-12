@@ -257,7 +257,7 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
   end
   
   before(:each) do
-    @amazonia = Exhibit[:name => 'Amazonia']
+    @amazonia = Exhibit.first :name => 'Amazonia'
   end
   
   it "should generate the SQL for a join statement" do
@@ -297,6 +297,17 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
   
   it 'should allow association of additional objects' do
     @amazonia.animals << Animal.new(:name => "Buffalo")
+    @amazonia.animals.size.should == 2
+    @amazonia.reload
+  end
+  
+  it "should allow association of additional objects (CLEAN)" do
+    @amazonia.should_not be_dirty
+    
+    animal = Animal[2]
+    animal.should_not be_dirty
+    
+    @amazonia.animals << animal
     @amazonia.animals.size.should == 2
     @amazonia.reload
   end
@@ -371,6 +382,27 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
     u1.reload!
     u1.comments.should_not be_empty
     u1.comments.should include(c1)
+  end
+
+  it "should raise an error when attempting to associate an object not of the correct type (assuming added model doesn't inherit from the correct type)" do
+    pending("need to create an error which indicated objects of the wrong Type")
+    @amazonia.animals.should_not be_empty
+    chuck = Person.new(:name => "Chuck")
+    
+    ## InvalidRecord isn't the error we should use here....needs to be changed
+    lambda { @amazonia.animals << chuck }.should raise_error(WrongType)
+    
+  end
+
+  it "should associate an object which has inherited from the correct type into an association" do
+    pending("need to create an error which indicated objects of the wrong Type")
+    programmer = Career.first(:name => 'Programmer')
+    programmer.followers.should_not be_empty
+    
+    sales_person = SalesPerson.new(:name => 'Chuck')
+    
+    lambda { programmer.followers << sales_person }.should_not raise_error(WrongType)
+    
   end
 
 end

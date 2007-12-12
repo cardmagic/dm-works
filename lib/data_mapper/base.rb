@@ -254,7 +254,7 @@ module DataMapper
       end
       
       if mapping.type == :boolean
-        class_eval("#{visibility.to_s}; def #{mapping.name}?; #{mapping.instance_variable_name} end")
+        class_eval("#{visibility.to_s}; def #{mapping.name.to_s.ensure_ends_with('?')}; #{mapping.instance_variable_name} end")
       end
       
     rescue SyntaxError

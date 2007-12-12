@@ -62,6 +62,7 @@ module DataMapper
                   column.type_cast_value(values[index])
                 )
                 
+                
                 original_values[column.name] = case type_cast_value
                   when String, Date, Time then type_cast_value.dup
                   when column.type == :object then Marshal.dump(type_cast_value)

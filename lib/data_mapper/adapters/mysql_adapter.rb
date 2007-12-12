@@ -13,6 +13,11 @@ module DataMapper
   module Adapters
     
     class MysqlAdapter < DataObjectAdapter
+      
+      TRUE_ALIASES << "T".freeze << "\004\bT".freeze
+      FALSE_ALIASES << "F".freeze << "\004\bF".freeze
+      
+      
       def create_connection
         
         connection_string = ""
