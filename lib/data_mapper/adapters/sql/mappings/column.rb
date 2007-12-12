@@ -21,6 +21,18 @@ module DataMapper
             @lazy = @options.has_key?(:lazy) ? @options[:lazy] : (@type == :text && !@key)
             @serial = @options[:serial] == true
             @default = @options[:default]
+            
+            @size = if @options.has_key?(:size)
+              @options[:size]
+            elsif @options.has_key?(:length)
+              @options[:length]
+            else
+              case type
+                when :integer then 11
+                when :string, :class then 50
+                else nil
+              end
+            end
           end
           
           def type=(value)
@@ -102,16 +114,12 @@ module DataMapper
           end
       
           def size
-            @size || begin
-              return @size = @options[:size] if @options.has_key?(:size)
-              return @size = @options[:length] if @options.has_key?(:length)
+            @size
+          end
           
-              @size = case type
-                when :integer then 11
-                when :string, :class then 50
-                else nil
-              end
-            end
+          def size=(val)
+            self.flush_sql_caches!
+            @size = val
           end
       
           def inspect
