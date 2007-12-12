@@ -6,7 +6,8 @@ module DataMapper
         # TODO: There are of course many more options to add here.
         # Ordinal, Length/Size, Nullability are just a few.
         class Column
-          attr_reader :type, :name, :check
+          attr_reader :type, :name, :ordinal, :size, :default, :check
+          attr_writer :lazy
           attr_accessor :table, :options
           
           def initialize(adapter, table, name, type, ordinal, options = {})
@@ -51,15 +52,7 @@ module DataMapper
             flush_sql_caches!
             @name = value
           end
-          
-          def ordinal
-            @ordinal
-          end
-    
-          def lazy=(value)
-            @lazy = value
-          end
-    
+
           # Determines if the field should be lazy loaded.
           # You can set this explicitly, or accept the default,
           # which is false for all but text fields.
@@ -78,11 +71,7 @@ module DataMapper
           def serial?
             @serial
           end
-          
-          def default
-            @default
-          end
-          
+
           def default=(value)
             self.flush_sql_caches!
             @default = value
@@ -113,11 +102,7 @@ module DataMapper
               @to_sql || (@to_sql = @adapter.quote_column_name(column_name).freeze)
             end
           end
-      
-          def size
-            @size
-          end
-          
+
           def size=(val)
             self.flush_sql_caches!
             @size = val
