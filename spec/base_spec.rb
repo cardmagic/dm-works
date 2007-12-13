@@ -259,4 +259,12 @@ describe 'Properties' do
     end.should raise_error(ArgumentError)
   end
 
+  it 'should raise an error when the first argument to index isnt an array' do
+    lambda do
+      class JumpyCow < DataMapper::Base
+        set_table_name 'animals'
+        index :name, :parent
+      end
+    end.should raise_error(ArgumentError)
+  end
 end

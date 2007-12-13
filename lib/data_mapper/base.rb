@@ -211,26 +211,15 @@ module DataMapper
       EmbeddedValue::define(self, name, options, &block)
     end
     
-    # Creates indexes for an arbitrary number of database columns. Note that
-    # it also is possible to specify indexes directly for each property (quick-indexes).
-    # Note: If you want composite indexes, supply an array!
+    # Creates a composite index for an arbitrary number of database columns. Note that
+    # it also is possible to specify single indexes directly for each property.
     # 
-    # === EXAMPLE:
-    #   class Person < DataMapper::Base
-    #     property :name, :string
-    #     property :age, :integer, :nullable => false
-    #     property :occupation, :string
-    #     property :notes, :text, :lazy => true
-    #
-    #     add_index :age, :occupation
-    #   end
-    #
     # === EXAMPLE WITH COMPOSITE INDEX:
     #   class Person < DataMapper::Base
     #     property :server_id, :integer
     #     property :name, :string
     #
-    #     add_index [:server_id, :name]
+    #     index [:server_id, :name]
     #   end
     #
     # === EXAMPLE WITH COMPOSITE UNIQUE INDEX:
@@ -238,22 +227,17 @@ module DataMapper
     #     property :server_id, :integer
     #     property :name, :string
     #
-    #     add_index [:server_id, :name], :unique => true
+    #     index [:server_id, :name], :unique => true
     #   end
     #
-    # === QUICK INDEX EXAMPLES:
+    # === SINGLE INDEX EXAMPLES:
     # * property :name, :index => true
     # * property :name, :index => :unique
-    def self.add_index(*indexes)
-      if indexes.first.kind_of?(Array) # if given an index of multiple columns 
-        database.schema[self].add_composite_index(indexes[0], indexes[1] ? true : false)
+    def self.index(indexes, unique = false)
+      if indexes.kind_of?(Array) # if given an index of multiple columns 
+        database.schema[self].add_composite_index(indexes, unique)
       else
-        database.schema[self].columns.each do |column|
-          if indexes.include? column.name
-            column.index = true # let the column know that it should be indexed
-            next                # now lets look at the next one
-          end
-        end
+        raise ArgumentError.new("You must supply an array for the composite index")
       end
     end
 
@@ -449,10 +433,13 @@ module DataMapper
       @original_values || (@original_values = {})
     end
     
-    def self.index
-      @index || @index = Ferret::Index::Index.new(:path => "#{database.adapter.index_path}/#{name}")
-    end
-    
+    #--
+    # NOTE: I commented out this to avoid namespace conflict. It doesn't seem to be referenced
+    # to by any other method, and all specs still pass, so..
+    #def self.index
+    #  @index || @index = Ferret::Index::Index.new(:path => "#{database.adapter.index_path}/#{name}")
+    #end
+    #++
     def self.reindex!
       all.each do |record|
         index << record.attributes

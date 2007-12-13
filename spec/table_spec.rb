@@ -35,7 +35,7 @@ describe DataMapper::Adapters::Sql::Mappings::Table do
       property :name, :string
       property :cage_id, :integer
       
-      add_index [:name, :cage_id], :unique => true
+      index [:name, :cage_id], :unique => true
     end
     
     table_sql = database.adapter.table(Cage).to_create_sql
@@ -47,7 +47,7 @@ describe DataMapper::Adapters::Sql::Mappings::Table do
       property :name, :string
       property :tamer_id, :integer
       
-      add_index [:name, :tamer_id]
+      index [:name, :tamer_id]
     end
     
     table_sql = database.adapter.table(Lion).to_create_sql
