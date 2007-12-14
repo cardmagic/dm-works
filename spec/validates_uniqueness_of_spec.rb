@@ -40,6 +40,24 @@ describe Validatable::ValidatesUniquenessOf do
     new_programmer_scott.valid?(:save).should == false
     new_programmer_scott.errors.full_messages.first.should == "Name has already been taken"
   end
+
+  it 'must have a unique name for their occupation and career_name' do
+    class Person
+      validations.clear
+      validates_uniqueness_of :name, :event => :save, :scope => [:occupation, :career_name]
+    end
+    
+    new_programmer_scott = Person.new(:name => 'Scott', :age => 29, :occupation => 'Programmer', :career_name => 'Programmer')
+    junior_programmer_scott = Person.new(:name => 'Scott', :age => 25, :occupation => 'Programmer', :career_name => 'Junior Programmer')
+    
+    # Should be valid even though there is another 'Scott' already in the database
+    junior_programmer_scott.valid?(:save).should == true
+
+    # Should NOT be valid, there is already a Programmer names Scott, adding one more
+    # would destroy the universe or something
+    new_programmer_scott.valid?(:save).should == false
+    new_programmer_scott.errors.full_messages.first.should == "Name has already been taken"
+  end
   
   it "should allow custom error messages" do
     class Animal

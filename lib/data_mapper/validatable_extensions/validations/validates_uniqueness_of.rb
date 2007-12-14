@@ -20,9 +20,16 @@ module Validatable
         { self.attribute.like => value }
       end
       
-      if scope
-        scope_value = instance.send(scope)
-        finder_options.merge! scope => scope_value
+      if scope 
+        if scope.kind_of?(Array) # if scope is larger than just one property, check them all
+          scope.each do |scope_property|
+            scope_value = instance.send(scope_property)
+            finder_options.merge! scope_property => scope_value
+          end
+        else
+          scope_value = instance.send(scope)
+          finder_options.merge! scope => scope_value
+        end
       end
       
       finder_options.merge!({ instance.database_context.table(instance.class).key.name.not => instance.key }) unless instance.new_record?

@@ -134,3 +134,4 @@
 * Added syntax for setting CHECK-constraints directly in your properties (Postgres)
 * You can now set indexes with :index => true and :index => :unique
 * Support for composite indexes (thanks to Jeffrey Gelens)
+* Add composite scope to validates_uniqueness
