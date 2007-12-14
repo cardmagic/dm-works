@@ -1,6 +1,6 @@
 class Animal < DataMapper::Base
   property :name, :string, :default => "No Name", :index => :unique
-  property :notes, :text, :index => true
+  property :notes, :text
   property :nice, :boolean
   
   has_one :favourite_fruit, :class => 'Fruit', :foreign_key => 'devourer_id'

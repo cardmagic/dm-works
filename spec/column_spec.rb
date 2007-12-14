@@ -106,6 +106,6 @@ describe DataMapper::Adapters::Sql::Mappings::Column do
   it "should be able to create an indexed column" do
     column = table.add_column("age", :integer, :index => true)
     column.index?.should be_true
-    table.to_create_sql.should match(/CREATE INDEX cow_age_index/)
+    table.to_create_index_sql[0].should match(/CREATE INDEX cow_age_index/)
   end
 end

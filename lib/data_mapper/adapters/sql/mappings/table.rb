@@ -120,6 +120,8 @@ module DataMapper
             else
               @adapter.connection do |db|
                 db.create_command(to_create_sql).execute_non_query
+                index_queries = to_create_index_sql + to_create_composite_index_sql
+                index_queries.each { |q| db.create_command(q).execute_non_query }
                 schema << self
                 true
               end
@@ -311,23 +313,35 @@ module DataMapper
               end
               sql << ")"
               
-              unless indexes.blank?
-                indexes.each do |column|
-                  sql << "; CREATE INDEX #{to_s.downcase}_#{column}_index ON "
-                  sql << "#{to_sql} (#{column.to_sql})"
-                end
-              end
-              
-              unless composite_indexes.blank?
-                composite_indexes.each do |columns, unique|
-                  sql << "; CREATE #{unique ? 'UNIQUE ' : ''}INDEX "
-                  sql << "#{to_s.downcase}_#{columns.join('_')}_index ON "
-                  sql << "#{to_sql} (#{columns.join(', ')})"
-                end
-              end
-              
               sql.compress_lines
             end
+          end
+          
+          # Returns an array with each separate CREATE INDEX statement
+          def to_create_index_sql
+            queries = []
+            unless indexes.blank?
+              indexes.each do |column|
+                sql = "CREATE INDEX #{to_s.downcase}_#{column}_index ON "
+                sql << "#{to_sql} (#{column.to_sql})"
+                queries << sql.compress_lines
+              end
+            end
+            queries
+          end
+          
+          # Returns an array with each separate CREATE INDEX statement
+          def to_create_composite_index_sql
+            queries = []
+            unless composite_indexes.blank?
+              composite_indexes.each do |columns, unique|
+                sql = "CREATE #{unique ? 'UNIQUE ' : ''}INDEX "
+                sql << "#{to_s.downcase}_#{columns.join('_')}_index ON "
+                sql << "#{to_sql} (#{columns.join(', ')})"
+                queries << sql.compress_lines
+              end
+            end
+            queries
           end
           
           def to_drop_sql

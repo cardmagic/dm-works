@@ -38,8 +38,8 @@ describe DataMapper::Adapters::Sql::Mappings::Table do
       index [:name, :cage_id], :unique => true
     end
     
-    table_sql = database.adapter.table(Cage).to_create_sql
-    table_sql.should match(/CREATE UNIQUE INDEX cages_name_cage_id_index/)
+    index_sql = database.adapter.table(Cage).to_create_composite_index_sql
+    index_sql[0].should match(/CREATE UNIQUE INDEX cages_name_cage_id_index/)
   end
   
   it "should create sql for composite indexes" do
@@ -50,7 +50,24 @@ describe DataMapper::Adapters::Sql::Mappings::Table do
       index [:name, :tamer_id]
     end
     
-    table_sql = database.adapter.table(Lion).to_create_sql
-    table_sql.should match(/CREATE INDEX lions_name_tamer_id_index/)
+    index_sql = database.adapter.table(Lion).to_create_composite_index_sql
+    index_sql[0].should match(/CREATE INDEX lions_name_tamer_id_index/)
+  end
+  
+  it "should create sql for multiple composite indexes" do
+    class Course < DataMapper::Base
+      property :code, :string
+      property :name, :string
+      property :description, :text
+      property :department_id, :integer
+      property :professor_id, :integer
+      
+      index [:code, :name], :unique => true
+      index [:department_id, :professor_id], :unique => true
+    end
+    
+    index_sql = database.adapter.table(Course).to_create_composite_index_sql
+    index_sql[0].should match(/CREATE UNIQUE INDEX courses_code_name_index/)
+    index_sql[1].should match(/CREATE UNIQUE INDEX courses_department_id_professor_id_index/)    
   end
 end
