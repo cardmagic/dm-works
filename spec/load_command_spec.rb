@@ -166,6 +166,15 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
      Animal[2].should_not be_dirty 
    end
    
+   it "should retrieve altered integer columns correctly" do
+     pending "see http://wm.lighthouseapp.com/projects/4819-datamapper/tickets/95"
+     sam = Person.first
+     sam.age = 6471561394
+     sam.save
+     sam.reload
+     sam.original_values[:age].should == 6471561394
+     sam.age.should == 6471561394
+   end
    
    it "should be able to search on UTF-8 strings" do
      Zoo.create(:name => 'Danish Vowels: Smoot!') # øø
