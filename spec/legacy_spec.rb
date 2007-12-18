@@ -8,8 +8,8 @@ describe 'Legacy mappings' do
   
   it('should allow custom foreign-key mappings') do
     database do
-      Fruit[:name => 'Watermelon'].devourer_of_souls.should == Animal[:name => 'Cup']
-      Animal[:name => 'Cup'].favourite_fruit.should == Fruit[:name => 'Watermelon']
+      Fruit.first(:name => 'Watermelon').devourer_of_souls.should == Animal.first(:name => 'Cup')
+      Animal.first(:name => 'Cup').favourite_fruit.should == Fruit.first(:name => 'Watermelon')
     end
   end
   

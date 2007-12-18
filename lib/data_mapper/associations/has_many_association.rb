@@ -85,8 +85,12 @@ module DataMapper
           item
         end
         
-        def set(items)
-          @items = items
+        def set(value)
+          values = value.is_a?(Enumerable) ? value : [value]
+          @items = []
+          values.each do |item|
+            self << item
+          end
         end
         
         def method_missing(symbol, *args, &block)
@@ -100,6 +104,8 @@ module DataMapper
               end
             end
             results.flatten
+          elsif items.size == 1 && items.first.respond_to?(symbol)
+            items.first.send(symbol, *args, &block)
           else
             super
           end
@@ -140,6 +146,10 @@ module DataMapper
         
         def inspect
           entries.inspect
+        end
+        
+        def ==(other)
+          (items.size == 1 ? items.first : items) == other
         end
       end
 
