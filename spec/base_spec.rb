@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + "/spec_helper"
 
-describe DataMapper::Base do
+describe DataMapper::Persistence do
   
   it "attributes method should load all lazy-loaded values" do
     Animal.first(:name => 'Cup').attributes[:notes].should == 'I am a Cup!'
@@ -165,7 +165,9 @@ end
 describe 'Properties' do
 
   it 'should default to public method visibility' do
-    class SoftwareEngineer < DataMapper::Base
+    class SoftwareEngineer
+      include DataMapper::Persistence
+      
       set_table_name 'people'
       property :name, :string
     end
@@ -175,7 +177,9 @@ describe 'Properties' do
   end
 
   it 'should respect protected property options' do
-    class SanitationEngineer < DataMapper::Base
+    class SanitationEngineer
+      include DataMapper::Persistence
+
       set_table_name 'people'
       property :name, :string, :reader => :protected
       property :age, :integer, :writer => :protected
@@ -186,7 +190,9 @@ describe 'Properties' do
   end
 
   it 'should respect private property options' do
-    class ElectricalEngineer < DataMapper::Base
+    class ElectricalEngineer
+      include DataMapper::Persistence
+
       set_table_name 'people'
       property :name, :string, :reader => :private
       property :age, :integer, :writer => :private
@@ -197,7 +203,9 @@ describe 'Properties' do
   end
 
   it 'should set both reader and writer visibiliy when accessor option is passed' do
-    class TrainEngineer < DataMapper::Base
+    class TrainEngineer
+      include DataMapper::Persistence
+
       property :name, :string, :accessor => :private
     end
 
@@ -206,7 +214,9 @@ describe 'Properties' do
   end
 
   it 'should only be listed in attributes if they have public getters' do
-    class SalesEngineer < DataMapper::Base
+    class SalesEngineer
+      include DataMapper::Persistence
+
       set_table_name 'people'
       property :name, :string
       property :age, :integer, :reader => :private
@@ -218,7 +228,9 @@ describe 'Properties' do
   end
 
   it 'should not allow mass assignment if private or protected' do
-    class ChemicalEngineer < DataMapper::Base
+    class ChemicalEngineer
+      include DataMapper::Persistence
+
       set_table_name 'people'
       property :name, :string, :writer => :private
       property :age, :integer
@@ -231,7 +243,9 @@ describe 'Properties' do
   end
 
   it 'should allow :protected to be passed as an alias for a public reader, protected writer' do
-    class CivilEngineer < DataMapper::Base
+    class CivilEngineer
+      include DataMapper::Persistence
+
       set_table_name 'people'
       property :name, :string, :protected => true
     end
@@ -241,7 +255,9 @@ describe 'Properties' do
   end
 
   it 'should allow :private to be passed as an alias for a public reader, private writer' do
-    class AudioEngineer < DataMapper::Base
+    class AudioEngineer
+      include DataMapper::Persistence
+
       set_table_name 'people'
       property :name, :string, :private => true
     end
@@ -252,7 +268,9 @@ describe 'Properties' do
   
   it 'should raise an error when invalid options are passsed' do
     lambda do
-      class JumpyCow < DataMapper::Base
+      class JumpyCow
+        include DataMapper::Persistence
+
         set_table_name 'animals'
         property :name, :string, :laze => true
       end
@@ -261,7 +279,9 @@ describe 'Properties' do
 
   it 'should raise an error when the first argument to index isnt an array' do
     lambda do
-      class JumpyCow < DataMapper::Base
+      class JumpyCow
+        include DataMapper::Persistence
+
         set_table_name 'animals'
         index :name, :parent
       end

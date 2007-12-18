@@ -28,8 +28,7 @@ module DataMapper
             @paranoid = false
             @paranoid_column = nil
             
-            if @klass && @klass.ancestors.include?(DataMapper::Base) && @klass.superclass != DataMapper::Base
-              
+            if @klass && @klass.respond_to?(:persistent?) && @klass.superclass.respond_to?(:persistent?)
               super_table = @adapter.table(@klass.superclass)
               
               super_table.columns.each do |column|
@@ -191,7 +190,7 @@ module DataMapper
             class << self
               attr_accessor :key
             end
-            Base::dependencies.resolve!
+            Persistence::dependencies.resolve!
             
             self.key
           end
@@ -253,8 +252,8 @@ module DataMapper
               elsif @klass_or_name.kind_of?(String)
                 @klass_or_name
               elsif @klass_or_name.kind_of?(Class)
-                if @klass_or_name.superclass != DataMapper::Base \
-                  && @klass_or_name.ancestors.include?(DataMapper::Base)
+                persistent_ancestor = @klass_or_name.superclass.respond_to?(:persistent?)
+                if @klass_or_name.superclass.respond_to?(:persistent?)
                   @adapter.table(@klass_or_name.superclass).name
                 else
                   Inflector.tableize(@klass_or_name.name)

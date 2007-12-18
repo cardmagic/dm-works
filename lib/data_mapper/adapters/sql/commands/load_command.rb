@@ -38,7 +38,6 @@ module DataMapper
             end
 
             def materialize(values)
-
               instance_id = @key.type_cast_value(values[@key_index])
               instance = create_instance(instance_id,
                 if @type_override_present
@@ -47,7 +46,7 @@ module DataMapper
                   @klass
                 end
               )
-
+              
               @klass.callbacks.execute(:before_materialize, instance)
 
               original_values = instance.original_values

@@ -1,4 +1,5 @@
-class Career < DataMapper::Base
+class Career #< DataMapper::Base
+  include DataMapper::Persistence
   
   property :name, :string, :key => true
   

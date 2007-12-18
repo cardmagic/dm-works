@@ -109,7 +109,7 @@ SQLite3:: (sqlite3 adaptor)
 
 Defining your models requires a few steps.
 
-* Inherit your class from DataMapper::Base
+* Include the module DataMapper::Persistence in your class
 * Define your properties you wish to access from the database
 * Define any relationships (optional)
 
@@ -119,7 +119,9 @@ which are too numerous to go into here.
 
 Your models might end up looking something like this:
 
-  class Animal < DataMapper::Base
+  class Animal
+    include DataMapper::Persistence
+
     property :name, :string
     property :notes, :text, :lazy => true
 
@@ -187,7 +189,7 @@ This will generate the table structure for your model automatically.
 
 You can also execute the following to generate ALL of your models' tables:
 
-  DataMapper::Base.auto_migrate!
+  DataMapper::Persistence.auto_migrate!
 
 === NOTE
 Both of these methods are DESTRUCTIVE. If you are working in anything other than a pre-production environment, 

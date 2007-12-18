@@ -1,4 +1,6 @@
-class Person < DataMapper::Base
+class Person #< DataMapper::Base
+  include DataMapper::Persistence
+  
   property :name, :string
   property :age, :integer
   property :occupation, :string

@@ -186,7 +186,7 @@ module DataMapper
         case instance
         when Class then table(instance).create!
         when Mappings::Table then instance.create!
-        when DataMapper::Base then          
+        when DataMapper::Persistence then          
           event = instance.new_record? ? :create : :update
           
           return false if validate && !instance.validate_recursively(event, Set.new)
@@ -250,7 +250,7 @@ module DataMapper
 
         table = self.table(instance)
         attributes = instance.dirty_attributes
-        
+
         if table.multi_class?
           instance.instance_variable_set(
             table[:type].instance_variable_name,
@@ -264,7 +264,7 @@ module DataMapper
           keys << table[key].to_sql
           values << value
         end
-    
+
         sql = if keys.size > 0
           "INSERT INTO #{table.to_sql} (#{keys.join(', ')}) VALUES ?"
         else
@@ -287,7 +287,7 @@ module DataMapper
       def table(instance)
         case instance
         when DataMapper::Adapters::Sql::Mappings::Table then instance
-        when DataMapper::Base then schema[instance.class]
+        when DataMapper::Persistence then schema[instance.class]
         when Class, String then schema[instance]
         else raise "Don't know how to map #{instance.inspect} to a table."
         end

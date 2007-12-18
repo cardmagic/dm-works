@@ -1,4 +1,6 @@
-class Zoo < DataMapper::Base
+class Zoo #< DataMapper::Base
+  include DataMapper::Persistence
+  
   property :name, :string
   property :notes, :text
   property :updated_at, :datetime

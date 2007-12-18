@@ -29,7 +29,9 @@ require 'data_mapper/support/silence'
 require 'data_mapper/support/inflector'
 require 'data_mapper/support/errors'
 require 'data_mapper/database'
+require 'data_mapper/persistence'
 require 'data_mapper/base'
+
 
 begin
   # This block of code is for compatibility with Ruby On Rails' or Merb's database.yml

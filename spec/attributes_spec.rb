@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + "/spec_helper"
 
-describe DataMapper::Base do
+describe DataMapper::Persistence do
     
   it 'should allow mass-assignment of attributes' do
     zoo = Zoo.new(:name => 'MassAssignment', :notes => 'This is a test.')

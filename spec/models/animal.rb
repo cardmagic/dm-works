@@ -1,4 +1,6 @@
-class Animal < DataMapper::Base
+class Animal #< DataMapper::Base
+  include DataMapper::Persistence
+
   property :name, :string, :default => "No Name", :index => :unique
   property :notes, :text
   property :nice, :boolean

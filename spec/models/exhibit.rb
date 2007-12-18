@@ -1,4 +1,6 @@
-class Exhibit < DataMapper::Base
+class Exhibit #< DataMapper::Base
+  include DataMapper::Persistence
+  
   property :name, :string
   
   begin

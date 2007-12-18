@@ -3,7 +3,9 @@ require File.dirname(__FILE__) + "/spec_helper"
 describe('A tree') do
   
   before(:all) do
-    class Node < DataMapper::Base
+    class Node
+      include DataMapper::Persistence
+
       property :name, :string
 
       belongs_to :parent, :class => 'Node'

@@ -38,8 +38,8 @@ module DataMapper
     end
     
     private
-    def mapped_class(klass)      
-      if klass.superclass == DataMapper::Base
+    def mapped_class(klass)
+      if ! klass.superclass.respond_to?(:persistent?)
         klass
       else
         mapped_class(klass.superclass)

@@ -1,4 +1,6 @@
-class Fruit < DataMapper::Base
+class Fruit #< DataMapper::Base
+  include DataMapper::Persistence
+  
   set_table_name 'fruit'
   property :name, :string, :column => 'fruit_name'
   

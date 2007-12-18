@@ -1,4 +1,6 @@
-class Project < DataMapper::Base
+class Project #< DataMapper::Base
+  include DataMapper::Persistence
+  
   property :title, :string
   property :description, :string
 

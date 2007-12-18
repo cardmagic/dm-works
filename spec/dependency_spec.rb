@@ -1,18 +1,20 @@
 require File.dirname(__FILE__) + "/spec_helper"
 
-describe DataMapper::Base do
+describe DataMapper::Persistence do
   
   it "should be able to add a dependency for a class not yet defined" do
     
     $happy_cow_defined = false
     
-    DataMapper::Base.dependencies.add('HappyCow') do |klass|
+    DataMapper::Persistence.dependencies.add('HappyCow') do |klass|
       klass.should eql(Object.const_get('HappyCow'))
       database.table(klass).key.name.should eql(:name)
       $happy_cow_defined = true
     end
     
-    class HappyCow < DataMapper::Base
+    class HappyCow 
+      include DataMapper::Persistence
+      
       property :name, :string, :key => true
     end
     

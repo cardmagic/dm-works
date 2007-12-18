@@ -69,7 +69,7 @@ describe DataMapper::Callbacks do
     post.instance_variable_get("@one").should be_nil
     post.instance_variable_get("@two").should be_nil
     post.instance_variable_get("@three").should be_nil
-    
+
     post.save
     post.instance_variable_get("@one").should eql('moo')
     post.instance_variable_get("@two").should eql('cow')

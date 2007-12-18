@@ -31,7 +31,9 @@ describe DataMapper::Adapters::Sql::Mappings::Table do
   end
   
   it "should create sql for composite unique indexes" do
-    class Cage < DataMapper::Base
+    class Cage
+      include DataMapper::Persistence
+      
       property :name, :string
       property :cage_id, :integer
       
@@ -43,7 +45,9 @@ describe DataMapper::Adapters::Sql::Mappings::Table do
   end
   
   it "should create sql for composite indexes" do
-    class Lion < DataMapper::Base
+    class Lion
+      include DataMapper::Persistence
+
       property :name, :string
       property :tamer_id, :integer
       
@@ -55,7 +59,9 @@ describe DataMapper::Adapters::Sql::Mappings::Table do
   end
   
   it "should create sql for multiple composite indexes" do
-    class Course < DataMapper::Base
+    class Course
+      include DataMapper::Persistence
+
       property :code, :string
       property :name, :string
       property :description, :text

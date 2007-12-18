@@ -38,7 +38,9 @@ DataMapper::Database.setup({
   :username => 'root'
 })
 
-class Animal < DataMapper::Base #:nodoc:
+class Animal #:nodoc:
+  include DataMapper::Persistence
+  
   set_table_name 'animals' # Just as an example. Same inflector as Rails,
     # so this really isn't necessary.
     
@@ -48,17 +50,22 @@ class Animal < DataMapper::Base #:nodoc:
   has_and_belongs_to_many :exhibits
 end
 
-class Exhibit < DataMapper::Base #:nodoc:
+class Exhibit #:nodoc:
+  include DataMapper::Persistence
+
   property :name, :string
   belongs_to :zoo
 end
 
-class Zoo < DataMapper::Base #:nodoc:
+class Zoo #:nodoc:
+  include DataMapper::Persistence
+
   property :name, :string
   has_many :exhibits
 end
 
-class Person < DataMapper::Base #:nodoc:
+class Person #:nodoc:
+  include DataMapper::Persistence
 
   property :name, :string
   property :age, :integer

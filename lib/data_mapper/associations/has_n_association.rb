@@ -23,7 +23,7 @@ module DataMapper
         
         define_accessor(klass)
         
-        Base::dependencies.add(associated_constant_name) do |klass|
+        Persistence::dependencies.add(associated_constant_name) do |klass|
           @foreign_key_column = associated_table[foreign_key_name]
           
           unless @foreign_key_column

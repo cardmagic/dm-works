@@ -1,4 +1,6 @@
-class Section < DataMapper::Base
+class Section #< DataMapper::Base
+  include DataMapper::Persistence
+  
   property :title, :string
   property :created_at, :datetime
   

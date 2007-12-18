@@ -1,4 +1,6 @@
-class Post < DataMapper::Base
+class Post #< DataMapper::Base
+  include DataMapper::Persistence
+  
   property :title, :string
   property :created_at, :datetime
   
