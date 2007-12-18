@@ -22,6 +22,14 @@ module DataMapper
         "UPDATE #{associated_table.to_sql} SET #{foreign_key_column.to_sql} = NULL WHERE #{foreign_key_column.to_sql} = ?"
       end
       
+      def instance_variable_name
+        class << self
+          attr_reader :instance_variable_name
+        end
+        
+        @instance_variable_name = "@#{@association_name}"
+      end
+      
       class Set < Associations::Reference
         
         include Enumerable
@@ -60,7 +68,7 @@ module DataMapper
         end
         
         def <<(associated_item)
-          items << associated_item
+          (@items || @items = []) << associated_item
           
           # TODO: Optimize!
           fk = association.foreign_key_column
@@ -123,17 +131,12 @@ module DataMapper
           @items || begin
             if @instance.loaded_set.nil?
               @items = []
-            else
-              fk = association.foreign_key_column.to_sym
+            else              
+              associated_items = fetch_sets
               
-              finder_options = { association.foreign_key_column.to_sym => @instance.loaded_set.map { |item| item.key } }
-              finder_options.merge!(association.finder_options)
-              
-              associated_items = @instance.database_context.all(
-                association.associated_constant,
-                finder_options
-              ).group_by { |entry| entry.send(fk) }
-              
+              # This is where @items is set, by calling association=,
+              # which in turn calls HasManyAssociation::Set#set.
+              association_ivar_name = association.instance_variable_name
               setter_method = "#{@association_name}=".to_sym
               @instance.loaded_set.each do |entry|
                 entry.send(setter_method, associated_items[entry.key])
@@ -151,6 +154,20 @@ module DataMapper
         def ==(other)
           (items.size == 1 ? items.first : items) == other
         end
+        
+        private
+        def fetch_sets
+          finder_options = { association.foreign_key_column.to_sym => @instance.loaded_set.map { |item| item.key } }
+          finder_options.merge!(association.finder_options)
+          
+          foreign_key_ivar_name = association.foreign_key_column.instance_variable_name
+          
+          @instance.database_context.all(
+            association.associated_constant,
+            finder_options
+          ).group_by { |entry| entry.instance_variable_get(foreign_key_ivar_name) }
+        end
+        
       end
 
     end

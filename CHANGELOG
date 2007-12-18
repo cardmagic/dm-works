@@ -136,3 +136,4 @@
 * Support for composite indexes (thanks to Jeffrey Gelens)
 * Add composite scope to validates_uniqueness
 * Added private/protected properties
+* Remove HasOneAssociation, Make HasManyAssociation impersonate has_one relationships
