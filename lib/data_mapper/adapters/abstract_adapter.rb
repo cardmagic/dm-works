@@ -37,6 +37,63 @@ module DataMapper
         @logger || @logger = @configuration.logger
       end
       
+      protected
+      
+      def materialize(database_context, values, reload = false, loaded_set = [])
+        
+        table = self.table
+        
+        instance_id = table.key.type_cast_value(values[table.key.name])
+        
+        instance_type = if table.multi_class? && table.type_column
+          values.has_key?(table.type_column.name) ?
+            table.type_column.type_cast_value(values[table.type_column.name]) :
+            self
+        else
+          self
+        end
+        
+        instance = create_instance(database_context, instance_id, instance_type, reload)
+        
+        instance_type.callbacks.execute(:before_materialize, instance)
+        
+        type_cast_values = {}
+        
+        values.each_pair do |k,v|
+          column = table[k]
+          type_cast_value = column.type_cast_value(v)
+          type_cast_values[k] = type_cast_value
+          instance.instance_variable_set(column.instance_variable_name, type_cast_value)
+        end
+
+        instance.loaded_set = loaded_set
+
+        instance_type.callbacks.execute(:after_materialize, instance)
+
+        return instance
+        
+      rescue => e
+        raise MaterializationError.new("Failed to materialize row: #{values.inspect}\n#{e.to_yaml}")
+      end
+      
+      def create_instance(database_context, instance_id, instance_type, reload = false)
+        instance = database_context.identity_map.get(instance_type, instance_id)
+
+        if instance.nil? || reload
+          instance = instance_type.new() if instance.nil?
+          instance.instance_variable_set(:@__key, instance_id)
+          instance.instance_variable_set(:@new_record, false)
+          database_context.identity_map.set(instance)
+        elsif instance.new_record?
+          instance.instance_variable_set(:@__key, instance_id)
+          instance.instance_variable_set(:@new_record, false)
+        end
+
+        instance.database_context = database_context
+
+        return instance
+      end
+      
     end # class AbstractAdapter
     
   end # module Adapters

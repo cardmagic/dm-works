@@ -31,6 +31,7 @@ module DataMapper
       klass.instance_variable_set('@properties', [])
       
       klass.send :extend, AutoMigrations
+      klass.subclasses
       DataMapper::Persistence::subclasses << klass unless klass == DataMapper::Base
       klass.send(:undef_method, :id) if method_defined?(:id)
 
@@ -59,9 +60,11 @@ module DataMapper
         end
       end
     end
-    
-    def self.logger
-      database.logger
+
+    def self.auto_migrate!
+      subclasses.each do |subclass|
+        subclass.auto_migrate!
+      end
     end
     
     # Track classes that include this module.
@@ -69,10 +72,8 @@ module DataMapper
       @subclasses || (@subclasses = [])
     end
     
-    def self.auto_migrate!
-      subclasses.each do |subclass|
-        subclass.auto_migrate!
-      end
+    def self.dependencies
+      @dependency_queue || (@dependency_queue = DependencyQueue.new) 
     end
     
     def initialize(details = nil)
@@ -84,11 +85,17 @@ module DataMapper
       end
     end
     
-    def self.dependencies
-      @dependency_queue || (@dependency_queue = DependencyQueue.new) 
-    end
-        
     module ClassMethods
+      
+      # Track classes that include this module.
+      def subclasses
+        @subclasses || (@subclasses = [])
+      end
+      
+      def logger
+        database.logger
+      end
+      
       def transaction
         yield
       end
@@ -301,64 +308,10 @@ module DataMapper
         end
       end
       
-      def materialize(database_context, values, reload = false, loaded_set = [])
-        
-        table = self.table
-        
-        instance_id = table.key.type_cast_value(values[table.key.name])
-        
-        instance_type = if table.multi_class? && table.type_column
-          values.has_key?(table.type_column.name) ?
-            table.type_column.type_cast_value(values[table.type_column.name]) :
-            self
-        else
-          self
-        end
-        
-        instance = create_instance(database_context, instance_id, instance_type, reload)
-        
-        instance_type.callbacks.execute(:before_materialize, instance)
-        
-        type_cast_values = {}
-        
-        values.each_pair do |k,v|
-          column = table[k]
-          type_cast_value = column.type_cast_value(v)
-          type_cast_values[k] = type_cast_value
-          instance.instance_variable_set(column.instance_variable_name, type_cast_value)
-        end
-
-        instance.loaded_set = loaded_set
-
-        instance_type.callbacks.execute(:after_materialize, instance)
-
-        return instance
-        
-      rescue => e
-        raise MaterializationError.new("Failed to materialize row: #{values.inspect}\n#{e.to_yaml}")
-      end
-      
       def get(*keys)
         database.get(self, *keys)
       end
       
-      def create_instance(database_context, instance_id, instance_type, reload = false)
-        instance = database_context.identity_map.get(instance_type, instance_id)
-
-        if instance.nil? || reload
-          instance = instance_type.new() if instance.nil?
-          instance.instance_variable_set(:@__key, instance_id)
-          instance.instance_variable_set(:@new_record, false)
-          database_context.identity_map.set(instance)
-        elsif instance.new_record?
-          instance.instance_variable_set(:@__key, instance_id)
-          instance.instance_variable_set(:@new_record, false)
-        end
-
-        instance.database_context = database_context
-
-        return instance
-      end
     end
     
     # Lazy-loads the attributes for a loaded_set, then overwrites the accessors
@@ -418,7 +371,8 @@ module DataMapper
 
     def logger
       self.class.logger
-    end    
+    end
+    
     def new_record?
       @new_record.nil? || @new_record
     end
