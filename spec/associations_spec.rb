@@ -6,7 +6,7 @@ describe DataMapper::Associations::BelongsToAssociation do
   end
   
   before(:each) do
-    @aviary = Exhibit[:name => 'Monkey Mayhem']
+    @aviary = Exhibit.first(:name => 'Monkey Mayhem')
   end
   
   it 'has a zoo association' do
@@ -93,9 +93,9 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
   
   it "should load associations" do
     database do
-      froggy = Animal[:name => 'Frog']
+      froggy = Animal.first(:name => 'Frog')
       froggy.exhibits.size.should == 1
-      froggy.exhibits.entries.first.should == Exhibit[:name => 'Amazonia']
+      froggy.exhibits.entries.first.should == Exhibit.first(:name => 'Amazonia')
     end
   end
   

@@ -43,11 +43,25 @@ class DMPerson < DataMapper::Base #:nodoc:
   property :name, :string
   property :age, :integer
   property :occupation, :string
+  property :type, :class
   property :notes, :text
-  property :street, :string
-  property :city, :string
-  property :state, :string, :size => 2
-  property :zip_code, :string, :size => 10
+  property :date_of_birth, :date
+  
+  embed :address, :prefix => true do
+    property :street, :string
+    property :city, :string
+    property :state, :string, :size => 2
+    property :zip_code, :string, :size => 10
+    
+    def city_state_zip_code
+      "#{city}, #{state} #{zip_code}"
+    end
+    
+    def to_s
+      "#{street}\n#{city_state_zip_code}"
+    end
+  end
+  
 end
 
 class Exhibit < DataMapper::Base #:nodoc:
@@ -115,12 +129,12 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
   end
   
   x.report('DataMapper:conditions:short') do
-    N.times { Zoo[:name => 'Galveston'].name }
+    N.times { Zoo.first(:name => 'Galveston').name }
   end
   
   x.report('DataMapper:conditions:short:in-session') do
     database do
-      N.times { Zoo[:name => 'Galveston'].name }
+      N.times { Zoo.first(:name => 'Galveston').name }
     end
   end
   
@@ -241,8 +255,8 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
         #{person.name} (#{person.age})
         #{person.occupation}
         
-        #{person.street}
-        #{person.city}, #{person.state} #{person.zip_code}
+        #{person.address_street}
+        #{person.address_city}, #{person.address_state} #{person.address_zip_code}
         
         #{person.notes}
       VCARD
@@ -257,8 +271,7 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
         #{person.name} (#{person.age})
         #{person.occupation}
         
-        #{person.street}
-        #{person.city}, #{person.state} #{person.zip_code}
+        #{person.address}
         
         #{person.notes}
       VCARD

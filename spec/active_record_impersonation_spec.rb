@@ -23,7 +23,7 @@ describe DataMapper::Support::ActiveRecordImpersonation do
     end
 
     it 'should reload its attributes' do
-      frog = Animal[:name => 'Frog']
+      frog = Animal.first(:name => 'Frog')
       frog.name = 'MegaFrog'
       frog.name.should == 'MegaFrog'
       frog.reload!
@@ -43,7 +43,7 @@ describe DataMapper::Support::ActiveRecordImpersonation do
       capybara = Animal.create(:name => 'Capybara')
       count = Animal.count
       capybara.destroy!
-      Animal[:name => 'Capybara'].should be_nil
+      Animal.first(:name => 'Capybara').should be_nil
       Animal.count.should == count - 1
     end
   end
@@ -118,10 +118,6 @@ describe DataMapper::Support::ActiveRecordImpersonation do
 
   it 'should retrieve the indexed element' do
     Animal[1].id.should == 1
-  end
-
-  it 'should retrieve the indexed element using a hash condition' do
-    Animal[:name => 'Frog'].name.should == 'Frog'
   end
 
   it 'should create a new record' do

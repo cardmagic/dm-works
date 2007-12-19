@@ -168,7 +168,7 @@ module DataMapper
       @schema_search_path = nil
       @username = 'root'
       @password = ''
-      @index_path = (Dir::pwd + "/indexes")
+      @socket = nil
       
       @log_level = Logger::WARN
       @log_stream = nil

@@ -109,7 +109,7 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
      zebra = Animal.first(:name => 'Zebra')
      zebra.name.should == 'Zebra'
 
-     elephant = Animal[:name => 'Elephant']
+     elephant = Animal.first(:name => 'Elephant')
      elephant.name.should == 'Elephant'
 
      aged = Person.all(:age => 29)
@@ -122,18 +122,18 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
 
    it 'should not find deleted objects' do
      database do
-       wally = Animal[:name => 'Whale']
+       wally = Animal.first(:name => 'Whale')
        wally.new_record?.should == false
        wally.destroy!.should == true
 
-       wallys_evil_twin = Animal[:name => 'Whale']
+       wallys_evil_twin = Animal.first(:name => 'Whale')
        wallys_evil_twin.should == nil
 
        wally.new_record?.should == true
        wally.save
        wally.new_record?.should == false
 
-       Animal[:name => 'Whale'].should == wally
+       Animal.first(:name => 'Whale').should == wally
      end
    end
 
@@ -163,7 +163,8 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
    it "should return a CLEAN object" do
      # pending "see http://wm.lighthouseapp.com/projects/4819-datamapper/tickets/90"
      # Animal[2].original_values[:nice].should_not include("\004\b")
-     Animal[2].should_not be_dirty 
+     Animal[2].should_not be_dirty
+     Animal.first(:name => 'Cup').should_not be_dirty
    end
    
    it "should retrieve altered integer columns correctly" do

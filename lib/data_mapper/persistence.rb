@@ -475,7 +475,7 @@ module DataMapper
       values.each_pair do |k,v|
         original_values[k] = case v
           when String, Date, Time then v.dup
-          when column.type == :object then Marshal.dump(v)
+          # when column.type == :object then Marshal.dump(v)
           else v
         end
       end

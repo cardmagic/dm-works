@@ -35,9 +35,9 @@ describe DataMapper::Associations::HasManyAssociation do
   
   it 'should lazily-load the association when Enumerable methods are called' do
     database do |db|
-      san_diego = Zoo[:name => 'San Diego']
+      san_diego = Zoo.first(:name => 'San Diego')
       san_diego.exhibits.size.should == 2
-      san_diego.exhibits.should include(Exhibit[:name => 'Monkey Mayhem'])
+      san_diego.exhibits.should include(Exhibit.first(:name => 'Monkey Mayhem'))
     end
   end
   
@@ -53,13 +53,13 @@ describe DataMapper::Associations::HasManyAssociation do
   end
   
   it "should be dirty even when clean objects are associated" do
-    zoo = Zoo[:name => 'New York']
+    zoo = Zoo.first(:name => 'New York')
     zoo.exhibits << Exhibit.first
     zoo.should be_dirty
   end
   
   it "should proxy associations on the associated type" do
-    Zoo[:name => 'Miami'].exhibits.animals.size.should == 1
+    Zoo.first(:name => 'Miami').exhibits.animals.size.should == 1
   end
   
   it "should have a valid zoo setup for testing" do

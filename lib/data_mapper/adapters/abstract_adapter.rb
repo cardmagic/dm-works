@@ -39,44 +39,44 @@ module DataMapper
       
       protected
       
-      def materialize(database_context, values, reload = false, loaded_set = [])
+      def materialize(database_context, klass, values, reload, loaded_set)
         
-        table = self.table
+        table = self.table(klass)
         
         instance_id = table.key.type_cast_value(values[table.key.name])
         
         instance_type = if table.multi_class? && table.type_column
           values.has_key?(table.type_column.name) ?
-            table.type_column.type_cast_value(values[table.type_column.name]) :
-            self
+            table.type_column.type_cast_value(values[table.type_column.name]) : klass
         else
-          self
+          klass
         end
         
-        instance = create_instance(database_context, instance_id, instance_type, reload)
+        instance = create_instance(database_context, instance_type, instance_id, reload)
         
         instance_type.callbacks.execute(:before_materialize, instance)
         
-        type_cast_values = {}
+        type_casted_values = {}
         
         values.each_pair do |k,v|
           column = table[k]
           type_cast_value = column.type_cast_value(v)
-          type_cast_values[k] = type_cast_value
+          type_casted_values[k] = type_cast_value
           instance.instance_variable_set(column.instance_variable_name, type_cast_value)
         end
-
+        
+        instance.original_values = type_casted_values
         instance.loaded_set = loaded_set
 
         instance_type.callbacks.execute(:after_materialize, instance)
 
         return instance
         
-      rescue => e
-        raise MaterializationError.new("Failed to materialize row: #{values.inspect}\n#{e.to_yaml}")
+      #rescue => e
+      #  raise MaterializationError.new("Failed to materialize row: #{values.inspect}\n#{e.to_yaml}")
       end
       
-      def create_instance(database_context, instance_id, instance_type, reload = false)
+      def create_instance(database_context, instance_type, instance_id, reload)
         instance = database_context.identity_map.get(instance_type, instance_id)
 
         if instance.nil? || reload

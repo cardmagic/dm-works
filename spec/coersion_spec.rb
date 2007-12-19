@@ -18,7 +18,7 @@ describe DataMapper::Adapters::Sql::Coersion do
     dob = Date::today
     bob = Person.create(:name => 'DateCoersionTest', :date_of_birth => dob)
     
-    bob2 = Person[:name => 'DateCoersionTest']
+    bob2 = Person.first(:name => 'DateCoersionTest')
     
     bob.date_of_birth.should eql(dob)
     bob2.date_of_birth.should eql(dob)

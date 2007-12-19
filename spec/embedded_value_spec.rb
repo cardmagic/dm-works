@@ -3,7 +3,7 @@ require File.dirname(__FILE__) + "/spec_helper"
 describe DataMapper::EmbeddedValue do
     
   before(:all) do
-    @bob = Person[:name => 'Bob']
+    @bob = Person.first(:name => 'Bob')
   end
   
   it 'should proxy getting values for you' do
@@ -33,7 +33,7 @@ describe DataMapper::EmbeddedValue do
       end
     end
 
-    @sam = PointyHeadedBoss[:name => 'Sam']
+    @sam = PointyHeadedBoss.first(:name => 'Sam')
     @sam.address.address_street.should == '1337 Duck Way'
   end
 
@@ -50,7 +50,7 @@ describe DataMapper::EmbeddedValue do
       end
     end
 
-    @sam = Employee[:name => 'Sam']
+    @sam = Employee.first(:name => 'Sam')
     @sam.address_street.should == '1337 Duck Way'
   end
 
@@ -67,7 +67,7 @@ describe DataMapper::EmbeddedValue do
       end
     end
 
-    @sam = Human[:name => 'Sam']
+    @sam = Human.first(:name => 'Sam')
     @sam.address.street.should == '1337 Duck Way'
   end
 
@@ -83,7 +83,7 @@ describe DataMapper::EmbeddedValue do
       end
     end
 
-    @sam = SoftwareEngineer[:name => 'Sam']
+    @sam = SoftwareEngineer.first(:name => 'Sam')
     public_properties = @sam.address.class.public_instance_methods.select { |m| ["city", "city="].include?(m) }
     public_properties.length.should == 2
   end
@@ -101,7 +101,7 @@ describe DataMapper::EmbeddedValue do
       end
     end
 
-    @sam = SanitationEngineer[:name => 'Sam']
+    @sam = SanitationEngineer.first(:name => 'Sam')
     protected_properties = @sam.address.class.protected_instance_methods.select { |m| ["city", "street"].include?(m) }
     protected_properties.length.should == 2
   end
@@ -119,7 +119,7 @@ describe DataMapper::EmbeddedValue do
       end
     end
 
-    @sam = ElectricalEngineer[:name => 'Sam']
+    @sam = ElectricalEngineer.first(:name => 'Sam')
     private_properties = @sam.address.class.private_instance_methods.select { |m| ["city=", "street="].include?(m) }
     private_properties.length.should == 2
   end
@@ -136,7 +136,7 @@ describe DataMapper::EmbeddedValue do
       end
     end
 
-    @sam = TrainEngineer[:name => 'Sam']
+    @sam = TrainEngineer.first(:name => 'Sam')
     private_properties = @sam.address.class.private_instance_methods.select { |m| ["city", "city="].include?(m) }
     private_properties.length.should == 2
   end
@@ -154,7 +154,7 @@ describe DataMapper::EmbeddedValue do
       end
     end
 
-    @sam = ChemicalEngineer[:name => 'Sam']
+    @sam = ChemicalEngineer.first(:name => 'Sam')
     public_properties = @sam.address.class.public_instance_methods.select { |m| ["street", "street="].include?(m) }
     public_properties.length.should == 2
   end

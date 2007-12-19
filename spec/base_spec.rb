@@ -137,7 +137,7 @@ describe 'A new record' do
   
   it "should have original values when loaded from the database" do
     Person.create(:name => 'a')
-    x = Person[:name => 'a']
+    x = Person.first(:name => 'a')
     x.original_values.should_not be_empty
     x.original_values.keys.should include(:name)
     x.original_values[:name].should == "a"
@@ -222,7 +222,7 @@ describe 'Properties' do
       property :age, :integer, :reader => :private
     end
 
-    @sam = SalesEngineer[:name => 'Sam']
+    @sam = SalesEngineer.first(:name => 'Sam')
     # note: id default key gets a public reader by default (but writer is protected)
     @sam.attributes.should == {:id => @sam.id, :name => @sam.name}
   end
@@ -236,7 +236,7 @@ describe 'Properties' do
       property :age, :integer
     end
 
-    @sam = ChemicalEngineer[:name => 'Sam']
+    @sam = ChemicalEngineer.first(:name => 'Sam')
     @sam.attributes = {:name => 'frank', :age => 101}
     @sam.age.should == 101
     @sam.name.should == 'Sam'

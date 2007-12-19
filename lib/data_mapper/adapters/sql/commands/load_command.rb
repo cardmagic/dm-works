@@ -49,26 +49,20 @@ module DataMapper
               
               @klass.callbacks.execute(:before_materialize, instance)
 
-              original_values = instance.original_values
-
+              type_casted_values = {}
+              
               @columns.each_pair do |index, column|
                 # This may be a little confusing, but we're
                 # setting both the original_value, and the
                 # instance-variable through method chaining to avoid
                 # lots of extra short-lived local variables.
-                type_cast_value = instance.instance_variable_set(
+                type_casted_values[column.name] = instance.instance_variable_set(
                   column.instance_variable_name,
                   column.type_cast_value(values[index])
                 )
-                
-                
-                original_values[column.name] = case type_cast_value
-                  when String, Date, Time then type_cast_value.dup
-                  when column.type == :object then Marshal.dump(type_cast_value)
-                  else type_cast_value
-                end
               end
-
+              
+              instance.original_values = type_casted_values
               instance.instance_variable_set(:@loaded_set, @set)
               @set << instance
 

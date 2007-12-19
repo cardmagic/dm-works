@@ -286,7 +286,7 @@ module DataMapper
       
       def get(database_context, klass, *keys)
         table = self.table(klass)
-        sql = "SELECT #{table.columns.map { |column| column.to_sql }} FROM #{table.to_sql} WHERE #{table.keys.map { |key| "#{key.to_sql} = ?" }.join(' AND ')}"
+        sql = "SELECT #{table.columns.map { |column| column.to_sql }.join(', ')} FROM #{table.to_sql} WHERE #{table.keys.map { |key| "#{key.to_sql} = ?" }.join(' AND ')}"
         
         connection do |db|
           db.create_command(sql).execute_reader(*keys) do |reader|
@@ -294,7 +294,7 @@ module DataMapper
             table.columns.each_with_index do |column, i|
               values[column.name] = reader.item(i)
             end
-            klass.materialize(database_context, values)
+            materialize(database_context, klass, values, false, [])
           end
         end
       end
