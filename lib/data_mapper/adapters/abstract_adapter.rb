@@ -29,6 +29,10 @@ module DataMapper
         raise NotImplementedError.new
       end
       
+      def get(database_context, klass, *keys)
+        raise NotImplementedError.new
+      end
+      
       def logger
         @logger || @logger = @configuration.logger
       end

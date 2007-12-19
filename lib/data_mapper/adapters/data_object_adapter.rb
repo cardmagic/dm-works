@@ -284,6 +284,21 @@ module DataMapper
         self.class::Commands::LoadCommand.new(self, database_context, klass, options).call
       end
       
+      def get(database_context, klass, *keys)
+        table = self.table(klass)
+        sql = "SELECT #{table.columns.map { |column| column.to_sql }} FROM #{table.to_sql} WHERE #{table.keys.map { |key| "#{key.to_sql} = ?" }.join(' AND ')}"
+        
+        connection do |db|
+          db.create_command(sql).execute_reader(*keys) do |reader|
+            values = {}
+            table.columns.each_with_index do |column, i|
+              values[column.name] = reader.item(i)
+            end
+            klass.materialize(database_context, values)
+          end
+        end
+      end
+      
       def table(instance)
         case instance
         when DataMapper::Adapters::Sql::Mappings::Table then instance

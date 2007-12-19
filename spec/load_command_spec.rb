@@ -161,7 +161,7 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
    end
    
    it "should return a CLEAN object" do
-     pending "see http://wm.lighthouseapp.com/projects/4819-datamapper/tickets/90"
+     # pending "see http://wm.lighthouseapp.com/projects/4819-datamapper/tickets/90"
      # Animal[2].original_values[:nice].should_not include("\004\b")
      Animal[2].should_not be_dirty 
    end
@@ -212,7 +212,7 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
      total = Animal.count
      count = 0
      
-     Animal.batch(:name.not => nil) do |animal|
+     Animal.each(:name.not => nil) do |animal|
        count += 1
      end
      

@@ -85,8 +85,6 @@ module DataMapper
             end
 
             private
-              
-              class MaterializationError < StandardError; end
                 
               def create_instance(instance_id, instance_type)
                 instance = @database_context.identity_map.get(@klass, instance_id)
