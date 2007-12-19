@@ -160,9 +160,8 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
      Zoo.find(1).should be_a_kind_of(Zoo)
    end
    
+   # TICKET: http://wm.lighthouseapp.com/projects/4819-datamapper/tickets/90
    it "should return a CLEAN object" do
-     # pending "see http://wm.lighthouseapp.com/projects/4819-datamapper/tickets/90"
-     # Animal[2].original_values[:nice].should_not include("\004\b")
      Animal[2].should_not be_dirty
      Animal.first(:name => 'Cup').should_not be_dirty
    end
