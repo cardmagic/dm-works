@@ -75,9 +75,13 @@ module DataMapper
           DataMapper::database.query(*args)
         end
         
+        def get(*keys)
+          database.get(self, keys)
+        end
+        
         def [](*keys)
           raise ArgumentError.new('Hash is not a valid key') if keys.size == 1 && keys.first.is_a?(Hash)
-          get(*keys)
+          database.get(self, keys)
         end
         
         def create(attributes)

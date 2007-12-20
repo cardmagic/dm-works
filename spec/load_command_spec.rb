@@ -5,6 +5,11 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
   before(:all) do
     fixtures(:zoos)
     fixtures(:animals)
+    fixtures(:people)
+  end
+  
+  after(:all) do
+    fixtures(:people)
   end
   
   def loader_for(klass, options = {})
@@ -218,6 +223,23 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
      
      count.should == total     
    end
+   
+   it "should get the right object back" do
+     a = Animal.first(:name => 'Cup')
+     Animal.get(a.id).should == a
+     
+     b = Person.first(:name => 'Amy')
+     Person.get(b.id).should == b
+     
+     c = Person.first(:name => 'Bob')
+     Person.get(c.id).should == c
+     
+     database.execute("UPDATE people SET type = ? WHERE name = ?", nil, "Bob")
+     
+     d = Person.first(:name => 'Bob')
+     Person.get(d.id).should == d
+   end
+   
 end
 
 =begin

@@ -46,8 +46,8 @@ module DataMapper
         instance_id = table.key.type_cast_value(values[table.key.name])
         
         instance_type = if table.multi_class? && table.type_column
-          values.has_key?(table.type_column.name) ?
-            table.type_column.type_cast_value(values[table.type_column.name]) : klass
+          values[table.type_column.name].blank? ? klass :
+            table.type_column.type_cast_value(values[table.type_column.name])
         else
           klass
         end

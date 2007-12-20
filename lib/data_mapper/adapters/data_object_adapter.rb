@@ -295,7 +295,7 @@ module DataMapper
         self.class::Commands::LoadCommand.new(self, database_context, klass, options).call
       end
       
-      def get(database_context, klass, *keys)
+      def get(database_context, klass, keys)
         table = self.table(klass)
         sql = "SELECT #{table.columns.map { |column| column.to_sql }.join(', ')} FROM #{table.to_sql} WHERE #{table.keys.map { |key| "#{key.to_sql} = ?" }.join(' AND ')}"
         

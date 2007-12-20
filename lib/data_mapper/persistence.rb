@@ -308,10 +308,6 @@ module DataMapper
         end
       end
       
-      def get(*keys)
-        database.get(self, *keys)
-      end
-      
     end
     
     # Lazy-loads the attributes for a loaded_set, then overwrites the accessors

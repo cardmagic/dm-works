@@ -44,8 +44,8 @@ module DataMapper
       @adapter.load(self, klass, options).first
     end
     
-    def get(klass, *keys)
-      @adapter.get(self, klass, *keys)
+    def get(klass, keys)
+      @adapter.get(self, klass, keys)
     end
     
     def all(klass, options = {})
