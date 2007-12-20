@@ -301,11 +301,15 @@ module DataMapper
         
         connection do |db|
           db.create_command(sql).execute_reader(*keys) do |reader|
-            values = {}
-            table.columns.each_with_index do |column, i|
-              values[column.name] = reader.item(i)
+            if reader.has_rows?
+              values = {}
+              table.columns.each_with_index do |column, i|
+                values[column.name] = reader.item(i)
+              end
+              materialize(database_context, klass, values, false, [])
+            else
+              nil
             end
-            materialize(database_context, klass, values, false, [])
           end
         end
       end

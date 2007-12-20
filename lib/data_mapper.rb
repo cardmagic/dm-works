@@ -16,6 +16,8 @@ unless defined?(DM_PLUGINS_ROOT)
 end
 
 # Require the basics...
+require 'date'
+require 'time'
 require 'rubygems'
 require 'yaml'
 require 'set'
