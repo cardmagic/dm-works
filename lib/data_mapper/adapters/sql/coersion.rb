@@ -45,7 +45,7 @@ module DataMapper
         
         def type_cast_class(raw_value)
           return nil if raw_value.blank?
-          Kernel::const_get(raw_value)
+          Object::recursive_const_get(raw_value)
         end
         
         def type_cast_integer(raw_value)
