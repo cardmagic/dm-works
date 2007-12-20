@@ -138,6 +138,17 @@ module DataMapper
         db.close
       end      
       
+      def execute(*args)
+        db = create_connection
+        command = db.create_command(args.shift)
+        return command.execute_non_query(*args)
+      rescue => e
+        logger.error { e }
+        raise e
+      ensure
+        db.close
+      end
+      
       def handle_error(error)
         raise error
       end
