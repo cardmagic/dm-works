@@ -137,3 +137,5 @@
 * Add composite scope to validates_uniqueness
 * Added private/protected properties
 * Remove HasOneAssociation, Make HasManyAssociation impersonate has_one relationships
+* Added #get method
+* Persistence module added, inheriting from DataMapper::Base no longer necessary
