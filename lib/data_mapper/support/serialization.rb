@@ -1,6 +1,12 @@
 require 'rexml/document'
 
 begin
+  require 'faster_csv'
+rescue LoadError
+  nil
+end
+
+begin
   require 'json/ext'
 rescue LoadError
   require 'json/pure'
@@ -67,6 +73,13 @@ module DataMapper
         
         result << ' }'
         result
+      end
+      
+      def to_csv(writer = "")
+        FasterCSV.generate(writer) do |csv|
+          csv << database_context.table(self.class).columns.map { |column| get_value_for_column(column) }
+        end
+        return writer
       end
       
       def get_value_for_column(column)
