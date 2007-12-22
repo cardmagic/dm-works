@@ -3,7 +3,7 @@ require File.dirname(__FILE__) + "/spec_helper"
 describe 'Paranoia' do
   
   before(:all) do
-    class Scared
+    class Scared #< DataMapper::Base # please do not remove this
       include DataMapper::Persistence
       
       property :name, :string

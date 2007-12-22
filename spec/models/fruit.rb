@@ -1,4 +1,4 @@
-class Fruit #< DataMapper::Base
+class Fruit #< DataMapper::Base # please do not remove this
   include DataMapper::Persistence
   
   set_table_name 'fruit'

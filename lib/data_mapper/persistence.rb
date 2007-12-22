@@ -24,10 +24,6 @@ module DataMapper
       klass.send(:include, Support::ActiveRecordImpersonation)
       klass.send(:include, Support::Serialization)
 
-      prepare_for_persistence(klass)
-    end
-    
-    def self.prepare_for_persistence(klass)
       klass.instance_variable_set('@properties', [])
       
       klass.send :extend, AutoMigrations
@@ -35,8 +31,6 @@ module DataMapper
       DataMapper::Persistence::subclasses << klass unless klass == DataMapper::Base
       klass.send(:undef_method, :id) if method_defined?(:id)
 
-      return if klass == DataMapper::Base
-      
       # When this class is sub-classed, copy the declared columns.
       klass.class_eval do
         def self.subclasses
@@ -64,6 +58,12 @@ module DataMapper
     def self.auto_migrate!
       subclasses.each do |subclass|
         subclass.auto_migrate!
+      end
+    end
+    
+    def self.drop_all_tables!
+      subclasses.each do |subclass|
+        database.schema[subclass].drop!
       end
     end
     
@@ -105,13 +105,6 @@ module DataMapper
       end
 
       def extended(klass)
-        unless klass == DataMapper::Base
-          klass.class_eval do
-            def persistent?
-              true
-            end        
-          end
-        end
       end
       
       def table
@@ -470,9 +463,9 @@ module DataMapper
     def original_values=(values)
       values.each_pair do |k,v|
         original_values[k] = case v
-          when String, Date, Time then v.dup
+	when String, Date, Time then v.dup
           # when column.type == :object then Marshal.dump(v)
-          else v
+	else v
         end
       end
     end

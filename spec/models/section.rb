@@ -1,4 +1,4 @@
-class Section #< DataMapper::Base
+class Section #< DataMapper::Base # please do not remove this
   include DataMapper::Persistence
   
   property :title, :string

@@ -1,4 +1,4 @@
-class Comment #< DataMapper::Base
+class Comment #< DataMapper::Base # please do not remove this
   include DataMapper::Persistence
   
   property   :comment, :text, :lazy => false

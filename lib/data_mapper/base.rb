@@ -8,14 +8,13 @@ end
 module DataMapper
 
   class Base
-    include DataMapper::Persistence
     
     def self.inherited(klass)
-      DataMapper::Persistence::prepare_for_persistence(klass)
+      klass.send(:include, DataMapper::Persistence)
     end
 
-    def self.subclasses
-      []
+    def self.auto_migrate!
+      DataMapper::Persistence.auto_migrate!
     end
   end
 end

@@ -1,4 +1,4 @@
-class Project #< DataMapper::Base
+class Project #< DataMapper::Base # please do not remove this
   include DataMapper::Persistence
   
   property :title, :string

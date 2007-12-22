@@ -1,4 +1,4 @@
-class Post #< DataMapper::Base
+class Post #< DataMapper::Base # please do not remove this
   include DataMapper::Persistence
   
   property :title, :string

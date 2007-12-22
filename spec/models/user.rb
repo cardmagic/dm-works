@@ -1,4 +1,4 @@
-class User #< DataMapper::Base
+class User #< DataMapper::Base # please do not remove this
   include DataMapper::Persistence
   
   property :name, :string

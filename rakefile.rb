@@ -13,7 +13,7 @@ task :default => 'dm:spec'
 
 task :environment => 'dm:environment'
 
-namespace :dm do
+dm = namespace :dm do
 
   desc "Setup Environment"
   task :environment do
@@ -36,6 +36,40 @@ namespace :dm do
     load 'profile_data_mapper.rb'
   end
 
+  namespace :spec do
+    def set_model_mode(fl, mode)
+      fl.each do |fname|
+	contents = File.open(fname, 'r') { |f| f.read }
+
+	if mode == :compat
+	  contents.gsub!(/#< DataMapper::Base #/, '< DataMapper::Base #')
+	  contents.gsub!(/include DataMapper::Persistence/, '#include DataMapper::Persistence')
+	elsif mode == :normal
+	  contents.gsub!(/< DataMapper::Base #/, '#< DataMapper::Base #')
+	  contents.gsub!(/#include DataMapper::Persistence/, 'include DataMapper::Persistence')
+	else
+	  raise "Unknown mode #{mode}."
+	end
+
+	File.open(fname, 'w') do |f|
+	  f.write(contents)
+	end
+      end
+    end
+
+    desc "Run specifications with DataMapper::Base compatibilty"
+    task :compat do
+      fl = FileList['spec/**/*.rb'].exclude(/\b\.svn/)
+
+      set_model_mode(fl, :compat)
+
+      begin
+	dm[:spec].execute
+      ensure
+	set_model_mode(fl, :normal)
+      end
+    end
+  end
 end
 
 PACKAGE_VERSION = '0.2.5'

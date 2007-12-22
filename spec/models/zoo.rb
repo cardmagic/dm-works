@@ -1,4 +1,4 @@
-class Zoo #< DataMapper::Base
+class Zoo #< DataMapper::Base # please do not remove this
   include DataMapper::Persistence
   
   property :name, :string

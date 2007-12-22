@@ -19,7 +19,7 @@ describe DataMapper::EmbeddedValue do
   end
   
   it 'should not require prefix' do
-    class PointyHeadedBoss
+    class PointyHeadedBoss #< DataMapper::Base # please do not remove this
       include DataMapper::Persistence
 
       set_table_name 'people'
@@ -38,7 +38,7 @@ describe DataMapper::EmbeddedValue do
   end
 
   it 'should add convenience methods to the non-embedded base' do
-    class Employee
+    class Employee #< DataMapper::Base # please do not remove this
       include DataMapper::Persistence
 
       set_table_name 'people'
@@ -55,7 +55,7 @@ describe DataMapper::EmbeddedValue do
   end
 
   it 'should support lazy loading of embedded properties' do
-    class Human
+    class Human #< DataMapper::Base # please do not remove this
       include DataMapper::Persistence
 
       set_table_name 'people'
@@ -72,7 +72,7 @@ describe DataMapper::EmbeddedValue do
   end
 
   it 'should default to public method visibility for all' do
-    class SoftwareEngineer
+    class SoftwareEngineer #< DataMapper::Base # please do not remove this
       include DataMapper::Persistence
 
       set_table_name 'people'
@@ -89,7 +89,7 @@ describe DataMapper::EmbeddedValue do
   end
 
   it 'should respect protected property options for all' do
-    class SanitationEngineer
+    class SanitationEngineer #< DataMapper::Base # please do not remove this
       include DataMapper::Persistence
 
       set_table_name 'people'
@@ -107,7 +107,7 @@ describe DataMapper::EmbeddedValue do
   end
 
   it 'should respect private property options for all' do
-    class ElectricalEngineer
+    class ElectricalEngineer #< DataMapper::Base # please do not remove this
       include DataMapper::Persistence
 
       set_table_name 'people'
@@ -125,7 +125,7 @@ describe DataMapper::EmbeddedValue do
   end
 
   it 'should set both reader and writer visibiliy for all when accessor option is passed' do
-    class TrainEngineer
+    class TrainEngineer #< DataMapper::Base # please do not remove this
       include DataMapper::Persistence
 
       set_table_name 'people'
@@ -142,7 +142,7 @@ describe DataMapper::EmbeddedValue do
   end
 
   it 'should allow individual properties to override method visibility options passed on the block' do
-    class ChemicalEngineer
+    class ChemicalEngineer #< DataMapper::Base # please do not remove this
       include DataMapper::Persistence
 
       set_table_name 'people'

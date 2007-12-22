@@ -1,4 +1,4 @@
-class Animal #< DataMapper::Base
+class Animal #< DataMapper::Base # please do not remove this
   include DataMapper::Persistence
 
   property :name, :string, :default => "No Name", :index => :unique

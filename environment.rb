@@ -42,3 +42,7 @@ DataMapper::Database.setup(:mock, :adapter => MockAdapter)
 
 # Reset the test database.
 DataMapper::Persistence.auto_migrate! unless ENV['AUTO_MIGRATE'] == 'false'
+
+# Save the initial database layout so we can put everything back together
+# after auto migrations testing
+INITIAL_CLASSES = Array.new(DataMapper::Persistence.subclasses)

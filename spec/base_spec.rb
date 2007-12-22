@@ -165,7 +165,7 @@ end
 describe 'Properties' do
 
   it 'should default to public method visibility' do
-    class SoftwareEngineer
+    class SoftwareEngineer #< DataMapper::Base # please do not remove this
       include DataMapper::Persistence
       
       set_table_name 'people'
@@ -177,7 +177,7 @@ describe 'Properties' do
   end
 
   it 'should respect protected property options' do
-    class SanitationEngineer
+    class SanitationEngineer #< DataMapper::Base # please do not remove this
       include DataMapper::Persistence
 
       set_table_name 'people'
@@ -190,7 +190,7 @@ describe 'Properties' do
   end
 
   it 'should respect private property options' do
-    class ElectricalEngineer
+    class ElectricalEngineer #< DataMapper::Base # please do not remove this
       include DataMapper::Persistence
 
       set_table_name 'people'
@@ -203,7 +203,7 @@ describe 'Properties' do
   end
 
   it 'should set both reader and writer visibiliy when accessor option is passed' do
-    class TrainEngineer
+    class TrainEngineer #< DataMapper::Base # please do not remove this
       include DataMapper::Persistence
 
       property :name, :string, :accessor => :private
@@ -214,7 +214,7 @@ describe 'Properties' do
   end
 
   it 'should only be listed in attributes if they have public getters' do
-    class SalesEngineer
+    class SalesEngineer #< DataMapper::Base # please do not remove this
       include DataMapper::Persistence
 
       set_table_name 'people'
@@ -228,7 +228,7 @@ describe 'Properties' do
   end
 
   it 'should not allow mass assignment if private or protected' do
-    class ChemicalEngineer
+    class ChemicalEngineer #< DataMapper::Base # please do not remove this
       include DataMapper::Persistence
 
       set_table_name 'people'
@@ -243,7 +243,7 @@ describe 'Properties' do
   end
 
   it 'should allow :protected to be passed as an alias for a public reader, protected writer' do
-    class CivilEngineer
+    class CivilEngineer #< DataMapper::Base # please do not remove this
       include DataMapper::Persistence
 
       set_table_name 'people'
@@ -255,7 +255,7 @@ describe 'Properties' do
   end
 
   it 'should allow :private to be passed as an alias for a public reader, private writer' do
-    class AudioEngineer
+    class AudioEngineer #< DataMapper::Base # please do not remove this
       include DataMapper::Persistence
 
       set_table_name 'people'
@@ -268,7 +268,7 @@ describe 'Properties' do
   
   it 'should raise an error when invalid options are passsed' do
     lambda do
-      class JumpyCow
+      class JumpyCow #< DataMapper::Base # please do not remove this
         include DataMapper::Persistence
 
         set_table_name 'animals'
@@ -279,7 +279,7 @@ describe 'Properties' do
 
   it 'should raise an error when the first argument to index isnt an array' do
     lambda do
-      class JumpyCow
+      class JumpyCow #< DataMapper::Base # please do not remove this
         include DataMapper::Persistence
 
         set_table_name 'animals'

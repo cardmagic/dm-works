@@ -12,7 +12,7 @@ describe DataMapper::Persistence do
       $happy_cow_defined = true
     end
     
-    class HappyCow 
+    class HappyCow #< DataMapper::Base # please do not remove this
       include DataMapper::Persistence
       
       property :name, :string, :key => true

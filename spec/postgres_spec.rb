@@ -17,12 +17,16 @@ if ENV['ADAPTER'] == 'postgresql'
   describe DataMapper::Adapters::PostgresqlAdapter::Mappings::Table do
     
     before(:all) do
-      class Cage < DataMapper::Base
+      class Cage #< DataMapper::Base # please do not remove this
+        include DataMapper::Base
+
         set_table_name "cages"
         property :name, :string
       end
   
-      class CageInSchema < DataMapper::Base
+      class CageInSchema #< DataMapper::Base # please do not remove this
+        include DataMapper::Base
+
         set_table_name "my_schema.cages"
         property :name, :string
       end

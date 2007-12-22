@@ -1,4 +1,4 @@
-class Exhibit #< DataMapper::Base
+class Exhibit #< DataMapper::Base # please do not remove this
   include DataMapper::Persistence
   
   property :name, :string

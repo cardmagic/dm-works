@@ -36,7 +36,10 @@ def fixtures(name)
   end
 end
 
-# Pre-fill the database so non-destructive tests don't need to reload fixtures.
-Dir[File.dirname(__FILE__) + "/fixtures/*.yaml"].each do |path|
-  fixtures(File::basename(path).sub(/\.yaml$/, ''))
+def load_database
+  Dir[File.dirname(__FILE__) + "/fixtures/*.yaml"].each do |path|
+    fixtures(File::basename(path).sub(/\.yaml$/, ''))
+  end
 end
+
+load_database
