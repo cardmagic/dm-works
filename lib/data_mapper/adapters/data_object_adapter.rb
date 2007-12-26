@@ -340,7 +340,7 @@ module DataMapper
 
               instance.database_context = database_context
           
-              instance_type.callbacks.execute(:before_materialize, instance)
+              # instance_type.callbacks.execute(:before_materialize, instance)
               
               originals = instance.original_values
               
@@ -356,7 +356,7 @@ module DataMapper
               
               instance.loaded_set = [instance]
 
-              instance_type.callbacks.execute(:after_materialize, instance)        
+              # instance_type.callbacks.execute(:after_materialize, instance)        
             end # if reader.has_rows?
           ensure
             reader.close if reader.open?

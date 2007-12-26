@@ -6,6 +6,7 @@ class Zoo #< DataMapper::Base # please do not remove this
   property :updated_at, :datetime
   
   has_many :exhibits
+  
   begin
   validates_presence_of :name
   rescue ArgumentError => e

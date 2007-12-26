@@ -76,4 +76,106 @@ describe DataMapper::Callbacks do
     post.instance_variable_get("@three").should eql('blue_cow')
   end
   
+  it "should execute materialization callbacks" do
+    
+    $before_materialize = 0
+    $after_materialize = 0
+    
+    Zoo.before_materialize do
+      $before_materialize += 1
+    end
+    
+    Zoo.after_materialize do
+      $after_materialize += 1
+    end
+    
+    class Zoo
+      
+      # This syntax doesn't work in DM.
+      # Which I don't think is necessarily a bad thing...
+      # Just FYI -Sam
+      def before_materialize
+        $before_materialize += 1
+      end
+      
+      def call_before_materialize
+        $before_materialize += 1
+      end
+      
+      # Example of invalid syntax
+      def after_materialize
+        $after_materialize += 1
+      end
+      
+      def call_after_materialize
+        $after_materialize += 1
+      end
+      
+    end
+    
+    Zoo.before_materialize :call_before_materialize
+    Zoo.after_materialize :call_after_materialize
+    
+    Zoo.before_materialize "$before_materialize += 1"
+    Zoo.after_materialize "$after_materialize += 1"
+    
+    Zoo.first
+    
+    $before_materialize.should == 3
+    $after_materialize.should == 3  
+    
+  end
+  
+  it "should execute creation callbacks" do
+    
+    $before_create = 0
+    $after_create = 0
+    
+    Zoo.before_create do
+      $before_create += 1
+    end
+    
+    Zoo.after_create do
+      $after_create += 1
+    end
+    
+    class Zoo
+      
+      # Example of invalid syntax
+      def before_create
+        $before_create += 1
+      end
+      
+      def call_before_create
+        $before_create += 1
+      end
+      
+      # Example of invalid syntax
+      def after_create
+        $after_create += 1
+      end
+      
+      def call_after_create
+        $after_create += 1
+      end
+      
+    end
+    
+    Zoo.before_create :call_before_create
+    Zoo.after_create :call_after_create
+    
+    Zoo.before_create "$before_create += 1"
+    Zoo.after_create "$after_create += 1"
+    
+    Zoo.create(:name => 'bob')
+    
+    $before_create.should == 3
+    $after_create.should == 3  
+    
+    Zoo.new(:name => 'bob2').save
+    
+    $before_create.should == 6
+    $after_create.should == 6
+  end
+  
 end

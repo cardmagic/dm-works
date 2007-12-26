@@ -35,7 +35,7 @@ DataMapper::Database.setup(configuration_options)
 class DMAnimal < DataMapper::Base #:nodoc:
   set_table_name 'animals'
   property :name, :string
-  property :notes, :string
+  property :notes, :text
 end
 
 class DMPerson < DataMapper::Base #:nodoc:
@@ -100,6 +100,18 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
     N.times { ARAnimal.find(1).name }
   end
   
+  x.report('ActiveRecord:id:raw_result-set') do
+    connection = ARAnimal.connection
+    
+    N.times do
+      result = connection.execute("SELECT name FROM animals WHERE id = 1")
+      result.each do |row|
+        nil
+      end
+      result.free
+    end
+  end
+  
   x.report('DataMapper:id') do
     N.times { DMAnimal[1].name }
   end
@@ -107,6 +119,18 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
   x.report('DataMapper:id:in-session') do
     database do
       N.times { DMAnimal[1].name }
+    end
+  end
+  
+  x.report('DataMapper:id:raw-result-set') do
+    database.adapter.connection do |db|
+      N.times do
+        command = db.create_command("SELECT name FROM animals WHERE id = 1")
+
+        command.execute_reader do |reader|          
+          reader.each { reader.current_row }
+        end
+      end
     end
   end
   

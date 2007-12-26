@@ -77,11 +77,12 @@ module DataMapper
     end
     
     def initialize(details = nil)
-      case details
-      when Hash then self.attributes = details
-      when details.respond_to?(:persistent?) then self.unsafe_attributes = details.attributes
-      when Struct then self.unsafe_attributes = details.attributes
-      when NilClass then nil
+      if details
+        case details
+        when Hash then self.attributes = details
+        when details.respond_to?(:persistent?) then self.unsafe_attributes = details.attributes
+        when Struct then self.unsafe_attributes = details.attributes
+        end
       end
     end
     
