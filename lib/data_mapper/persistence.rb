@@ -390,16 +390,6 @@ module DataMapper
       @lazy_loaded_attributes || @lazy_loaded_attributes = Set.new
     end
     
-    def loaded_attributes
-      pairs = {}
-      
-      database_context.table(self).columns.each do |column|
-        pairs[column.name] = instance_variable_get(column.instance_variable_name)
-      end
-      
-      pairs
-    end
-    
     def update_attributes(update_hash)
       self.attributes = update_hash
       self.save
@@ -463,9 +453,9 @@ module DataMapper
     def original_values=(values)
       values.each_pair do |k,v|
         original_values[k] = case v
-	when String, Date, Time then v.dup
-          # when column.type == :object then Marshal.dump(v)
-	else v
+        	when String, Date, Time then v.dup
+                  # when column.type == :object then Marshal.dump(v)
+        	else v
         end
       end
     end
