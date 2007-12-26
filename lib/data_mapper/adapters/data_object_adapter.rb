@@ -272,6 +272,8 @@ module DataMapper
         keys = []
         values = []
         attributes.each_pair do |key, value|
+          raise ArgumentError.new("#{value.inspect} is not a valid value for #{key.inspect}") if value.is_a?(Array)
+          
           keys << table[key].to_sql
           values << value
         end
