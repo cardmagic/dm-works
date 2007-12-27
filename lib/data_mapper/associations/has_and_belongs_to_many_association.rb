@@ -140,11 +140,6 @@ module DataMapper
         
         include Enumerable
         
-        def initialize(*args)
-          super
-          @new_members = false
-        end
-        
         def each
           entries.each { |item| yield item }
         end
@@ -167,7 +162,7 @@ module DataMapper
         end
         
         def dirty?
-          @new_members || (@entries && @entries.any? { |item| item != @instance && item.dirty? })
+          @entries.any? { |item| item.dirty? } || @associated_keys != @entries.map { |entry| entry.id }
         end
         
         def validate_recursively(event, cleared)
@@ -177,7 +172,7 @@ module DataMapper
         def save_without_validation(database_context)
           unless @entries.nil?
             
-            if @new_members || dirty?
+            if dirty?
               adapter = @instance.database_context.adapter
               
               adapter.connection do |db|
@@ -216,29 +211,23 @@ module DataMapper
                   end
                 end # if adapter.batch_insertable?
               end # unless @entries.empty?
-              
-              @new_members = false
-            end # if @new_members || dirty?
+            end # if dirty?
           end
         end
         
         def <<(member)
-          @new_members = true
           entries << member unless member.nil?
         end
         
         def clear
-          @new_members = true
           @entries = []
         end
         
         def reload!
-          @new_members = false
           @entries = nil
         end
         
         def delete(member)
-          @new_members = true
           if entries.delete(member)
             @instance.database_context.adapter.connection do |db|
               command = db.create_command(association.to_delete_member_sql)
@@ -315,6 +304,7 @@ module DataMapper
 
         def set(results)
           @entries = results
+          @association_keys = results.map { |result| result.id }
         end
 
         def inspect

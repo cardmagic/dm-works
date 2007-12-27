@@ -124,7 +124,7 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
   end
   
   it "should allow association of additional objects (CLEAN)" do
-    pending "http://wm.lighthouseapp.com/projects/4819-datamapper/tickets/92"
+    # pending "http://wm.lighthouseapp.com/projects/4819-datamapper/tickets/92"
     @amazonia.should_not be_dirty
     
     animal = Animal[2]
@@ -132,6 +132,8 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
     
     @amazonia.animals << animal
     @amazonia.animals.size.should == 2
+    @amazonia.should be_dirty
+    
     @amazonia.reload
   end
   
