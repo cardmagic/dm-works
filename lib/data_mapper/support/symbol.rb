@@ -52,14 +52,6 @@ module DataMapper
       def select(klass = nil)    
         Operator.new(self, :select, { :class => klass })
       end
-  
-      def to_s
-        @string_form || (@string_form = id2name.freeze)
-      end
-  
-      def to_proc
-       lambda { |value| value.send(self) }
-      end
       
       def as_instance_variable_name
         @instance_variable_name_form || (@instance_variable_name_form = "@#{id2name}".freeze)
@@ -91,4 +83,14 @@ end # module DataMapper
 
 class Symbol #:nodoc:
   include DataMapper::Support::Symbol
+  
+  # Re-implement Symbol#to_s for performance reasons.
+  # Read http://snippets.dzone.com/posts/show/2423 for info.
+  def to_s
+    @string_form || (@string_form = id2name.freeze)
+  end
+  
+  def to_proc
+    lambda { |value| value.send(self) }
+  end
 end
