@@ -102,7 +102,7 @@ module DataMapper
     #
     # This is what gives us thread safety, boys and girls
     def self.context
-      Thread::current[:context] || Thread::current[:context] = []
+      Thread::current[:database_contexts] || Thread::current[:database_contexts] = []
     end
     
     # Setup creates a database and sets all of your properties for that database.

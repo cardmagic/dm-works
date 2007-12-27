@@ -65,6 +65,11 @@ module DataMapper
               PRAGMA TABLE_INFO(?)
             EOS
           end
+          
+          def to_truncate_sql
+            "DELETE FROM #{to_sql}"
+          end
+          
           alias_method :to_columns_sql, :to_column_exists_sql
           
           def unquote_default(default)

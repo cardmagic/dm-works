@@ -136,7 +136,7 @@ module DataMapper
           
           def truncate!
             @adapter.connection do |db|
-              result = db.create_command("TRUNCATE TABLE #{to_sql}").execute_non_query
+              result = db.create_command(to_truncate_sql).execute_non_query
               database.identity_map.clear!(name)
               result.to_i > 0
             end

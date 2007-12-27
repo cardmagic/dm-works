@@ -122,7 +122,12 @@ describe DataMapper::Callbacks do
     Zoo.first
     
     $before_materialize.should == 3
-    $after_materialize.should == 3  
+    $after_materialize.should == 3
+    
+    Zoo[1]
+    
+    $before_materialize.should == 6
+    $after_materialize.should == 6
     
   end
   

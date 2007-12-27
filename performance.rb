@@ -8,10 +8,10 @@ socket_file = [
 ].find { |path| File.exists?(path) }
 
 configuration_options = {
-  :adapter => 'mysql',
-  :username => 'root',
+  :adapter => 'sqlite3',
+#  :username => 'root',
   :password => '',
-  :database => 'data_mapper_1'
+  :database => 'data_mapper_1.db'
 }
 
 configuration_options[:socket] = socket_file unless socket_file.nil?
@@ -71,6 +71,7 @@ end
 
 class Zoo < DataMapper::Base #:nodoc:
   property :name, :string
+  property :notes, :text
   has_many :exhibits
 end
 
@@ -108,7 +109,7 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
       result.each do |row|
         nil
       end
-      result.free
+      result.free if result.respond_to?(:free)
     end
   end
   
@@ -121,7 +122,7 @@ Benchmark::send(ENV['BM'] || :bmbm, 40) do |x|
       N.times { DMAnimal[1].name }
     end
   end
-  
+    
   x.report('DataMapper:id:raw-result-set') do
     database.adapter.connection do |db|
       N.times do
