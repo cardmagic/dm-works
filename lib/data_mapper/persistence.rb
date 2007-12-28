@@ -15,7 +15,7 @@ module DataMapper
     # This probably needs to be protected
     attr_accessor :loaded_set
     
-    def self.included(klass)
+    def self.included(klass)      
       klass.extend(ClassMethods)
 
       klass.send(:include, Associations)
@@ -30,7 +30,7 @@ module DataMapper
       klass.subclasses
       DataMapper::Persistence::subclasses << klass unless klass == DataMapper::Base
       klass.send(:undef_method, :id) if method_defined?(:id)
-
+      
       # When this class is sub-classed, copy the declared columns.
       klass.class_eval do
         def self.subclasses
@@ -474,16 +474,16 @@ module DataMapper
     def keys
       self.class.table.keys.map do |column|
         column.type_cast_value(instance_variable_get(column.instance_variable_name))
-      end
+      end.compact
     end
     
     def <=>(other)
       keys <=> other.keys
     end
     
-    alias __hash hash
+    # Look to ::included for __hash alias
     def hash
-      @__hash || @__hash = keys.empty? ? __hash : keys.hash
+      @__hash || @__hash = keys.empty? ? super : keys.hash
     end
     
     def eql?(other)

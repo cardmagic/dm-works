@@ -129,7 +129,7 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
       
       
       dunes.animals.should be_empty
-      dunes.send(:animals_keys=, meerkat.id)
+      dunes.send(:animals_keys=, meerkat.key)
       dunes.save.should be_true
     
       dunes.should have(1).animals

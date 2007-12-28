@@ -196,7 +196,7 @@ describe DataMapper::Associations::HasManyAssociation do
       dunes = Exhibit.create(:name => "Dunes")
       
       london.exhibits.should be_empty
-      london.send(:exhibits_keys=, dunes.id)
+      london.send(:exhibits_keys=, dunes.key)
       london.save.should be_true
     
       london.should have(1).exhibits

@@ -20,7 +20,7 @@ module DataMapper
           def #{@association_name}_keys=(value)
             #{@association_name}.clear
             
-            associated_constant = #{@association_name}.association.constant
+            associated_constant = #{@association_name}.association.associated_constant
             associated_table = #{@association_name}.association.associated_table
             associated_constant.all(associated_table.key => [*value]).each do |entry|
               #{@association_name} << entry
@@ -72,7 +72,10 @@ module DataMapper
             
             setter_method = "#{@association_name}=".to_sym
             ivar_name = association.foreign_key_column.instance_variable_name
+            original_value_name = association.foreign_key_column.name
+            
             @items.each do |item|
+              item.original_values.delete(original_value_name)
               item.instance_variable_set(ivar_name, @instance.key)
               @instance.database_context.adapter.save_without_validation(database_context, item)
             end
@@ -85,7 +88,7 @@ module DataMapper
         
         # Adds a new item to the association. The entire item collection is then returned.
         def <<(associated_item)
-          (@items || @items = []) << associated_item
+          items << associated_item
           
           # TODO: Optimize!
           fk = association.foreign_key_column
@@ -95,7 +98,7 @@ module DataMapper
           
           associated_item.send("#{foreign_association.name}=", @instance) if foreign_association
           
-          return @items
+          return self
         end
 
         # Builds a new item and returns it.
@@ -114,7 +117,7 @@ module DataMapper
         
         def set(value)
           values = value.is_a?(Enumerable) ? value : [value]
-          @items = []
+          @items = Support::TypedSet.new(association.associated_constant)
           values.each do |item|
             self << item
           end
@@ -149,7 +152,8 @@ module DataMapper
         def items
           @items || begin
             if @instance.loaded_set.nil?
-              @items = []
+              @items = Support::TypedSet.new(association.associated_constant)
+              return @items
             else              
               associated_items = fetch_sets
               
@@ -170,8 +174,16 @@ module DataMapper
           entries.inspect
         end
         
+        def first
+          items.entries.first
+        end
+        
+        def last
+          items.entries.last
+        end
+        
         def ==(other)
-          (items.size == 1 ? items.first : items) == other
+          (items.size == 1 ? first : items) == other
         end
         
         private
