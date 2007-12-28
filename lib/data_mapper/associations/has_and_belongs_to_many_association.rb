@@ -162,7 +162,8 @@ module DataMapper
         end
         
         def dirty?
-          @entries.any? { |item| item.dirty? } || @associated_keys != @entries.map { |entry| entry.id }
+          return false unless @entries
+          @entries.any? { |item| item.dirty? } || @associated_keys != @entries.map { |entry| entry.keys }
         end
         
         def validate_recursively(event, cleared)
@@ -309,7 +310,8 @@ module DataMapper
             @entries = Support::TypedSet.new(association.constant)
             [*results].each { |item| @entries << item }
           end
-          @association_keys = results.map { |result| result.id }
+          @associated_keys = @entries.map { |entry| entry.key }
+          return @entries
         end
 
         def inspect

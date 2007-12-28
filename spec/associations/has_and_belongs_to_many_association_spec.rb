@@ -54,16 +54,27 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
   
   it "should allow association of additional objects (CLEAN)" do
     # pending "http://wm.lighthouseapp.com/projects/4819-datamapper/tickets/92"
-    @amazonia.should_not be_dirty
     
-    animal = Animal[2]
-    animal.should_not be_dirty
+    ted = Exhibit.create(:name => 'Ted')
+    ted.should_not be_dirty
     
-    @amazonia.animals << animal
-    @amazonia.animals.size.should == 2
-    @amazonia.should be_dirty
+    zest = Animal.create(:name => 'Zest')
+    zest.should_not be_dirty
     
-    @amazonia.reload
+    ted.animals << zest
+    ted.should be_dirty
+    ted.save
+    
+    ted.reload!
+    ted.should_not be_dirty
+    ted.should have(1).animals
+    
+    ted2 = Exhibit[ted.key]
+    ted2.should_not be_dirty
+    ted2.should have(1).animals
+    
+    ted2.destroy!
+    zest.destroy!
   end
   
   it 'should allow you to fill and clear an association' do
