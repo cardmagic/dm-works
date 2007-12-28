@@ -80,8 +80,8 @@ module DataMapper
       if details
         case details
         when Hash then self.attributes = details
-        when details.respond_to?(:persistent?) then self.unsafe_attributes = details.attributes
-        when Struct then self.unsafe_attributes = details.attributes
+        when details.respond_to?(:persistent?) then self.private_attributes = details.attributes
+        when Struct then self.private_attributes = details.attributes
         end
       end
     end
@@ -390,18 +390,6 @@ module DataMapper
       pairs
     end
     
-    def unsafe_attributes=(values_hash)
-      table = database_context.table(self.class)
-      
-      values_hash.each_pair do |key, value|
-        if respond_to?(key)
-          send("#{key}=", value)
-        elsif column = table[key]
-          instance_variable_set(column.instance_variable_name, value)          
-        end
-      end
-    end
-    
     def dirty?
       result = database_context.table(self).columns.any? do |column|
         if column.type == :object
@@ -538,6 +526,18 @@ module DataMapper
 
       pairs
     end
-    
+
+    # private method for setting any/all attribute values, regardless of visibility
+    def private_attributes=(values_hash)
+      table = database_context.table(self.class)
+
+      values_hash.each_pair do |key, value|
+        if respond_to?(key)
+          send("#{key}=", value)
+        elsif column = table[key]
+          instance_variable_set(column.instance_variable_name, value)
+        end
+      end
+    end
   end
 end
