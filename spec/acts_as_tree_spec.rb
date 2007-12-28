@@ -10,6 +10,10 @@ describe('A tree') do
 
       belongs_to :parent, :class => 'Node'
       has_many :children, :class => 'Node', :foreign_key => 'parent_id'
+      
+      def <=>(other)
+        name <=> other.name
+      end
     end
     
     Node.auto_migrate!
@@ -56,6 +60,8 @@ describe('A tree') do
     grand.children.should include(one)
     one.reload
     one.children.should include(one_one)
+    
+    grand.children.first.children.first.should eql(one_one)
   end
   
 end

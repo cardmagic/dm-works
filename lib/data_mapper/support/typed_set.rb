@@ -2,19 +2,19 @@ require 'set'
 
 module DataMapper
   module Support
-    class TypedSet < Set
+    class TypedSet
       
-      alias __append <<
-      alias __init initialize
+      include ::Enumerable
       
       def initialize(*types)
-        super()
-        @__types = types
+        @types = types
+        @set = SortedSet.new
       end
       
       def <<(item)
-        raise ArgumentError.new("#{item.inspect} must be a kind of: #{@__types.inspect}") unless @__types.any? { |type| type === item }
-        __append(item)
+        raise ArgumentError.new("#{item.inspect} must be a kind of: #{@types.inspect}") unless @types.any? { |type| type === item }
+        @set << item
+        return self
       end
       
       def concat(values)
@@ -23,8 +23,38 @@ module DataMapper
       end
       
       def inspect
-        "#<DataMapper::Support::TypedSet#{@__types.inspect}: {#{entries.inspect[1...-1]}}>"
+        "#<DataMapper::Support::TypedSet#{@types.inspect}: {#{entries.inspect[1...-1]}}>"
+      end
+      
+      def each
+        @set.each { |item| yield(item) }
+      end
+      
+      def delete?(item)
+        @set.delete?(item)
+      end
+      
+      def size
+        @set.size
+      end
+      alias length size
+      
+      def empty?
+        @set.empty?
+      end
+      
+      def clear
+        @set.clear
       end
     end
+  end
+end
+
+class Class
+  
+  include Comparable
+  
+  def <=>(other)
+    name <=> other.name
   end
 end

@@ -15,9 +15,12 @@ module DataMapper
     # This probably needs to be protected
     attr_accessor :loaded_set
     
-    def self.included(klass)      
+    include Comparable
+    
+    def self.included(klass)
+      
       klass.extend(ClassMethods)
-
+      
       klass.send(:include, Associations)
       klass.send(:include, Validations)
       klass.send(:include, CallbacksHelper)

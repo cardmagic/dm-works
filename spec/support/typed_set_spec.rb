@@ -23,4 +23,22 @@ describe DataMapper::Support::TypedSet do
     
   end
   
+  it "should be sorted" do
+    
+    s = DataMapper::Support::TypedSet.new(Numeric)
+    
+    s << 8
+    s << 4
+    s << 9
+    s << 27
+    s << 30
+    s << 1
+    s << 0
+    s << 5
+    s << 3
+    
+    s.entries.first.should eql(0)
+    s.entries.last.should eql(30)
+  end
+  
 end
