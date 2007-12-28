@@ -143,6 +143,15 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
     end
   end
 
+  it "should allow you to 'append' multiple associated objects at once" do
+    dunes = Exhibit.create(:name => 'Dunes')
+    
+    lambda { dunes.animals << @amazonia.animals }.should_not raise_error(ArgumentError)
+    lambda { dunes.animals << Animal.all }.should_not raise_error(ArgumentError)
+    
+    dunes.destroy!
+  end
+  
   it "should raise an error when attempting to associate an object not of the correct type (assuming added model doesn't inherit from the correct type)" do
     # pending("see: http://wm.lighthouseapp.com/projects/4819-datamapper/tickets/91")
     @amazonia.animals.should_not be_empty

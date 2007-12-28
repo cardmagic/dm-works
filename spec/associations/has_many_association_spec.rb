@@ -188,4 +188,25 @@ describe DataMapper::Associations::HasManyAssociation do
     u1.comments.should_not be_empty
     u1.comments.should include(c1)
   end
+  
+  it "should allow updates to associations using association_keys=" do
+    # pending "http://wm.lighthouseapp.com/projects/4819-datamapper/tickets/109-associations-should-support-association_keys-methods"
+    database(:default) do
+      london = Zoo.create(:name => "London")
+      dunes = Exhibit.create(:name => "Dunes")
+      
+      london.exhibits.should be_empty
+      london.send(:exhibits_keys=, dunes.id)
+      london.save.should be_true
+    
+      london.should have(1).exhibits
+      london.exhibits.should include(dunes)
+      
+      london.reload!
+      london.should have(1).exhibits
+      
+      london.destroy!
+      dunes.destroy!
+    end
+  end
 end

@@ -228,7 +228,13 @@ module DataMapper
         end
         
         def <<(member)
-          entries << member unless member.nil?
+          return nil unless member
+          
+          if member.is_a?(Enumerable)
+            member.each { |entry| entries << entry }
+          else
+            entries << member
+          end
         end
         
         def clear
