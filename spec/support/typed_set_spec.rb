@@ -6,14 +6,20 @@ describe DataMapper::Support::TypedSet do
     
     s = DataMapper::Support::TypedSet.new(Zoo, Animal)
     
-    lambda { s << Zoo.first }.should_not raise_error(ArgumentError)
-    s.size.should == 1
+    lambda do
+      s << Zoo.first
+      s.size.should == 1
+    end.should_not raise_error(ArgumentError)
+        
+    lambda do
+      s << Animal.first
+      s.size.should == 2
+    end.should_not raise_error(ArgumentError)
     
-    lambda { s << Animal.first }.should_not raise_error(ArgumentError)
-    s.size.should == 2
-    
-    lambda { s << Exhibit.first }.should raise_error(ArgumentError)
-    s.size.should == 2
+    lambda do
+      s << Exhibit.first
+      s.size.should == 2
+    end.should raise_error(ArgumentError)
     
   end
   

@@ -220,7 +220,7 @@ module DataMapper
         end
         
         def clear
-          @entries = []
+          @entries = Support::TypedSet.new(association.constant)
         end
         
         def reload!
@@ -228,7 +228,7 @@ module DataMapper
         end
         
         def delete(member)
-          if entries.delete(member)
+          if entries.delete?(member)
             @instance.database_context.adapter.connection do |db|
               command = db.create_command(association.to_delete_member_sql)
               command.execute_non_query(@instance.key, member.key)
@@ -259,7 +259,7 @@ module DataMapper
           @entries || @entries = begin
 
             if @instance.loaded_set.nil?
-              []
+              Support::TypedSet.new(association.constant)
             else
               
               associated_items = Hash.new { |h,k| h[k] = [] }
@@ -303,12 +303,25 @@ module DataMapper
         end
 
         def set(results)
-          @entries = results
+          if results.is_a?(Support::TypedSet)
+            @entries = results
+          else
+            @entries = Support::TypedSet.new(association.constant)
+            [*results].each { |item| @entries << item }
+          end
           @association_keys = results.map { |result| result.id }
         end
 
         def inspect
           entries.inspect
+        end
+        
+        def first
+          entries.entries.first
+        end
+        
+        def last
+          entries.entries.last
         end
       end
     

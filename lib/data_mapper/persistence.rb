@@ -366,26 +366,6 @@ module DataMapper
     def new_record?
       @new_record.nil? || @new_record
     end
-
-    def ==(other)
-      other.is_a?(self.class) && private_attributes == other.send(:private_attributes)
-    end
-    
-    # Returns the difference between two objects, in terms of their attributes. 
-    def ^(other)
-      results = {}
-      
-      self_attributes, other_attributes = attributes, other.attributes
-      
-      self_attributes.each_pair do |k,v|
-        other_value = other_attributes[k]
-        unless v == other_value
-          results[k] = [v, other_value]
-        end
-      end
-      
-      results      
-    end
     
     def lazy_loaded_attributes
       @lazy_loaded_attributes || @lazy_loaded_attributes = Set.new
@@ -503,6 +483,47 @@ module DataMapper
       end
     end
 
+    def keys
+      self.class.table.keys.map do |column|
+        column.type_cast_value(instance_variable_get(column.instance_variable_name))
+      end
+    end
+    
+    def <=>(other)
+      keys <=> other.keys
+    end
+    
+    alias __hash hash
+    def hash
+      @__hash || @__hash = keys.empty? ? __hash : keys.hash
+    end
+    
+    def eql?(other)
+      return false unless other.is_a?(self.class)
+      comparator = keys.empty? ? :object_id : :keys
+      send(comparator) == other.send(comparator)
+    end
+    
+    def ==(other)
+      other.is_a?(self.class) && private_attributes == other.send(:private_attributes)
+    end
+    
+    # Returns the difference between two objects, in terms of their attributes. 
+    def ^(other)
+      results = {}
+      
+      self_attributes, other_attributes = attributes, other.attributes
+      
+      self_attributes.each_pair do |k,v|
+        other_value = other_attributes[k]
+        unless v == other_value
+          results[k] = [v, other_value]
+        end
+      end
+      
+      results      
+    end
+    
     private
 
     # return all attributes, regardless of their visibility

@@ -51,7 +51,7 @@ describe('A tree') do
     grand.should have(2).children
     
     root.should == grand # true since +root+ and +grand+ are objects with identical types and attributes.
-    root.should_not eql(grand) # false since +root+ and +grand+ are in different sessions.
+    root.object_id.should_not eql(grand.object_id) # false since +root+ and +grand+ are in different sessions.
     
     grand.children[0].children[0].name.should == 'one_one'
   end
