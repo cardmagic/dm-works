@@ -36,6 +36,11 @@ describe "Save Commands" do
     end
   end
   
+  it "should return success of save call, not status of query execution" do
+    # pending "http://wm.lighthouseapp.com/projects/4819/tickets/54-save-should-return-success"
+    Exhibit.first.save.should be_true
+  end
+  
   it "should be invalid if invalid associations are loaded" do
     miami = Zoo.first(:name => 'Miami')
     fish_fancy = Exhibit.new

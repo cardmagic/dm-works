@@ -204,7 +204,7 @@ module DataMapper
           
           callback(instance, :before_save)
           
-          return false unless instance.new_record? || instance.dirty?
+          return true unless instance.new_record? || instance.dirty?
           
           result = send(event, database_context, instance)
           
