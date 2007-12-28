@@ -1,6 +1,8 @@
 require File.dirname(__FILE__) + "/spec_helper"
 
-describe DataMapper::Persistence do
+# Can't describe DataMapper::Persistence because
+# rspec will include it for some crazy reason!
+describe "DataMapper::Persistence" do
   
   it "attributes method should load all lazy-loaded values" do
     Animal.first(:name => 'Cup').attributes[:notes].should == 'I am a Cup!'

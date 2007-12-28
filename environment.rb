@@ -46,5 +46,5 @@ unless defined?(INITIAL_CLASSES)
 
   # Save the initial database layout so we can put everything back together
   # after auto migrations testing
-  INITIAL_CLASSES = Array.new(DataMapper::Persistence.subclasses)
+  INITIAL_CLASSES = Array.new(DataMapper::Persistence.subclasses.to_a)
 end

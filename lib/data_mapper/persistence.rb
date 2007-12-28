@@ -69,7 +69,7 @@ module DataMapper
     
     # Track classes that include this module.
     def self.subclasses
-      @subclasses || (@subclasses = [])
+      @subclasses || (@subclasses = Support::TypedSet.new(Class))
     end
     
     def self.dependencies

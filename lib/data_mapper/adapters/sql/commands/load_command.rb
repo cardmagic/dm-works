@@ -56,10 +56,14 @@ module DataMapper
                 # setting both the original_value, and the
                 # instance-variable through method chaining to avoid
                 # lots of extra short-lived local variables.
-                type_casted_values[column.name] = instance.instance_variable_set(
-                  column.instance_variable_name,
-                  column.type_cast_value(values[index])
-                )
+                begin
+                  type_casted_values[column.name] = instance.instance_variable_set(
+                    column.instance_variable_name,
+                    column.type_cast_value(values[index])
+                  )
+                rescue => e
+                  raise MaterializationError.new("Failed to materialize column #{column.name.inspect} with value #{values[index].inspect}\n#{e.display}")
+                end
               end
               
               instance.original_values = type_casted_values
@@ -71,7 +75,11 @@ module DataMapper
               return instance
               
             rescue => e
-              raise MaterializationError.new("Failed to materialize row: #{values.inspect}\n#{e.to_yaml}")
+              if e.is_a?(MaterializationError)
+                raise e
+              else
+                raise MaterializationError.new("Failed to materialize row: #{values.inspect}\n#{e.display}")
+              end
             end
 
             def loaded_set

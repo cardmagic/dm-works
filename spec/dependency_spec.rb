@@ -1,6 +1,8 @@
 require File.dirname(__FILE__) + "/spec_helper"
 
-describe DataMapper::Persistence do
+# Can't describe DataMapper::Persistence because
+# rspec will include it for some crazy reason!
+describe "DataMapper::Persistence" do
   
   it "should be able to add a dependency for a class not yet defined" do
     
