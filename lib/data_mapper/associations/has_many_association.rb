@@ -72,6 +72,7 @@ module DataMapper
           items.each { |item| yield item }
         end
         
+        # Adds a new item to the association. The entire item collection is then returned.
         def <<(associated_item)
           (@items || @items = []) << associated_item
           
@@ -86,12 +87,14 @@ module DataMapper
           return @items
         end
 
+        # Builds a new item and returns it.
         def build(options)
           item = association.associated_constant.new(options)
           self << item
           item
         end
-
+        
+        # Builds and saves a new item, then returns it.
         def create(options)
           item = build(options)
           item.save
