@@ -133,6 +133,17 @@ module DataMapper
           def #{@association_name}=(value)
             #{@association_name}.set(value)
           end
+          
+          private
+          def #{@association_name}_keys=(value)
+            #{@association_name}.clear
+            
+            associated_constant = #{@association_name}.association.constant
+            associated_table = #{@association_name}.association.associated_table
+            associated_constant.all(associated_table.key => [*value]).each do |entry|
+              #{@association_name} << entry
+            end
+          end
         EOS
       end
       

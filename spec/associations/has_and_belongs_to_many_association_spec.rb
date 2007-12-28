@@ -121,16 +121,26 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
     walter.destroy!
   end
   
-  it "should allow updates to associations using association_ids[]" do
-    pending "Awaiting implementation of association_ids[]"
-    meerkat = Animal.new(:name => "Meerkat")
-    @amazonia.animals.size.should == 1
+  it "should allow updates to associations using association_keys=" do
+    # pending "http://wm.lighthouseapp.com/projects/4819-datamapper/tickets/109-associations-should-support-association_keys-methods"
+    database(:default) do
+      meerkat = Animal.create(:name => "Meerkat")
+      dunes = Exhibit.create(:name => "Dunes")
+      
+      
+      dunes.animals.should be_empty
+      dunes.send(:animals_keys=, meerkat.id)
+      dunes.save.should be_true
     
-    @amazonia.animal_ids << meerkat.id
-    @amazonia.save
-    
-    @amazonia.animals.size.should == 2
-    @amazonia.animals.should include?(meerkat)
+      dunes.should have(1).animals
+      dunes.animals.should include(meerkat)
+      
+      dunes.reload!
+      dunes.should have(1).animals
+      
+      dunes.destroy!
+      meerkat.destroy!
+    end
   end
 
   it "should raise an error when attempting to associate an object not of the correct type (assuming added model doesn't inherit from the correct type)" do
