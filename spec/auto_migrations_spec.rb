@@ -2,7 +2,6 @@ require File.dirname(__FILE__) + "/spec_helper"
 
 describe DataMapper::AutoMigrations do
   before(:all) do
-    p DataMapper::Persistence.subclasses
     DataMapper::Persistence.drop_all_tables!
     DataMapper::Persistence.subclasses.clear
   end

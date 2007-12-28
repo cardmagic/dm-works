@@ -34,7 +34,7 @@ module DataMapper
       # When this class is sub-classed, copy the declared columns.
       klass.class_eval do
         def self.subclasses
-          @subclasses || (@subclasses = [])
+          @subclasses || (@subclasses = Support::TypedSet.new(Class))
         end
         
         def self.inherited(subclass)
