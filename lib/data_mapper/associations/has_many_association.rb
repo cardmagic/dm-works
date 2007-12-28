@@ -34,6 +34,11 @@ module DataMapper
         
         include Enumerable
         
+        # Returns true if the association has zero items
+        def nil?
+          @items.empty?
+        end
+        
         def dirty?
           @items && @items.any? { |item| item.dirty? }
         end

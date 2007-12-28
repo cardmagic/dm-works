@@ -27,6 +27,7 @@ describe DataMapper::Associations::HasManyAssociation do
     project = Project.new
     project.sections.should be_a_kind_of(Enumerable)
     project.sections.should be_empty
+    project.sections.should be_nil
   end
   
   it "should display correctly when inspected" do

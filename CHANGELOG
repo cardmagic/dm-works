@@ -139,3 +139,7 @@
 * Remove HasOneAssociation, Make HasManyAssociation impersonate has_one relationships
 * Added #get method
 * Persistence module added, inheriting from DataMapper::Base no longer necessary
+
+-- 0.3.0
+* HasManyAssociation::Set now has a nil? method, so we can do stuff like cage.animal.nil?
+
