@@ -24,8 +24,10 @@ dm = namespace :dm do
   Spec::Rake::SpecTask.new('spec') do |t|
     t.spec_opts = ["--format", "specdoc", "--colour"]
     t.spec_files = FileList[(ENV['FILES'] || 'spec/**/*_spec.rb')]
-    t.rcov = true
-    t.rcov_opts = ['--exclude', 'examples']
+    unless ENV['NO_RCOV']
+      t.rcov = true
+      t.rcov_opts = ['--exclude', 'examples,spec']
+    end
   end
   
   desc "Run comparison with ActiveRecord"
