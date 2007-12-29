@@ -11,15 +11,17 @@ module DataMapper
         database_context.save(self)
       end
       
+      def save!
+        raise ValidationError.new() unless save
+        return true
+      end
+      
       def reload!
         database_context.first(self.class, key, :select => original_values.keys, :reload => true)
         self.loaded_associations.each { |association| association.reload! }
         self
       end
-      
-      def reload
-        reload!
-      end
+      alias reload reload!
       
       def destroy!
         database_context.destroy(self)
@@ -80,8 +82,12 @@ module DataMapper
         end
         
         def [](*keys)
+          # Eventually this ArgumentError should be removed. It's only here to help
+          # migrate users away from the [options_hash] syntax, which is no longer supported.
           raise ArgumentError.new('Hash is not a valid key') if keys.size == 1 && keys.first.is_a?(Hash)
-          database.get(self, keys)
+          instance = database.get(self, keys)
+          raise ObjectNotFoundError.new() unless instance
+          return instance
         end
         
         def create(attributes)

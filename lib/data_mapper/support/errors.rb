@@ -1,6 +1,8 @@
 module DataMapper
   
-  class InvalidRecord < StandardError; end
+  class ValidationError < StandardError; end
+  
+  class ObjectNotFoundError < StandardError; end
   
   class MaterializationError < StandardError; end
   

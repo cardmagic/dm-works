@@ -4,6 +4,11 @@ require File.dirname(__FILE__) + "/spec_helper"
 # rspec will include it for some crazy reason!
 describe "DataMapper::Persistence" do
   
+  it "should raise ObjectNotFoundError for missing objects with the indexer finder" do
+    # pending "http://wm.lighthouseapp.com/projects/4819-datamapper/tickets/111-should-raise-objectnotfounderror-on-the-indexer-finder"
+    lambda { Zoo[900] }.should raise_error(DataMapper::ObjectNotFoundError)
+  end
+  
   it "attributes method should load all lazy-loaded values" do
     Animal.first(:name => 'Cup').attributes[:notes].should == 'I am a Cup!'
   end

@@ -85,4 +85,10 @@ describe "Save Commands" do
     end
   end
   
+  it "save! should raise an error if validation failed" do
+    # pending "http://wm.lighthouseapp.com/projects/4819/tickets/29-dm-context-write"
+    empty = Zoo.new
+    lambda { empty.save! }.should raise_error(DataMapper::ValidationError)
+  end
+  
 end
