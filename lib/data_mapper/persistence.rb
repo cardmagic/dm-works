@@ -338,21 +338,6 @@ module DataMapper
         reset_attribute[self]
       end
     end
-
-    # Mass-assign mapped fields.
-    def attributes=(values_hash)
-      table = database_context.table(self.class)
-      
-      values_hash.delete_if do |key, value|
-        !self.class.public_method_defined?("#{key}=")
-      end.each_pair do |key, value|
-        if respond_to?(key)
-          send("#{key}=", value)
-        elsif column = table[key]
-          instance_variable_set(column.instance_variable_name, value)          
-        end
-      end
-    end
     
     def database_context
       @database_context || ( @database_context = database )
@@ -391,6 +376,18 @@ module DataMapper
       end
       
       pairs
+    end
+    
+    # Mass-assign mapped fields.
+    def attributes=(values_hash)
+      table = database_context.table(self.class)
+      
+      values_hash.each_pair do |k,v|
+        setter_name = k.to_s.ensure_ends_with('=')
+        if self.class.public_method_defined?(setter_name)
+          send(setter_name, v)
+        end
+      end
     end
     
     def dirty?

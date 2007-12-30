@@ -294,4 +294,16 @@ describe 'Properties' do
       end
     end.should raise_error(ArgumentError)
   end
+  
+  it "should assign to public setters" do
+    x = Project.new
+    x.attributes = { :set_us_up_the_bomb => true }
+    x.should be_set_up_for_bomb
+  end
+  
+  it "should protect private setters" do
+    x = Project.new
+    x.attributes = { :be_wery_sneaky => true }
+    x.should_not be_wery_sneaky
+  end
 end
