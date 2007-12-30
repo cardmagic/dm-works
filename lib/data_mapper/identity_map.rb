@@ -37,7 +37,7 @@ module DataMapper
     
     private
     def mapped_class(klass)
-      if ! klass.superclass.respond_to?(:persistent?)
+      unless klass.superclass.respond_to?(:persistent?)
         klass
       else
         mapped_class(klass.superclass)

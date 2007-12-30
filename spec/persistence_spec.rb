@@ -327,4 +327,8 @@ describe 'Properties' do
     x3.name.should eql('Bob')
     x3.should_not be_initialized
   end
+  
+  it "should report persistence" do
+    Tomato.should be_persistent
+  end
 end
