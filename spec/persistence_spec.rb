@@ -306,4 +306,25 @@ describe 'Properties' do
     x.attributes = { :be_wery_sneaky => true }
     x.should_not be_wery_sneaky
   end
+  
+  it "should not call initialize on materialization" do
+    # pending "http://wm.lighthouseapp.com/projects/4819-datamapper/tickets/113-use-allocate-to-materialize-objects"
+    x = Tomato.new
+    x.should be_initialized
+    x.save!
+    x.name.should eql('Ugly')
+    
+    x.name = 'Bob'
+    x.save!
+    
+    x2 = Tomato.first(:name => 'Bob')
+    x2.should == x
+    x2.name.should eql('Bob')
+    x2.should_not be_initialized
+    
+    x3 = Tomato.get(x.key)
+    x3.should == x
+    x3.name.should eql('Bob')
+    x3.should_not be_initialized
+  end
 end

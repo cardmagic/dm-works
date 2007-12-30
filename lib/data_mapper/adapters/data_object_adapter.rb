@@ -328,7 +328,7 @@ module DataMapper
               end
 
               if instance.nil?
-                instance = instance_type.new
+                instance = instance_type.allocate()
                 instance.instance_variable_set(:@__key, instance_id)
                 instance.instance_variable_set(:@new_record, false)
                 database_context.identity_map.set(instance)

@@ -92,7 +92,7 @@ module DataMapper
                 instance = @database_context.identity_map.get(@klass, instance_id)
 
                 if instance.nil? || @reload
-                  instance = instance_type.new() if instance.nil?
+                  instance = instance_type.allocate() if instance.nil?
                   instance.instance_variable_set(:@__key, instance_id)
                   instance.instance_variable_set(:@new_record, false)
                   @database_context.identity_map.set(instance)
