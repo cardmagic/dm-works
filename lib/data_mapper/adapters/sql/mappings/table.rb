@@ -343,6 +343,10 @@ module DataMapper
             queries
           end
           
+          def to_truncate_sql
+            "TRUNCATE TABLE #{to_sql}"
+          end
+          
           def to_drop_sql
             @to_drop_sql || @to_drop_sql = "DROP TABLE #{to_sql}"
           end

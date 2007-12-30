@@ -8,10 +8,10 @@ socket_file = [
 ].find { |path| File.exists?(path) }
 
 configuration_options = {
-  :adapter => 'sqlite3',
-#  :username => 'root',
+  :adapter => 'mysql',
+  :username => 'root',
   :password => '',
-  :database => 'data_mapper_1.db'
+  :database => 'data_mapper_1'
 }
 
 configuration_options[:socket] = socket_file unless socket_file.nil?
