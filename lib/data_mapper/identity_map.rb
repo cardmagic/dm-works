@@ -1,5 +1,3 @@
-require 'data_mapper/support/weak_hash'
-
 module DataMapper
   
   # Tracks objects to help ensure that each object gets loaded only once.

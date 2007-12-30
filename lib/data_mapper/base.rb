@@ -1,10 +1,5 @@
 require 'data_mapper/persistence'
 
-begin
-  require 'ferret'
-rescue LoadError
-end
-
 module DataMapper
 
   class Base

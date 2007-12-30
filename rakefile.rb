@@ -26,7 +26,7 @@ dm = namespace :dm do
     t.spec_files = FileList[(ENV['FILES'] || 'spec/**/*_spec.rb')]
     unless ENV['NO_RCOV']
       t.rcov = true
-      t.rcov_opts = ['--exclude', 'examples,spec']
+      t.rcov_opts = ['--exclude', 'examples,spec,environment.rb']
     end
   end
   

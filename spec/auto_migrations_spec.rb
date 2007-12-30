@@ -92,7 +92,9 @@ describe DataMapper::AutoMigrations do
   after(:all) do
     DataMapper::Persistence.subclasses.clear
     DataMapper::Persistence.subclasses.concat INITIAL_CLASSES
-    DataMapper::Persistence.auto_migrate!
+    
+    # Use DataMapper::Base to boost spec coverage since it delegates to Persistence anyways.
+    DataMapper::Base.auto_migrate!
 
     load_database
   end
