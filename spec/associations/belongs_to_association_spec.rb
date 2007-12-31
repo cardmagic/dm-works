@@ -9,6 +9,13 @@ describe DataMapper::Associations::BelongsToAssociation do
     @aviary = Exhibit.first(:name => 'Monkey Mayhem')
   end
   
+  it "should provide a shallow_append method that doesn't impact the complementary association" do
+    project = Project.new
+    section = Section.new
+    section.send(:project_association).shallow_append(project)
+    project.sections.should be_empty
+  end
+  
   it 'has a zoo association' do
     @aviary.zoo.class.should == Zoo
     Exhibit.new.zoo.should == nil

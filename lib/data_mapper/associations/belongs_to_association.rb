@@ -107,10 +107,15 @@ module DataMapper
         end
         
         def set(val)
-          raise "RecursionError" if val == @instance
+          shallow_append(val)
+        end
+        
+        def shallow_append(val)
+          raise RecursionError.new if val == @instance
           @new_member = true
           @instance.instance_variable_set(association.foreign_key_column.instance_variable_name, val.key)
           @associated = val
+          return self
         end
         
         def ensure_foreign_key!

@@ -86,21 +86,6 @@ module DataMapper
           items.each { |item| yield item }
         end
         
-        # Adds a new item to the association. The entire item collection is then returned.
-        def <<(associated_item)
-          items << associated_item
-          
-          # TODO: Optimize!
-          fk = association.foreign_key_column
-          foreign_association = association.associated_table.associations.find do |mapping|
-            mapping.is_a?(BelongsToAssociation) && mapping.foreign_key_column == fk
-          end
-          
-          associated_item.send("#{foreign_association.name}=", @instance) if foreign_association
-          
-          return self
-        end
-
         # Builds a new item and returns it.
         def build(options)
           item = association.associated_constant.new(options)
@@ -121,6 +106,30 @@ module DataMapper
           values.each do |item|
             self << item
           end
+        end
+        
+        # Adds a new item to the association. The entire item collection is then returned.
+        def <<(member)
+          shallow_append(member)
+          
+          # TODO: Optimize logic demarcated by begin...end block.
+          begin
+            fk = association.foreign_key_column
+            foreign_association = association.associated_table.associations.find do |mapping|
+              mapping.is_a?(BelongsToAssociation) && mapping.foreign_key_column == fk
+            end
+          
+            if foreign_association
+              member.send("#{foreign_association.name}_association").shallow_append(@instance)
+            end
+          end
+          
+          return self
+        end
+        
+        def shallow_append(member)
+          self.items << member
+          return self
         end
         
         def method_missing(symbol, *args, &block)

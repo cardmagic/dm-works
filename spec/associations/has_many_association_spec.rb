@@ -23,6 +23,13 @@ describe DataMapper::Associations::HasManyAssociation do
     @zoo.destroy!
   end
   
+  it "should provide a shallow_append method that doesn't impact the complementary association" do
+    project = Project.new
+    section = Section.new
+    project.sections.shallow_append(section)
+    section.project.should be_nil
+  end
+  
   it "should return an empty Enumerable for new objects" do
     project = Project.new
     project.sections.should be_a_kind_of(Enumerable)
