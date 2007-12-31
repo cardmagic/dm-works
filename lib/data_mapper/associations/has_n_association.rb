@@ -106,6 +106,22 @@ module DataMapper
         associated_table.columns.reject { |column| column.lazy? }
       end
       
+      def complementary_association
+        @complementary_association || begin
+          @complementary_association = associated_table.associations.find do |mapping|
+            mapping.is_a?(BelongsToAssociation) && mapping.foreign_key_column == foreign_key_column
+          end
+          
+          if @complementary_association
+            class << self
+              attr_accessor :complementary_association
+            end
+          end
+          
+          return @complementary_association
+        end
+      end
+      
       def finder_options
         @finder_options || @finder_options = @options.reject { |k,v| self.class::OPTIONS.include?(k) }
       end

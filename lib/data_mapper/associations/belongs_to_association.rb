@@ -41,6 +41,22 @@ module DataMapper
         @foreign_key_name || @foreign_key_name = (@options[:foreign_key] || "#{name}_#{key_table.key.name}".to_sym)
       end
       
+      def complementary_association
+        @complementary_association || begin
+          @complementary_association = key_table.associations.find do |mapping|            
+            mapping.is_a?(HasManyAssociation) && mapping.foreign_key_column.name == foreign_key_column.name
+          end
+          
+          if @complementary_association
+            class << self
+              attr_accessor :complementary_association
+            end
+          end
+          
+          return @complementary_association
+        end
+      end
+      
       def to_sql
         "JOIN #{key_table.to_sql} ON #{foreign_key_column.to_sql(true)} = #{primary_key_column.to_sql(true)}"
       end
@@ -106,24 +122,31 @@ module DataMapper
           "#{@association_name}=".to_sym
         end
         
-        def set(val)
-          shallow_append(val)
+        def set(member)
+          shallow_append(member)
+            
+          if complement = association.complementary_association
+            member.send(complement.name).shallow_append(@instance)
+          end
+          
+          return self
         end
         
         def shallow_append(val)
           raise RecursionError.new if val == @instance
-          @new_member = true
           @instance.instance_variable_set(association.foreign_key_column.instance_variable_name, val.key)
           @associated = val
           return self
         end
+        
+        private
         
         def ensure_foreign_key!
           if @associated
             @instance.instance_variable_set(association.foreign_key.instance_variable_name, @associated.key)
           end
         end
-            
+        
       end # class Instance
     end
     

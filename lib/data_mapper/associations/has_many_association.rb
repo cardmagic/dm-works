@@ -111,17 +111,9 @@ module DataMapper
         # Adds a new item to the association. The entire item collection is then returned.
         def <<(member)
           shallow_append(member)
-          
-          # TODO: Optimize logic demarcated by begin...end block.
-          begin
-            fk = association.foreign_key_column
-            foreign_association = association.associated_table.associations.find do |mapping|
-              mapping.is_a?(BelongsToAssociation) && mapping.foreign_key_column == fk
-            end
-          
-            if foreign_association
-              member.send("#{foreign_association.name}_association").shallow_append(@instance)
-            end
+                    
+          if complement = association.complementary_association
+            member.send("#{complement.name}_association").shallow_append(@instance)
           end
           
           return self
