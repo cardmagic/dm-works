@@ -180,8 +180,12 @@ module DataMapper
               @key = @columns.find { |column| column.key? }
               
               if @key.nil?
-                @key = add_column(:id, :integer, :serial => true, :ordinal => -1)
-                @klass.send(:attr_reader, :id) unless @klass.nil? || @klass.methods.include?(:id)
+                unless @klass.nil?
+                  @klass.send(:property, :id, :integer, :serial => true, :ordinal => -1)
+                  @key = self[:id]
+                else
+                  @key = add_column(:id, :integer, :serial => true, :ordinal => -1)
+                end
               end
               
               @key

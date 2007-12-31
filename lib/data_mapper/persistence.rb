@@ -1,4 +1,5 @@
 require 'data_mapper/property'
+require 'data_mapper/attributes'
 require 'data_mapper/support/active_record_impersonation'
 require 'data_mapper/support/serialization'
 require 'data_mapper/validations'
@@ -21,6 +22,7 @@ module DataMapper
       
       klass.extend(ClassMethods)
       
+      klass.send(:include, Attributes)
       klass.send(:include, Associations)
       klass.send(:include, Validations)
       klass.send(:include, CallbacksHelper)
@@ -121,7 +123,7 @@ module DataMapper
       PROPERTY_OPTIONS = [
         :public, :protected, :private, :accessor, :reader, :writer,
         :lazy, :default, :nullable, :key, :serial, :column, :size, :length,
-        :index, :check
+        :index, :check, :ordinal
       ]
     
       # Adds property accessors for a field that you'd like to be able to modify.  The DataMapper doesn't
@@ -164,7 +166,10 @@ module DataMapper
 
         raise(ArgumentError.new, "property visibility must be :public, :protected, or :private") unless visibility_options.include?(reader_visibility) && visibility_options.include?(writer_visibility)
 
-        mapping = database.schema[self].add_column(name.to_s.sub(/\?$/, '').to_sym, type, options)
+        symbolized_name = name.to_s.sub(/\?$/, '').to_sym
+        self::ATTRIBUTES << symbolized_name
+        
+        mapping = database.schema[self].add_column(symbolized_name, type, options)
 
         property_getter(mapping, reader_visibility)
         property_setter(mapping, writer_visibility)
@@ -362,32 +367,6 @@ module DataMapper
     def update_attributes(update_hash)
       self.attributes = update_hash
       self.save
-    end
-    
-    def attributes
-      pairs = {}
-      
-      database_context.table(self).columns.each do |column|
-        if self.class.public_method_defined?(column.name)
-          lazy_load!(column.name) if column.lazy?
-          value = instance_variable_get(column.instance_variable_name)
-          pairs[column.name] = column.type == :class ? value.to_s : value
-        end
-      end
-      
-      pairs
-    end
-    
-    # Mass-assign mapped fields.
-    def attributes=(values_hash)
-      table = database_context.table(self.class)
-      
-      values_hash.each_pair do |k,v|
-        setter_name = k.to_s.ensure_ends_with('=')
-        if self.class.public_method_defined?(setter_name)
-          send(setter_name, v)
-        end
-      end
     end
     
     def dirty?
