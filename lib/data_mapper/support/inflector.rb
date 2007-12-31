@@ -1,5 +1,6 @@
-# This file is copied from the ActiveSupport project, which
+# This file was copied from the ActiveSupport project, which
 # is a part of the Ruby On Rails web-framework (http://rubyonrails.org).
+# Some methods have been modified or removed.
 
 require 'singleton'
 
@@ -63,21 +64,6 @@ module Inflector
     def uncountable(*words)
       (@uncountables << words).flatten!
     end
-
-    # Clears the loaded inflections within a given scope (default is :all). Give the scope as a symbol of the inflection type,
-    # the options are: :plurals, :singulars, :uncountables
-    #
-    # Examples:
-    #   clear :all
-    #   clear :plurals
-    def clear(scope = :all)
-      case scope
-        when :all
-          @plurals, @singulars, @uncountables = [], [], []
-        else
-          instance_variable_set "@#{scope}", []
-      end
-    end
   end
 
   extend self
@@ -130,35 +116,15 @@ module Inflector
     end
   end
 
-  # By default, camelize converts strings to UpperCamelCase. If the argument to camelize
-  # is set to ":lower" then camelize produces lowerCamelCase.
+  # By default, camelize converts strings to UpperCamelCase.
   #
   # camelize will also convert '/' to '::' which is useful for converting paths to namespaces
   #
   # Examples
   #   "active_record".camelize #=> "ActiveRecord"
-  #   "active_record".camelize(:lower) #=> "activeRecord"
   #   "active_record/errors".camelize #=> "ActiveRecord::Errors"
-  #   "active_record/errors".camelize(:lower) #=> "activeRecord::Errors"
-  def camelize(lower_case_and_underscored_word, first_letter_in_uppercase = true)
-    if first_letter_in_uppercase
-      lower_case_and_underscored_word.to_s.gsub(/\/(.?)/) { "::" + $1.upcase }.gsub(/(^|_)(.)/) { $2.upcase }
-    else
-      lower_case_and_underscored_word.first + camelize(lower_case_and_underscored_word)[1..-1]
-    end
-  end
-
-  # Capitalizes all the words and replaces some characters in the string to create
-  # a nicer looking title. Titleize is meant for creating pretty output. It is not
-  # used in the Rails internals.
-  #
-  # titleize is also aliased as as titlecase
-  #
-  # Examples
-  #   "man from the boondocks".titleize #=> "Man From The Boondocks"
-  #   "x-men: the last stand".titleize #=> "X Men: The Last Stand"
-  def titleize(word)
-    humanize(underscore(word)).gsub(/\b([a-z])/) { $1.capitalize }
+  def camelize(lower_case_and_underscored_word)
+    lower_case_and_underscored_word.to_s.gsub(/\/(.?)/) { "::" + $1.upcase }.gsub(/(^|_)(.)/) { $2.upcase }
   end
 
   # The reverse of +camelize+. Makes an underscored form from the expression in the string.
@@ -174,14 +140,6 @@ module Inflector
       gsub(/([a-z\d])([A-Z])/,'\1_\2').
       tr("-", "_").
       downcase
-  end
-
-  # Replaces underscores with dashes in the string.
-  #
-  # Example
-  #   "puni_puni" #=> "puni-puni"
-  def dasherize(underscored_word)
-    underscored_word.gsub(/_/, '-')
   end
 
   # Capitalizes the first word and turns underscores into spaces and strips _id.
@@ -227,15 +185,12 @@ module Inflector
   end
 
   # Creates a foreign key name from a class name.
-  # +separate_class_name_and_id_with_underscore+ sets whether
-  # the method should put '_' between the name and 'id'.
   #
   # Examples
   #   "Message".foreign_key #=> "message_id"
-  #   "Message".foreign_key(false) #=> "messageid"
   #   "Admin::Post".foreign_key #=> "post_id"
-  def foreign_key(class_name, separate_class_name_and_id_with_underscore = true)
-    underscore(demodulize(class_name)) + (separate_class_name_and_id_with_underscore ? "_id" : "id")
+  def foreign_key(class_name, key = "id")
+    underscore(demodulize(class_name.to_s)) << "_" << key.to_s
   end
 
   # Constantize tries to find a declared constant with the name specified
@@ -251,27 +206,6 @@ module Inflector
     end
 
     Object.module_eval("::#{$1}", __FILE__, __LINE__)
-  end
-
-  # Ordinalize turns a number into an ordinal string used to denote the
-  # position in an ordered sequence such as 1st, 2nd, 3rd, 4th.
-  #
-  # Examples
-  #   ordinalize(1)     # => "1st"
-  #   ordinalize(2)     # => "2nd"
-  #   ordinalize(1002)  # => "1002nd"
-  #   ordinalize(1003)  # => "1003rd"
-  def ordinalize(number)
-    if (11..13).include?(number.to_i % 100)
-      "#{number}th"
-    else
-      case number.to_i % 10
-        when 1: "#{number}st"
-        when 2: "#{number}nd"
-        when 3: "#{number}rd"
-        else    "#{number}th"
-      end
-    end
   end
 end
 

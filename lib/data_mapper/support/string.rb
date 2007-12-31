@@ -41,26 +41,17 @@ module DataMapper
         split($/).map { |line| line.strip }.join(spaced ? ' ' : '')
       end
       
+      # Useful for heredocs - removes whitespace margin.
       def margin(indicator = nil)
-        target = dup
-        lines = target.split($/)
+        lines = self.dup.split($/)
         
-        if indicator.nil?
-          min_margin = nil
-          lines.each do |line|
-            if line =~ /(\s+)/ && (min_margin.nil? || $1.size < min_margin)
-              min_margin = $1.size
-            end
+        min_margin = 0
+        lines.each do |line|
+          if line =~ /^(\s+)/ && (min_margin == 0 || $1.size < min_margin)
+            min_margin = $1.size
           end
-
-          lines.map do |line|
-            line.sub(/^\s{#{min_margin}}/, '')
-          end.join($/)
-        else
-          lines.map do |line|
-            line.sub(/^.*?#{"\\" + indicator}/, '')
-          end.join($/)
         end
+        lines.map { |line| line.sub(/^\s{#{min_margin}}/, '') }.join($/)
       end
       
       # Formats String for easy translation. Replaces an arbitrary number of 

@@ -48,12 +48,6 @@ module DataMapper
       def in
         Operator.new(self, :in)
       end
-  
-      # Re-implement Symbol#to_s for performance reasons.
-      # Read http://snippets.dzone.com/posts/show/2423 for info.
-      def to_s
-        @string_form || (@string_form = id2name.freeze)
-      end
 
       def to_proc
         lambda { |value| value.send(self) }

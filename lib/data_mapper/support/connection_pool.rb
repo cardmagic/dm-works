@@ -15,11 +15,15 @@ module DataMapper
 
       # The maximum number of connections.
       attr_reader :max_size
+      
+      # Returns the number of created connections.
+      attr_reader :created_count
+      alias :size :created_count
 
       # The proc used to create a new connection.
       attr_accessor :connection_proc
 
-      attr_reader :available_connections, :allocated, :created_count
+      attr_reader :available_connections, :allocated
 
       # Constructs a new pool with a maximum size. If a block is supplied, it
       # is used to create new connections as they are needed.
@@ -39,11 +43,6 @@ module DataMapper
         @available_connections = []
         @allocated = {}
         @created_count = 0
-      end
-
-      # Returns the number of created connections.
-      def size
-        @created_count
       end
 
       # Assigns a connection to the current thread, yielding the connection

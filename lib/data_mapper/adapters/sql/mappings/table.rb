@@ -275,11 +275,11 @@ module DataMapper
           end
       
           def default_foreign_key
-            @default_foreign_key || (@default_foreign_key = "#{Inflector.underscore(Inflector.singularize(name))}_#{key.name}".freeze)
+            @default_foreign_key ||= Inflector.foreign_key(@klass_or_name, key.name).freeze
           end
       
           def to_sql
-            @to_sql || @to_sql = quote_table.freeze
+            @to_sql ||= quote_table.freeze
           end
           
           def to_s

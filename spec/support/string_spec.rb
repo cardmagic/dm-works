@@ -1,6 +1,6 @@
-describe DataMapper::Support do
+describe DataMapper::Support::String do
   
-  it "a String should translate" do
+  it "should translate" do
     "%s is great!".t('DataMapper').should eql("DataMapper is great!")
   end
   

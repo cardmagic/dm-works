@@ -4,7 +4,7 @@ class Object
   end
 end
 
-class Fixnum
+class Numeric
   def blank?
     false
   end
@@ -24,7 +24,7 @@ end
 
 class FalseClass
   def blank?
-    false
+    true
   end
 end
 
