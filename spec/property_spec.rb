@@ -1,3 +1,5 @@
+require File.dirname(__FILE__) + '/spec_helper'
+
 describe DataMapper::Property do
   
   before(:all) do
@@ -5,18 +7,23 @@ describe DataMapper::Property do
   end
   
   it "should map a column" do
-    pending('until Property is implemented')
-    @property.column.should eql(database.table(Zoo)[:notes])
+    puts Zoo.properties.inspect
+    
+    @property.column.should == database(:mock).table(Zoo)[:notes]
   end
   
   it "should determine lazyness" do
-    pending('until Property is implemented')
     @property.should be_lazy
   end
   
-  it "should determine protection level"
+  it "should determine protection level" do
+    @property.reader_visibility.should == :public
+    @property.writer_visibility.should == :public
+  end
   
-  it "should return instance variable name"
+  it "should return instance variable name" do
+    @property.instance_variable_name.should == database.table(Zoo)[:notes].instance_variable_name
+  end
   
   it "should add a validates_presence_of for not-null properties"
   
@@ -44,9 +51,8 @@ describe DataMapper::Adapters::Sql::Mappings do
   end
   
   it "should have two different sets of mapped properties that point to subsets of the Table columns" do
-    pending('until Property is implemented')
-    
-    table = database.table(Person)
+    pending("This one still needs some love to pass")
+    table = database(:mock).table(Person)
     
     # Every property's column should be represented in the Table's column mappings.
     Person.properties.each do |property|
@@ -55,7 +61,7 @@ describe DataMapper::Adapters::Sql::Mappings do
     
     # For both models in the STI setup...
     SalesPerson.properties.each do |property|
-      table.columns.should include(property.column)
+      table.columns.find { |column| column.eql?(property) }
     end
     
     # Even though Person's properties are fewer than a SalesPerson's

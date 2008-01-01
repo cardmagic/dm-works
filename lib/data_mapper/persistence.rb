@@ -117,15 +117,6 @@ module DataMapper
         database.table(self)
       end
     
-      # NOTE: check is only for psql, so maybe the postgres adapter should define
-      # its own property options. currently it will produce a warning tho since
-      # PROPERTY_OPTIONS is a constant
-      PROPERTY_OPTIONS = [
-        :public, :protected, :private, :accessor, :reader, :writer,
-        :lazy, :default, :nullable, :key, :serial, :column, :size, :length,
-        :index, :check, :ordinal
-      ]
-    
       # Adds property accessors for a field that you'd like to be able to modify.  The DataMapper doesn't
       # use the table schema to infer accessors, you must explicity call #property to add field accessors
       # to your model.
@@ -152,42 +143,15 @@ module DataMapper
       #   * <tt>writer</tt>: Like the accessor option but affects only the property writer.
       #   * <tt>protected</tt>: Alias for :reader => :public, :writer => :protected
       #   * <tt>private</tt>: Alias for :reader => :public, :writer => :private
+      
       def property(name, type, options = {})
-      
-        options.each_pair do |k,v|
-          raise ArgumentError.new("#{k.inspect} is not a supported option in DataMapper::Base::PROPERTY_OPTIONS") unless PROPERTY_OPTIONS.include?(k)
-        end
-      
-        visibility_options = [:public, :protected, :private]
-        reader_visibility = options[:reader] || options[:accessor] || :public
-        writer_visibility = options[:writer] || options[:accessor] || :public
-        writer_visibility = :protected if options[:protected]
-        writer_visibility = :private if options[:private]
-
-        raise(ArgumentError.new, "property visibility must be :public, :protected, or :private") unless visibility_options.include?(reader_visibility) && visibility_options.include?(writer_visibility)
-
-        symbolized_name = name.to_s.sub(/\?$/, '').to_sym
-        self::ATTRIBUTES << symbolized_name
-        
-        mapping = database.schema[self].add_column(symbolized_name, type, options)
-
-        property_getter(mapping, reader_visibility)
-        property_setter(mapping, writer_visibility)
-      
-        if MAGIC_PROPERTIES.has_key?(name)
-          class_eval(&MAGIC_PROPERTIES[name])
-        end
-      
-        return name
+        property = DataMapper::Property.new(self, name, type, options)
+        @properties ||= []
+        @properties << property
+        name
       end
-    
-      MAGIC_PROPERTIES = {
-        :updated_at => lambda { before_save { |x| x.updated_at = Time::now } },
-        :updated_on => lambda { before_save { |x| x.updated_on = Date::today } },
-        :created_at => lambda { before_create { |x| x.created_at = Time::now } },
-        :created_on => lambda { before_create { |x| x.created_on = Date::today } }
-      }
-
+      
+      # TODO: Figure out how to make EmbeddedValue work with new property code. EV relies on these next two methods.
       def property_getter(mapping, visibility = :public)
         if mapping.lazy?
           class_eval <<-EOS
