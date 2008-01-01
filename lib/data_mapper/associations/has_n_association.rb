@@ -109,7 +109,9 @@ module DataMapper
       def complementary_association
         @complementary_association || begin
           @complementary_association = associated_table.associations.find do |mapping|
-            mapping.is_a?(BelongsToAssociation) && mapping.foreign_key_column == foreign_key_column
+            mapping.is_a?(BelongsToAssociation) && 
+            mapping.foreign_key_column == foreign_key_column &&
+            mapping.key_table.name == key_table.name
           end
           
           if @complementary_association
