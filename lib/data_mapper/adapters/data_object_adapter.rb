@@ -232,6 +232,8 @@ module DataMapper
       def update(database_context, instance)
         callback(instance, :before_update)
         
+        instance = update_magic_properties(database_context, instance)
+        
         table = self.table(instance)
         attributes = instance.dirty_attributes
         parameters = []
@@ -258,6 +260,8 @@ module DataMapper
       
       def create(database_context, instance)
         callback(instance, :before_create)
+        
+        instance = update_magic_properties(database_context, instance)
 
         table = self.table(instance)
         attributes = instance.dirty_attributes
@@ -291,6 +295,20 @@ module DataMapper
         instance.key = insert_id if table.key.serial? && !attributes.include?(table.key.name)
         database_context.identity_map.set(instance)
         callback(instance, :after_create)
+      end
+      
+      MAGIC_PROPERTIES = {
+        :updated_at => lambda { self.updated_at = Time::now },
+        :updated_on => lambda { self.updated_on = Date::today },
+        :created_at => lambda { self.created_at = Time::now },
+        :created_on => lambda { self.created_on = Date::today }
+      }
+      
+      def update_magic_properties(database_context, instance)
+        instance.class.properties.find_all { |property| MAGIC_PROPERTIES.has_key?(property.name) }.each do |property|
+          instance.instance_eval(&MAGIC_PROPERTIES[property.name])
+        end
+        instance
       end
       
       def load(database_context, klass, options)

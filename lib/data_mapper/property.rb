@@ -12,29 +12,20 @@ module DataMapper
     
     VISIBILITY_OPTIONS = [:public, :protected, :private]
     
-    MAGIC_PROPERTIES = {
-      :updated_at => lambda { before_save { |x| x.updated_at = Time::now } },
-      :updated_on => lambda { before_save { |x| x.updated_on = Date::today } },
-      :created_at => lambda { before_create { |x| x.created_at = Time::now } },
-      :created_on => lambda { before_create { |x| x.created_on = Date::today } }
-    }
-    
     def initialize(table, name, type, options)
       
-      @table, @options = table, options
-      symbolized_name = name.to_s.sub(/\?$/, '').to_sym
+      @table, @name, @type, @options = table, name, type, options
+      @symbolized_name = name.to_s.sub(/\?$/, '').to_sym
       
       validate_options!
       determine_visibility!
       
-      table::ATTRIBUTES << symbolized_name
-      
-      @column = database.schema[table].add_column(symbolized_name, type, options)
+      database.schema[table].add_column(@symbolized_name, @type, @options)
+      table::ATTRIBUTES << @symbolized_name
       
       create_getter!
       create_setter!
-      
-      create_magic_properties
+      auto_validations!
       
     end
     
@@ -107,9 +98,13 @@ module DataMapper
       raise SyntaxError.new(column)
     end
     
-    def create_magic_properties
-      if MAGIC_PROPERTIES.has_key?(name)
-        table.class_eval(&MAGIC_PROPERTIES[name])
+    AUTO_VALIDATIONS = {
+      :nullable => lambda { |k,v| "begin; validates_presence_of :#{k}; rescue ArgumentError => e; throw e unless e.message =~ /specify a unique key/; end" if v == false }
+    }
+    
+    def auto_validations!
+      AUTO_VALIDATIONS.each do |key, value|
+        table.class_eval(value.call(name, options[key])) if options.has_key?(key)
       end
     end
     
@@ -118,7 +113,7 @@ module DataMapper
     end
     
     def column
-      @column
+      database.table(table)[@name]
     end
      
     def name
@@ -134,7 +129,7 @@ module DataMapper
     end
     
     def options
-      column[:options]
+      column.options
     end
     
     def reader_visibility

@@ -7,9 +7,7 @@ describe DataMapper::Property do
   end
   
   it "should map a column" do
-    puts Zoo.properties.inspect
-    
-    @property.column.should == database(:mock).table(Zoo)[:notes]
+    @property.column.should eql(database.table(Zoo)[:notes])
   end
   
   it "should determine lazyness" do
@@ -25,7 +23,12 @@ describe DataMapper::Property do
     @property.instance_variable_name.should == database.table(Zoo)[:notes].instance_variable_name
   end
   
-  it "should add a validates_presence_of for not-null properties"
+  it "should add a validates_presence_of for not-null properties" do
+    zoo = Zoo.new
+    zoo.valid?.should == false
+    zoo.name = "Content"
+    zoo.valid?.should == true
+  end
   
   it "should add a validates_format_of if you pass a format option"
 end
@@ -51,8 +54,8 @@ describe DataMapper::Adapters::Sql::Mappings do
   end
   
   it "should have two different sets of mapped properties that point to subsets of the Table columns" do
-    pending("This one still needs some love to pass")
-    table = database(:mock).table(Person)
+    pending("This one still needs some love to pass.")
+    table = database.table(Person)
     
     # Every property's column should be represented in the Table's column mappings.
     Person.properties.each do |property|
@@ -61,7 +64,7 @@ describe DataMapper::Adapters::Sql::Mappings do
     
     # For both models in the STI setup...
     SalesPerson.properties.each do |property|
-      table.columns.find { |column| column.eql?(property) }
+      table.columns.should include(property.column)
     end
     
     # Even though Person's properties are fewer than a SalesPerson's
