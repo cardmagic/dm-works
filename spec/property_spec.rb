@@ -54,7 +54,7 @@ describe DataMapper::Adapters::Sql::Mappings do
   end
   
   it "should have two different sets of mapped properties that point to subsets of the Table columns" do
-    pending("This one still needs some love to pass.")
+    # pending("This one still needs some love to pass.")
     table = database.table(Person)
     
     # Every property's column should be represented in the Table's column mappings.
@@ -64,7 +64,7 @@ describe DataMapper::Adapters::Sql::Mappings do
     
     # For both models in the STI setup...
     SalesPerson.properties.each do |property|
-      table.columns.should include(property.column)
+      database.table(SalesPerson).columns.should include(property.column)
     end
     
     # Even though Person's properties are fewer than a SalesPerson's
