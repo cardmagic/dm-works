@@ -249,9 +249,15 @@ module DataMapper
           sql << " WHERE #{table.key.to_sql} = ?"
           parameters << instance.key
           
-          connection do |db|
-            db.create_command(sql).execute_non_query(*parameters).to_i > 0 \
-            && callback(instance, :after_update)
+          affected_rows = connection do |db|
+            db.create_command(sql).execute_non_query(*parameters).to_i
+          end
+          
+          if affected_rows > 0
+            callback(instance, :after_update)
+            return true
+          else
+            return false
           end
         else
           true
