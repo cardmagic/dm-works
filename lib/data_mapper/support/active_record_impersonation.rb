@@ -16,8 +16,8 @@ module DataMapper
         return true
       end
       
-      def reload!
-        database_context.first(self.class, key, :select => original_values.keys, :reload => true)
+      def reload!(cols = nil)
+        database_context.first(self.class, key, :select => cols || original_values.keys, :reload => true)
         self.loaded_associations.each { |association| association.reload! }
         self
       end
