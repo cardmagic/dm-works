@@ -38,6 +38,11 @@ module DataMapper
         self.class.remove_column table, column
       end
       
+      def rename(old_column, new_column)
+        column = table[old_column]
+        column.rename!(new_column)
+      end
+      
       def exists?
         database.table_exists?(klass)
       end

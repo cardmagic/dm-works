@@ -36,6 +36,20 @@ class AddPasswordToUsers < DataMapper::Migration
   end
 end
 
+class RenameLoginOnUsers < DataMapper::Migration
+  def self.up
+    table :migration_users do
+      rename :login, :username
+    end
+  end
+  
+  def self.down
+    table :migration_users do
+      rename :username, :login
+    end
+  end
+end
+
 class RailsAddUsers < DataMapper::Migration
   def self.up
     create_table :migration_users do |t|
@@ -99,6 +113,29 @@ describe DataMapper::Migration do
     check_schema.match(/password/).should == nil
     table = database.table(MigrationUser)
     table[:password].should == nil
+    AddUsers.migrate(:down)
+  end
+  
+  it "should migrate up renaming a column" do
+    pending("Rename not finished.")
+    AddUsers.migrate(:up)
+    user = MigrationUser.create(:name => "Sam", :login => "sammy")
+    RenameLoginOnUsers.migrate(:up)
+    class MigrationUser
+      property :username, :string
+    end
+    check_schema.match(/username/).should be_a_kind_of(MatchData)
+    check_schema.match(/login/).should == nil
+    MigrationUser.first.username.should == user.login
+  end
+  
+  it "should migrate down renaming a column" do
+    pending("Rename not finished.")
+    user = MigrationUser.first
+    RenameLoginOnUsers.migrate(:down)
+    check_schema.match(/username/).should == nil
+    check_schema.match(/login/).should == be_a_kind_of(MatchData)
+    MigrationUser.first.login.should == user.username
     AddUsers.migrate(:down)
   end
   
