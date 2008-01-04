@@ -20,7 +20,7 @@ module DataMapper
             @nullable = @options.has_key?(:nullable) ? @options[:nullable] : !@key
             @lazy = @options.has_key?(:lazy) ? @options[:lazy] : (@type == :text && !@key)
             @serial = @options[:serial] == true
-            @default = @options[:default]
+            @default = @options[:default] if @options.key?(:default)
             @unique = @options.has_value?(:unique)
             @index = @options[:index]
             @check = @options[:check] # only for postgresql
@@ -38,6 +38,8 @@ module DataMapper
             end
             @size = @size.last if @size.is_a?(Range)
           end
+          
+          def defaulted?() instance_variables.include?("@default") end
           
           def type=(value)
             self.flush_sql_caches!
