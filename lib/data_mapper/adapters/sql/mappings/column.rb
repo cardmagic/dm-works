@@ -36,6 +36,7 @@ module DataMapper
                 else nil
               end
             end
+            @size = @size.last if @size.is_a?(Range)
           end
           
           def type=(value)

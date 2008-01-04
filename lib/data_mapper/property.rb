@@ -7,21 +7,21 @@ module DataMapper
     PROPERTY_OPTIONS = [
       :public, :protected, :private, :accessor, :reader, :writer,
       :lazy, :default, :nullable, :key, :serial, :column, :size, :length,
-      :index, :check, :ordinal
+      :format, :index, :check, :ordinal
     ]
     
     VISIBILITY_OPTIONS = [:public, :protected, :private]
     
-    def initialize(table, name, type, options)
+    def initialize(klass, name, type, options)
       
-      @table, @name, @type, @options = table, name, type, options
+      @klass, @name, @type, @options = klass, name, type, options
       @symbolized_name = name.to_s.sub(/\?$/, '').to_sym
       
       validate_options!
       determine_visibility!
       
-      database.schema[table].add_column(@symbolized_name, @type, @options)
-      table::ATTRIBUTES << @symbolized_name
+      database.schema[klass].add_column(@symbolized_name, @type, @options)
+      klass::ATTRIBUTES << @symbolized_name
       
       create_getter!
       create_setter!
@@ -45,7 +45,7 @@ module DataMapper
     
     def create_getter!
       if lazy?
-        table.class_eval <<-EOS
+        klass.class_eval <<-EOS
         #{reader_visibility.to_s}
         def #{name}
           lazy_load!(#{name.inspect})
@@ -56,7 +56,7 @@ module DataMapper
         end
         EOS
       else
-        table.class_eval <<-EOS
+        klass.class_eval <<-EOS
         #{reader_visibility.to_s}
         def #{name}
           #{instance_variable_name}
@@ -64,7 +64,7 @@ module DataMapper
         EOS
       end
       if type == :boolean
-        table.class_eval <<-EOS
+        klass.class_eval <<-EOS
         #{reader_visibility.to_s}
         def #{name.to_s.ensure_ends_with('?')}
           #{instance_variable_name}
@@ -77,7 +77,7 @@ module DataMapper
     
     def create_setter!
       if lazy?
-        table.class_eval <<-EOS
+        klass.class_eval <<-EOS
         #{writer_visibility.to_s}
         def #{name}=(value)
           class << self;
@@ -87,7 +87,7 @@ module DataMapper
         end
         EOS
       else
-        table.class_eval <<-EOS
+        klass.class_eval <<-EOS
         #{writer_visibility.to_s}
         def #{name}=(value)
           #{instance_variable_name} = value
@@ -99,21 +99,34 @@ module DataMapper
     end
     
     AUTO_VALIDATIONS = {
-      :nullable => lambda { |k,v| "begin; validates_presence_of :#{k}; rescue ArgumentError => e; throw e unless e.message =~ /specify a unique key/; end" if v == false }
+      :nullable => lambda { |k,v| "validates_presence_of :#{k}" if v == false },
+      :size => lambda { |k,v| "validates_length_of :#{k}, " + (v.is_a?(Range) ? ":minimum => #{v.first}, :maximum => #{v.last}" : ":maximum => #{v}") },
+      :format => lambda { |k, v| "validates_format_of :#{k}, :with => #{v.inspect}" }
     }
+    
+    AUTO_VALIDATIONS[:length] = AUTO_VALIDATIONS[:size].dup
     
     def auto_validations!
       AUTO_VALIDATIONS.each do |key, value|
-        table.class_eval(value.call(name, options[key])) if options.has_key?(key)
+        next unless options.has_key?(key)
+        validation = value.call(name, options[key])
+        next if validation.empty?
+        klass.class_eval <<-EOS
+        begin
+          #{validation}
+        rescue ArgumentError => e
+          throw e unless e.message =~ /specify a unique key/
+        end
+        EOS
       end
     end
     
-    def table
-      @table
+    def klass
+      @klass
     end
     
     def column
-      database.table(table)[@name]
+      database.table(klass)[@name]
     end
      
     def name

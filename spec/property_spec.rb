@@ -30,7 +30,23 @@ describe DataMapper::Property do
     zoo.valid?.should == true
   end
   
-  it "should add a validates_format_of if you pass a format option"
+  it "should add a validates_length_of for size options" do
+    zoo = Zoo.new(:name => "San Diego" * 100)
+    zoo.valid?.should == false
+    zoo.name = "San Diego"
+    zoo.valid?.should == true
+    zoo.name = "A"
+    zoo.valid?.should == false
+    zoo.name = "Zoo"
+    zoo.valid?.should == true
+  end
+  
+  it "should add a validates_format_of if you pass a format option" do
+    user = User.new(:name => "John Doe", :email => "incomplete_email")
+    user.valid?.should == false
+    user.email = "complete_email@anonymous.com"
+    user.valid?.should == true
+  end
 end
 
 describe DataMapper::Adapters::Sql::Mappings do
