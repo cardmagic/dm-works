@@ -407,6 +407,7 @@ module DataMapper
             @to_drop_sql = nil
             @to_sql = nil
             @name = nil
+            @columns_hash.clear
             
             if flush_columns
               @columns.each do |column|
