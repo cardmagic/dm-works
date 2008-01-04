@@ -492,8 +492,13 @@ module DataMapper
 
               case x = conditions_hash.delete(:conditions)
               when Array then
-                clause = x.shift
-                expression_to_sql(clause, x, collection)
+                # DO NOT mutate incoming Array values!!!
+                # Otherwise the mutated version may impact all the
+                # way up to the options passed to the finders,
+                # and have unintended side-effects.
+                array_copy = x.dup
+                clause = array_copy.shift
+                expression_to_sql(clause, array_copy, collection)
               when Hash then
                 x.each_pair do |key,value|
                   expression_to_sql(key, value, collection)

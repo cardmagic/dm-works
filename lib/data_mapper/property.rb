@@ -14,7 +14,7 @@ module DataMapper
     
     def initialize(klass, name, type, options)
       
-      @klass, @name, @type, @options = klass, name, type, options
+      @klass, @name, @type, @options = klass, name.to_sym, type, options
       @symbolized_name = name.to_s.sub(/\?$/, '').to_sym
       
       validate_options!
@@ -126,11 +126,13 @@ module DataMapper
     end
     
     def column
-      database.table(klass)[@name]
+      column = database.table(klass)[@name]
+      raise StandardError.new("#{@name.inspect} is not a valid column name") unless column
+      return column
     end
      
     def name
-      column.name
+      @name
     end
     
     def instance_variable_name

@@ -303,11 +303,6 @@ module DataMapper
           instance.instance_variable_set(:@new_record, false)
           instance.key = result.last_insert_row if table.key.serial? && !attributes.include?(table.key.name)
           database_context.identity_map.set(instance)
-          
-          unless (defaults = table.columns.select { |c| c.defaulted? }).empty?
-            instance.reload(defaults.map { |c| c.name })
-          end          
-          
           callback(instance, :after_create)
           return true
         else

@@ -88,6 +88,7 @@ describe DataMapper::Adapters::Sql::Mappings::Column do
     
     Zoo.send(:undef_method, :moo)
     Zoo.send(:undef_method, :moo=)
+    Zoo.properties.delete_if { |x| x.name == :moo }
     
     lambda { database.query("SELECT moo FROM zoos") }.should raise_error
   end

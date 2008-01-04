@@ -212,6 +212,11 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
      one.next.next.previous.previous.next.previous.next.next.title.should eql('Three')
    end
    
+   it "should allow both implicit :conditions and explicit in the same finder" do
+     cup = Animal.first(:name => 'Cup', :conditions => ['name <> ?', 'Frog'])
+     cup.should == Animal[cup.key]
+   end
+   
    it "should iterate in batches" do
      
      total = Animal.count
@@ -221,7 +226,15 @@ describe DataMapper::Adapters::Sql::Commands::LoadCommand do
        count += 1
      end
      
-     count.should == total     
+     count.should == total
+     
+     count = 0
+     
+     Animal.each(:order => "id asc", :conditions => ["id > ? AND id < ?", 0, 9985], :limit => 2) do |animal|
+       count += 1
+     end
+     
+     count.should == total
    end
    
    it "should get the right object back" do
