@@ -17,7 +17,7 @@ module DataMapper
       end
       
       def reload!(cols = nil)
-        database_context.first(self.class, key, :select => cols || original_values.keys, :reload => true)
+        database_context.first(self.class, key, :select => ([self.class.table.key.to_sym] + (cols || original_values.keys)).uniq, :reload => true)
         self.loaded_associations.each { |association| association.reload! }
         self
       end
