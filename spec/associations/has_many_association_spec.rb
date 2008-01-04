@@ -208,7 +208,7 @@ describe DataMapper::Associations::HasManyAssociation do
       
       london.exhibits.should be_empty
       london.send(:exhibits_keys=, dunes.key)
-      london.save.should be_true
+      london.save!.should be_true
     
       london.should have(1).exhibits
       london.exhibits.should include(dunes)

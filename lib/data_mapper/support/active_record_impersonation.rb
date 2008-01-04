@@ -12,7 +12,7 @@ module DataMapper
       end
       
       def save!
-        raise ValidationError.new() unless save
+        raise ValidationError.new(errors) unless save
         return true
       end
       
@@ -91,15 +91,17 @@ module DataMapper
         end
         
         def create(attributes)
-          instance = self.new(attributes)
+          instance = self.new
+          instance.attributes = attributes
           instance.save
           instance
         end
         
         def create!(attributes)
-          instance = self.new(attributes)
+          instance = self.new
+          instance.attributes = attributes
           instance.save
-          raise InvalidRecord.new(instance) if instance.new_record?
+          raise ObjectNotFoundError.new(instance) if instance.new_record?
           instance
         end
       end

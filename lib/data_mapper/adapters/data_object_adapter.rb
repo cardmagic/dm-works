@@ -249,11 +249,12 @@ module DataMapper
           sql << " WHERE #{table.key.to_sql} = ?"
           parameters << instance.key
           
-          affected_rows = connection do |db|
-            db.create_command(sql).execute_non_query(*parameters).to_i
+          result = connection do |db|
+            db.create_command(sql).execute_non_query(*parameters)
           end
-          
-          if affected_rows > 0
+
+          # BUG: do_mysql returns inaccurate affected row counts for UPDATE statements.
+          if true || result.to_i > 0
             callback(instance, :after_update)
             return true
           else
@@ -297,7 +298,7 @@ module DataMapper
         result = connection do |db|
           db.create_command(sql).execute_non_query(values)
         end
-        
+
         if result.to_i > 0
           instance.instance_variable_set(:@new_record, false)
           instance.key = result.last_insert_row if table.key.serial? && !attributes.include?(table.key.name)

@@ -30,7 +30,7 @@ module DataMapper
       end
       
       def to_disassociate_sql
-        "UPDATE #{associated_table.to_sql} SET #{foreign_key_column.to_sql} = NULL WHERE #{foreign_key_column.to_sql} = ? AND #{associated_table.key} NOT IN ?"
+        "UPDATE #{associated_table.to_sql} SET #{foreign_key_column.to_sql} = NULL WHERE #{foreign_key_column.to_sql} = ?"
       end
       
       def instance_variable_name
@@ -65,8 +65,18 @@ module DataMapper
           members = loaded_members
           
           adapter.connection do |db|
-            command = db.create_command(association.to_disassociate_sql)
-            command.execute_non_query(@instance.key, members.map { |member| member.key }.compact)
+            
+            sql = association.to_disassociate_sql
+            parameters = [@instance.key]
+            
+            member_keys = members.map { |member| member.key }.compact
+            
+            unless member_keys.empty?
+              sql << " AND #{association.associated_table.key} NOT IN ?"
+              parameters << member_keys
+            end
+            
+            db.create_command(sql).execute_non_query(*parameters)
           end
           
           unless members.blank?
@@ -118,6 +128,11 @@ module DataMapper
           end
           
           return self
+        end
+        
+        def clear
+          @pending_members = nil
+          @items = Support::TypedSet.new(association.associated_constant)
         end
         
         def shallow_append(member)
