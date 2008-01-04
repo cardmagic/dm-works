@@ -149,7 +149,7 @@ module DataMapper
         property = DataMapper::Property.new(self, name, type, options)
         @properties ||= []
         @properties << property
-        name
+        property
       end
       
       # TODO: Figure out how to make EmbeddedValue work with new property code. EV relies on these next two methods.

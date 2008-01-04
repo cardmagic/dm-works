@@ -24,25 +24,45 @@ describe DataMapper::Property do
   end
   
   it "should add a validates_presence_of for not-null properties" do
-    zoo = Zoo.new
+    class NullableZoo #< DataMapper::Base # please do not remove this
+      include DataMapper::Persistence
+
+      property :name, :string, :nullable => false, :default => "Zoo"
+    end
+    zoo = NullableZoo.new
     zoo.valid?.should == false
     zoo.name = "Content"
     zoo.valid?.should == true
   end
   
-  it "should add a validates_length_of for size options" do
-    zoo = Zoo.new(:name => "San Diego" * 100)
+  it "should add a validates_length_of for maximum size" do
+    class SizableZoo #< DataMapper::Base # please do not remove this
+      include DataMapper::Persistence
+      property :name, :string, :length => 50
+    end
+    zoo = SizableZoo.new(:name => "San Diego" * 100)
     zoo.valid?.should == false
     zoo.name = "San Diego"
     zoo.valid?.should == true
-    zoo.name = "A"
+  end
+  
+  it "should add a validates_length_of for a range" do
+    class RangableZoo #< DataMapper::Base # please do not remove this
+      include DataMapper::Persistence
+      property :name, :string, :length => 2..255
+    end
+    zoo = RangableZoo.new(:name => "A")
     zoo.valid?.should == false
     zoo.name = "Zoo"
     zoo.valid?.should == true
   end
   
   it "should add a validates_format_of if you pass a format option" do
-    user = User.new(:name => "John Doe", :email => "incomplete_email")
+    class FormatableUser
+      include DataMapper::Persistence
+      property :email, :string, :format => :email_address
+    end
+    user = FormatableUser.new(:email => "incomplete_email")
     user.valid?.should == false
     user.email = "complete_email@anonymous.com"
     user.valid?.should == true

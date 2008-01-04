@@ -6,9 +6,6 @@ module DataMapper
     def initialize(instance)
       @instance = instance
       @container_prefix = ''
-
-      # force lazy load on access to any lazy-loaded embed property
-      @instance.lazy_load!(*self.class::EMBEDDED_PROPERTIES) # if @container_lazy
     end
 
     def self.inherited(base)
@@ -19,51 +16,43 @@ module DataMapper
     def self.property(name, type, options = {})
       # set lazy option on the mapping if defined in the embed block
       options[:lazy] ||= @container_lazy
-
-      visibility_options = [:public, :protected, :private]
-      reader_visibility = options[:reader] || options[:accessor] || @container_reader_visibility
-      writer_visibility = options[:writer] || options[:accessor] || @container_writer_visibility
-      writer_visibility = :protected if options[:protected]
-      writer_visibility = :private if options[:private]
-
-      raise(ArgumentError.new, "property visibility must be :public, :protected, or :private") unless visibility_options.include?(reader_visibility) && visibility_options.include?(writer_visibility)
-
-      mapping = database.schema[containing_class].add_column("#{@container_prefix}#{name}", type, options)
-
-      self::EMBEDDED_PROPERTIES << "#{@container_prefix}#{name}"
-      define_property_getter(name, mapping, reader_visibility)
-      define_property_setter(name, mapping, writer_visibility)
+      
+      options[:reader] ||= options[:accessor] || @container_reader_visibility
+      options[:writer] ||= options[:accessor] || @container_writer_visibility
+      
+      property_name = @container_prefix ? @container_prefix + name.to_s : name
+      
+      property = containing_class.property(property_name, type, options)
+      define_property_getter(name, property)
+      define_property_setter(name, property)
     end
     
     # define embedded property getters
-    def self.define_property_getter(name, mapping, visibility = :public)
-      # add convenience method on non-embedded base for #update_attributes
-      self.containing_class.property_getter(mapping, visibility)
+    def self.define_property_getter(name, property)
 
       # add the method on the embedded class
       class_eval <<-EOS
-        #{visibility.to_s}
+        #{property.reader_visibility.to_s}
         def #{name}
-          @instance.instance_variable_get(#{mapping.instance_variable_name.inspect})
+          #{"@instance.lazy_load!("+ property.name.inspect + ")" if property.lazy?}
+          @instance.instance_variable_get(#{property.instance_variable_name.inspect})
         end
       EOS
 
       # add a shortcut boolean? method if applicable (ex: activated?)
-      if mapping.type == :boolean
-        class_eval("alias #{name}? #{name}")
+      if property.type == :boolean
+        class_eval("alias #{property.name}? #{property.name}")
       end
     end
     
     # define embedded property setters
-    def self.define_property_setter(name, mapping, visibility = :public)
-      # add convenience method on non-embedded base for #update_attributes
-      self.containing_class.property_setter(mapping, visibility)
+    def self.define_property_setter(name, property)
 
       # add the method on the embedded class
       class_eval <<-EOS
-        #{visibility.to_s}
+        #{property.writer_visibility.to_s}
         def #{name.to_s.sub(/\?$/, '')}=(value)
-          @instance.instance_variable_set(#{mapping.instance_variable_name.inspect}, value)
+          @instance.instance_variable_set(#{property.instance_variable_name.inspect}, value)
         end
       EOS
     end

@@ -1,7 +1,7 @@
 class Zoo #< DataMapper::Base # please do not remove this
   include DataMapper::Persistence
   
-  property :name, :string, :nullable => false, :default => "Zoo", :size => 2..255
+  property :name, :string, :nullable => false, :default => "Zoo"
   property :notes, :text
   property :updated_at, :datetime
   

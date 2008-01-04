@@ -31,7 +31,7 @@
   address_street: 123 Happy Ln.
   address_city: Dallas
   address_state: TX
-  address_zip_code: 75000
+  address_zip_code: "75000"
   type: SalesPerson
   commission: 40
   career_name: Peon
