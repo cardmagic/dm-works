@@ -294,13 +294,19 @@ module DataMapper
           "INSERT INTO #{table.to_sql}"
         end
         
-        insert_id = connection do |db|
-          db.create_command(sql).execute_non_query(values).last_insert_row
+        result = connection do |db|
+          db.create_command(sql).execute_non_query(values)
         end
-        instance.instance_variable_set(:@new_record, false)
-        instance.key = insert_id if table.key.serial? && !attributes.include?(table.key.name)
-        database_context.identity_map.set(instance)
-        callback(instance, :after_create)
+        
+        if result.to_i > 0
+          instance.instance_variable_set(:@new_record, false)
+          instance.key = result.last_insert_row if table.key.serial? && !attributes.include?(table.key.name)
+          database_context.identity_map.set(instance)
+          callback(instance, :after_create)
+          return true
+        else
+          return false
+        end
       end
       
       MAGIC_PROPERTIES = {

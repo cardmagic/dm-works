@@ -455,33 +455,5 @@ module DataMapper
       
       results      
     end
-    
-    private
-
-    # return all attributes, regardless of their visibility
-    def private_attributes
-      pairs = {}
-
-      database_context.table(self).columns.each do |column|
-        lazy_load!(column.name) if column.lazy?
-        value = instance_variable_get(column.instance_variable_name)
-        pairs[column.name] = column.type == :class ? value.to_s : value
-      end
-
-      pairs
-    end
-
-    # private method for setting any/all attribute values, regardless of visibility
-    def private_attributes=(values_hash)
-      table = database_context.table(self.class)
-
-      values_hash.each_pair do |key, value|
-        if respond_to?(key)
-          send("#{key}=", value)
-        elsif column = table[key]
-          instance_variable_set(column.instance_variable_name, value)
-        end
-      end
-    end
   end
 end

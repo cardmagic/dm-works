@@ -103,7 +103,7 @@ module DataMapper
 
               @instance.database_context.all(association.constant, association.associated_table.key.to_sym => set.keys).each do |assoc|
                 set[assoc.key].each do |primary_instance|
-                  primary_instance.send(setter_method, assoc)
+                  primary_instance.send("#{@association_name}_association").shallow_append(assoc)
                 end
               end
 

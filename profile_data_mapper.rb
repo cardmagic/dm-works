@@ -15,7 +15,7 @@ end
 
 profile do
   1000.times do
-    database.query("SELECT * FROM zoos")
+    Zoo.all.each { |zoo| zoo.name; zoo.exhibits.entries }
   end
 end
 

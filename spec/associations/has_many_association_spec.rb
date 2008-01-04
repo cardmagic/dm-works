@@ -30,6 +30,12 @@ describe DataMapper::Associations::HasManyAssociation do
     section.project.should be_nil
   end
   
+  it "assignment should not force associated items to load" do
+    dallas = Zoo.first(:name => 'Dallas')
+    Exhibit.new(:name => 'Weasel World!', :zoo => dallas)
+    dallas.exhibits.instance_variable_get('@items').should be_nil
+  end
+  
   it "should return an empty Enumerable for new objects" do
     project = Project.new
     project.sections.should be_a_kind_of(Enumerable)

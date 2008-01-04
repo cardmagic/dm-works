@@ -17,6 +17,10 @@ class Tomato
   
   property :name, :string
   
+  def heal!
+    @bruised = false
+  end
+  
   def bruised?
     @bruised
   end

@@ -42,9 +42,17 @@ module DataMapper
       def empty?
         @set.empty?
       end
+      alias blank? empty?
       
       def clear
         @set.clear
+      end
+      
+      def +(other)
+        x = self.class.new(*@types)
+        each { |entry| x << entry }
+        other.each { |entry| x << entry } unless other.blank?
+        return x
       end
     end
   end

@@ -7,4 +7,6 @@ class User < DataMapper::Base
   property :name, :string
   property :email, :string, :format => :email_address
   has_many :comments, :class => 'Comment', :foreign_key => 'user_id'
+  
+  after_create { false }
 end

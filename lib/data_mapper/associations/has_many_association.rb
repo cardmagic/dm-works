@@ -30,7 +30,7 @@ module DataMapper
       end
       
       def to_disassociate_sql
-        "UPDATE #{associated_table.to_sql} SET #{foreign_key_column.to_sql} = NULL WHERE #{foreign_key_column.to_sql} = ?"
+        "UPDATE #{associated_table.to_sql} SET #{foreign_key_column.to_sql} = NULL WHERE #{foreign_key_column.to_sql} = ? AND #{associated_table.key} NOT IN ?"
       end
       
       def instance_variable_name
@@ -47,37 +47,38 @@ module DataMapper
         
         # Returns true if the association has zero items
         def nil?
-          @items.empty?
+          loaded_members.blank?
         end
         
         def dirty?
-          @items && @items.any? { |item| item.dirty? }
+          loaded_members.any? { |member| member.dirty? }
         end
         
-        def validate_recursively(event, cleared)
-          @items.blank? || @items.all? { |item| cleared.include?(item) || item.validate_recursively(event, cleared) }
+        def validate_recursively(event, cleared)          
+          loaded_members.all? { |member| cleared.include?(member) || member.validate_recursively(event, cleared) }
         end
         
         def save_without_validation(database_context)
           
           adapter = @instance.database_context.adapter
           
+          members = loaded_members
+          
           adapter.connection do |db|
             command = db.create_command(association.to_disassociate_sql)
-            command.execute_non_query(@instance.key)
+            command.execute_non_query(@instance.key, members.map { |member| member.key }.compact)
           end
           
-          unless @items.nil? || @items.empty?
-            
+          unless members.blank?
             
             setter_method = "#{@association_name}=".to_sym
             ivar_name = association.foreign_key_column.instance_variable_name
             original_value_name = association.foreign_key_column.name
             
-            @items.each do |item|
-              item.original_values.delete(original_value_name)
-              item.instance_variable_set(ivar_name, @instance.key)
-              @instance.database_context.adapter.save_without_validation(database_context, item)
+            members.each do |member|
+              member.original_values.delete(original_value_name)
+              member.instance_variable_set(ivar_name, @instance.key)
+              @instance.database_context.adapter.save_without_validation(database_context, member)
             end
           end
         end
@@ -120,7 +121,11 @@ module DataMapper
         end
         
         def shallow_append(member)
-          self.items << member
+          if @items
+            self.items << member 
+          else
+            pending_members << member
+          end
           return self
         end
         
@@ -154,7 +159,6 @@ module DataMapper
           @items || begin
             if @instance.loaded_set.nil?
               @items = Support::TypedSet.new(association.associated_constant)
-              return @items
             else              
               associated_items = fetch_sets
               
@@ -165,9 +169,17 @@ module DataMapper
               @instance.loaded_set.each do |entry|
                 entry.send(setter_method, associated_items[entry.key])
               end # @instance.loaded_set.each
-              
-              return @items
             end # if @instance.loaded_set.nil?
+            
+            if @pending_members
+              pending_members.each do |member|
+                @items << member
+              end
+              
+              pending_members.clear
+            end
+            
+            return @items
           end # begin
         end # def items
         
@@ -188,6 +200,14 @@ module DataMapper
         end
         
         private
+        def loaded_members
+          pending_members + @items
+        end
+        
+        def pending_members
+          @pending_members || @pending_members = Support::TypedSet.new(association.associated_constant)
+        end
+        
         def fetch_sets
           finder_options = { association.foreign_key_column.to_sym => @instance.loaded_set.map { |item| item.key } }
           finder_options.merge!(association.finder_options)

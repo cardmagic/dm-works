@@ -295,6 +295,12 @@ describe 'Properties' do
     end.should raise_error(ArgumentError)
   end
   
+  it "should return true on saving a new record" do
+    bob = User.new(:name => 'bob', :email => 'bob@example.com')
+    bob.save!.should == true
+    bob.destroy!
+  end
+  
   it "should assign to public setters" do
     x = Project.new
     x.attributes = { :set_us_up_the_bomb => true }
@@ -318,11 +324,15 @@ describe 'Properties' do
     x.save!
     
     x2 = Tomato.first(:name => 'Bob')
+    x2.should_not == x
+    x2.heal!
     x2.should == x
     x2.name.should eql('Bob')
     x2.should_not be_initialized
     
     x3 = Tomato.get(x.key)
+    x3.should_not == x
+    x3.heal!
     x3.should == x
     x3.name.should eql('Bob')
     x3.should_not be_initialized

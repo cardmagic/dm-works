@@ -41,4 +41,26 @@ describe DataMapper::Support::TypedSet do
     s.entries.last.should eql(30)
   end
   
+  it "should respond to blank?" do
+    s = DataMapper::Support::TypedSet.new(Numeric)
+    s.should be_blank
+    
+    s << 4
+    s.should_not be_blank
+  end
+  
+  it "should return the combined entries for two sets" do
+    a = DataMapper::Support::TypedSet.new(Numeric)
+    b = DataMapper::Support::TypedSet.new(Numeric)
+    
+    a << 1 << 2 << 3
+    b << 4 << 5 << 6 << 3
+    
+    c = (a + b)
+    c.should have(6).entries
+    c.entries.should == [ 1, 2, 3, 4, 5, 6 ]
+    
+    lambda { (c + nil) }.should_not raise_error
+  end
+  
 end

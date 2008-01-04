@@ -376,10 +376,12 @@ module DataMapper
                 qualify_columns = qualify_columns?
                 @columns_for_select = []
                 
-                columns.each_with_index do |column,i|
+                i = 0
+                columns.each do |column|
                   class_for_loader = column.table.klass
                   @loaders[class_for_loader].add_column(column, i) if class_for_loader
                   @columns_for_select << column.to_sql(qualify_columns)
+                  i += 1
                 end
                 
                 @columns_for_select

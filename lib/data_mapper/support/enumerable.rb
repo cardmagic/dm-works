@@ -8,7 +8,7 @@ module DataMapper
   module Support
     
     # Extends Array to include an instance method for grouping objects
-    module Enumerable
+    module EnumerableExtensions
       
       # Group a collection of elements into groups within a
       # Hash. The value returned by the block passed to group_by
@@ -29,7 +29,7 @@ module DataMapper
   end # module Support
 end # module DataMapper
 
-# Extend Array with DataMapper::Support::Enumerable
+# Extend Array with DataMapper::Support::EnumerableExtensions
 class Array #:nodoc:
-  include DataMapper::Support::Enumerable
+  include DataMapper::Support::EnumerableExtensions
 end
