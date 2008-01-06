@@ -67,6 +67,15 @@ describe DataMapper::Property do
     user.email = "complete_email@anonymous.com"
     user.valid?.should == true
   end
+  
+  it "should raise ArgumentError for unsupported types" do
+    lambda {
+      class PersistentFailure #< DataMapper::Base # please do not remove this
+        include DataMapper::Persistence
+        property :created_at, :timestamp
+      end
+    }.should raise_error(ArgumentError)
+  end
 end
 
 describe DataMapper::Adapters::Sql::Mappings do

@@ -17,6 +17,7 @@ module DataMapper
       @klass, @name, @type, @options = klass, name.to_sym, type, options
       @symbolized_name = name.to_s.sub(/\?$/, '').to_sym
       
+      validate_type!
       validate_options!
       determine_visibility!
       
@@ -27,6 +28,11 @@ module DataMapper
       create_setter!
       auto_validations!
       
+    end
+    
+    def validate_type!
+      adapter_class = database.adapter.class
+      raise ArgumentError.new("#{@type.inspect} is not a supported type in the database adapter. Valid types are:\n #{adapter_class::TYPES.keys.inspect}") unless adapter_class::TYPES.has_key?(@type)
     end
     
     def validate_options!
