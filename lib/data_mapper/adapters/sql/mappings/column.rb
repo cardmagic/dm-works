@@ -21,7 +21,8 @@ module DataMapper
             @lazy = @options.has_key?(:lazy) ? @options[:lazy] : (@type == :text && !@key)
             @serial = @options[:serial] == true
             @default = @options[:default] if @options.key?(:default)
-            @unique = @options.has_value?(:unique)
+            
+            @unique = if @options[:index] == :unique then @options.delete(:index); true else false end
             @index = @options[:index]
             @check = @options[:check] # only for postgresql
             

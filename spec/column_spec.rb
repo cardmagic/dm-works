@@ -101,6 +101,8 @@ describe DataMapper::Adapters::Sql::Mappings::Column do
   it "should be able to create a column with unique index" do
     column = table.add_column("name", :string, :index => :unique)
     column.unique?.should be_true
+    column.index?.should be_nil
+    table.to_create_index_sql.should == []
     table.to_create_sql.should match(/UNIQUE/)
   end
   
