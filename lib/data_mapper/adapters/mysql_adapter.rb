@@ -31,6 +31,7 @@ module DataMapper
         builder['password', :password]
         builder['dbname', :database]
         builder['socket', :socket]
+        builder['port', :port]
         
         logger.debug { connection_string.strip }
         

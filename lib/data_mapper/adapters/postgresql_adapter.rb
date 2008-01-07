@@ -37,6 +37,7 @@ module DataMapper
         builder['password', :password]
         builder['dbname', :database]
         builder['socket', :socket]
+        builder['port', :port]
         conn = DataObject::Postgres::Connection.new(connection_string.strip)
         conn.logger = self.logger
         conn.open

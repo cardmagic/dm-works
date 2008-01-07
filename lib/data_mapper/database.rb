@@ -158,13 +158,14 @@ module DataMapper
     # Creates a new database object with the name you specify, and a default set of options.
     #
     # The default options are as follows:
-    #   { :host => 'localhost', :database => nil, :username => 'root', :password => '', :adapter = nil }
+    #   { :host => 'localhost', :database => nil, :port => nil, :username => 'root', :password => '', :adapter = nil }
     def initialize(name)
       @name = name
       
       @adapter = nil
       @host = 'localhost'
       @database = nil
+      @port = nil
       @schema_search_path = nil
       @username = 'root'
       @password = ''
@@ -176,7 +177,7 @@ module DataMapper
     
     attr_reader :name, :adapter, :log_stream
     
-    attr_accessor :host, :database, :schema_search_path, :username, :password, :log_level, :index_path, :socket
+    attr_accessor :host, :database, :port, :schema_search_path, :username, :password, :log_level, :index_path, :socket
     
     def log_stream=(val)
       @log_stream = (val.is_a?(String) && val =~ /STDOUT/ ? STDOUT : val)

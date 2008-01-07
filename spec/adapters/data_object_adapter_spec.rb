@@ -6,6 +6,16 @@ describe DataMapper::Adapters::DataObjectAdapter do
     fixtures(:zoos)
   end
   
+  it "should be able to be given a port" do
+    options = {
+      :adapter => 'postgresql',
+      :database => 'data_mapper_1',
+      :port => 4001
+    }
+    db = DataMapper::Database.setup(:my_postgres, options)
+    db.port.should == 4001
+  end
+  
   it "should use DB defaults when creating an empty record" do
     comment = Comment.create({})
     comment.new_record?.should be_false
