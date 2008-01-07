@@ -74,13 +74,27 @@ class RailsAddPasswordToUsers < DataMapper::Migration
 end
 
 def check_schema
-  database.query("
-  SELECT sql FROM
-     (SELECT * FROM sqlite_master UNION ALL
-      SELECT * FROM sqlite_temp_master)
-  WHERE name = 'migration_users'
-  ORDER BY substr(type,2,1), name
-  ")[0]
+  case ENV['ADAPTER']
+  when 'sqlite'
+    database.query("
+    SELECT sql FROM
+       (SELECT * FROM sqlite_master UNION ALL
+        SELECT * FROM sqlite_temp_master)
+    WHERE name = 'migration_users'
+    ORDER BY substr(type,2,1), name
+    ")[0]
+  when 'postgresql'
+    result = database.query("
+    SELECT table_name, column_name FROM information_schema.columns WHERE table_name = 'migration_users'
+    ").join(", ")
+    result.blank? ? nil : result
+  when 'mysql'
+    begin
+      database.query("SHOW CREATE TABLE migration_users")[0]["create table"]
+    rescue Exception => e
+      raise e unless e.message.match(/Table.*doesn\'t exist/)
+    end
+  end
 end
 
 describe DataMapper::Migration do
@@ -117,7 +131,6 @@ describe DataMapper::Migration do
   end
   
   it "should migrate up renaming a column" do
-    pending("Rename not finished.")
     AddUsers.migrate(:up)
     user = MigrationUser.create(:name => "Sam", :login => "sammy")
     RenameLoginOnUsers.migrate(:up)
@@ -130,11 +143,10 @@ describe DataMapper::Migration do
   end
   
   it "should migrate down renaming a column" do
-    pending("Rename not finished.")
     user = MigrationUser.first
     RenameLoginOnUsers.migrate(:down)
     check_schema.match(/username/).should == nil
-    check_schema.match(/login/).should == be_a_kind_of(MatchData)
+    check_schema.match(/login/).should be_a_kind_of(MatchData)
     MigrationUser.first.login.should == user.username
     AddUsers.migrate(:down)
   end

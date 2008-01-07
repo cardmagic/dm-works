@@ -185,10 +185,7 @@ module DataMapper
               command.execute_non_query
             end
             
-            # Swap column names
-            self.name, new_column.name = new_column.name, self.name
-            # Drop the old column
-            new_column.drop!
+            self.drop!
             true
           end
           
