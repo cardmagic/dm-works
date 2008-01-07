@@ -17,6 +17,9 @@ module DataMapper
       TRUE_ALIASES << "T".freeze << "\004\bT".freeze
       FALSE_ALIASES << "F".freeze << "\004\bF".freeze
       
+      def empty_insert_sql
+        "() VALUES ()"
+      end
       
       def create_connection
         

@@ -265,6 +265,10 @@ module DataMapper
         end
       end
       
+      def empty_insert_sql
+        "DEFAULT VALUES"
+      end
+      
       def create(database_context, instance)
         callback(instance, :before_create)
         
@@ -292,7 +296,7 @@ module DataMapper
         sql = if keys.size > 0
           "INSERT INTO #{table.to_sql} (#{keys.join(', ')}) VALUES ?"
         else
-          "INSERT INTO #{table.to_sql}"
+          "INSERT INTO #{table.to_sql} #{self.empty_insert_sql}"
         end
         
         result = connection do |db|
