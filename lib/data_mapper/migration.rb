@@ -43,6 +43,14 @@ module DataMapper
         column.rename!(new_column)
       end
       
+      def alter(column, type, options = {})
+        column = table[column]
+        column.type = type
+        column.options = options
+        column.parse_options!
+        column.alter!
+      end
+      
       def exists?
         database.table_exists?(klass)
       end
@@ -127,6 +135,12 @@ module DataMapper
       def rename_column(table_name, old_column_name, new_column_name)
         table table_name do
           rename old_column_name, new_column_name
+        end
+      end
+      
+      def change_column(table_name, column_name, type, options = {})
+        table table_name do
+          alter column_name, type, options
         end
       end
       

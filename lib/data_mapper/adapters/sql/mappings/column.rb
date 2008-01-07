@@ -7,7 +7,7 @@ module DataMapper
         # Ordinal, Length/Size, Nullability are just a few.
         class Column
           attr_reader :type, :name, :ordinal, :size, :default, :check
-          attr_writer :lazy, :index
+          attr_writer :lazy, :index, :unique
           attr_accessor :table, :options
           
           def initialize(adapter, table, name, type, ordinal, options = {})
@@ -15,12 +15,15 @@ module DataMapper
             @table = table
             @name, self.type, @options = name.to_sym, type, options
             @ordinal = ordinal
-            
+            parse_options!
+          end
+          
+          def parse_options!
             @key = @options[:key] == true || @options[:serial] == true
             @nullable = @options.has_key?(:nullable) ? @options[:nullable] : !@key
             @lazy = @options.has_key?(:lazy) ? @options[:lazy] : (@type == :text && !@key)
             @serial = @options[:serial] == true
-            @default = @options[:default] if @options.key?(:default)
+            @default = @options[:default]
             
             @unique = if @options[:index] == :unique then @options.delete(:index); true else false end
             @index = @options[:index]

@@ -76,6 +76,20 @@ describe DataMapper::Migration do
     end
   end
   
+  class AlterLoginOnUsers < DataMapper::Migration
+    def self.up
+      table :migration_users do
+        alter :login, :text, :nullable => false, :default => "username"
+      end
+    end
+    
+    def self.down
+      table :migration_users do
+        alter :login, :string
+      end
+    end
+  end
+  
   it "should migrate up creating a table with its columns" do
     AddUsers.migrate(:up)
     database.table_exists?(MigrationUser).should be_true
@@ -128,6 +142,24 @@ describe DataMapper::Migration do
     MigrationUser.first.login.should == user.username
     AddUsers.migrate(:down)
   end
+  
+  it "should migrate up altering a column" do
+    AddUsers.migrate(:up)
+    AlterLoginOnUsers.migrate(:up)
+    column = database.table(MigrationUser)[:login]
+    column.type.should == :text
+    column.nullable?.should be_false
+    column.default.should == "username"
+  end
+  
+  it "should migrate down altering a column" do
+    AlterLoginOnUsers.migrate(:down)
+    column = database.table(MigrationUser)[:login]
+    column.type.should == :string
+    column.nullable?.should be_true
+    column.default.should be_nil
+    AddUsers.migrate(:down)
+  end
 end
 
 describe "DataMapper::Migration [RAILS]" do
@@ -163,6 +195,17 @@ describe "DataMapper::Migration [RAILS]" do
       rename_column :migration_users, :username, :login
     end
   end
+  
+  class RailsAlterLoginOnUsers < DataMapper::Migration
+    def self.up
+      change_column :migration_users, :login, :text, :nullable => false, :default => "username"
+    end
+    
+    def self.down
+      change_column :migration_users, :login, :string
+    end
+  end
+  
   it "should migrate up creating a table with its columns" do
     RailsAddUsers.migrate(:up)
     database.table_exists?(MigrationUser).should be_true
@@ -202,5 +245,23 @@ describe "DataMapper::Migration [RAILS]" do
     check_schema.should match(/login/)
     check_schema.should_not match(/username/)
     RailsAddUsers.migrate(:down)
+  end
+  
+  it "should migrate up altering a column" do
+    AddUsers.migrate(:up)
+    RailsAlterLoginOnUsers.migrate(:up)
+    column = database.table(MigrationUser)[:login]
+    column.type.should == :text
+    column.nullable?.should be_false
+    column.default.should == "username"
+  end
+  
+  it "should migrate down altering a column" do
+    RailsAlterLoginOnUsers.migrate(:down)
+    column = database.table(MigrationUser)[:login]
+    column.type.should == :string
+    column.nullable?.should be_true
+    column.default.should be_nil
+    AddUsers.migrate(:down)
   end
 end
