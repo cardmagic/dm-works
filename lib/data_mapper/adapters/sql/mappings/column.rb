@@ -174,7 +174,7 @@ module DataMapper
           def rename!(new_name)
             old_name = name # Store the old_name
             
-            new_column = @table.add_column(new_name, self.type, self.options)
+            new_column = @table.add_column(new_name, self.type, self.options.merge(:ordinal => self.ordinal))
             
             # Create the new column
             new_column.create!
@@ -189,7 +189,7 @@ module DataMapper
             end
             
             self.drop!
-            true
+            new_column
           end
           
           def to_long_form

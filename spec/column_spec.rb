@@ -46,13 +46,13 @@ describe DataMapper::Adapters::Sql::Mappings::Column do
     lambda { database.query("SELECT name FROM zoos") }.should_not raise_error
     lambda { database.query("SELECT moo FROM zoos") }.should raise_error
     
-    name_column.rename!(:moo).should eql(true)
+    name_column = name_column.rename!(:moo)
     name_column.name.should eql(:moo)
     
     lambda { database.query("SELECT name FROM zoos") }.should raise_error
     lambda { database.query("SELECT moo FROM zoos") }.should_not raise_error
     
-    name_column.rename!(:name)
+    name_column = name_column.rename!(:name)
     name_column.name.should eql(:name)
     
     lambda { database.query("SELECT name FROM zoos") }.should_not raise_error
