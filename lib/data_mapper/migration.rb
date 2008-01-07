@@ -124,6 +124,12 @@ module DataMapper
         end
       end
       
+      def rename_column(table_name, old_column_name, new_column_name)
+        table table_name do
+          rename old_column_name, new_column_name
+        end
+      end
+      
       def remove_column(table_name, column)
         table table_name do
           remove column
