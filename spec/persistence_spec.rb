@@ -138,6 +138,10 @@ describe "DataMapper::Persistence" do
     lambda { Zoo[900] }.should raise_error(DataMapper::ObjectNotFoundError)
   end
   
+  it "should raise IncompleteModelDefinitionError for a model with no properties" do
+    lambda { class IncompleteZoo; include DataMapper::Persistence; end; IncompleteZoo.new }.should raise_error(DataMapper::Persistence::IncompleteModelDefinitionError)
+  end
+  
   it "attributes method should load all lazy-loaded values" do
     Animal.first(:name => 'Cup').attributes[:notes].should == 'I am a Cup!'
   end

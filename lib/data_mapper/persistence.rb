@@ -12,6 +12,10 @@ require 'data_mapper/support/struct'
 module DataMapper
   # See DataMapper::Persistence::ClassMethods for DataMapper's DSL documentation.
   module Persistence
+    
+    class IncompleteModelDefinitionError < StandardError
+    end
+    
     # This probably needs to be protected
     attr_accessor :loaded_set
     
@@ -83,6 +87,7 @@ module DataMapper
     end
     
     def initialize(details = nil)
+      check_for_properties!
       if details
         case details
         when Hash then self.attributes = details
@@ -90,6 +95,10 @@ module DataMapper
         when Struct then self.private_attributes = details.attributes
         end
       end
+    end
+    
+    def check_for_properties!
+      raise IncompleteModelDefinitionError.new("Models must have at least one property to be initialized.") if self.class.properties.empty?
     end
     
     module ConvenienceMethods
