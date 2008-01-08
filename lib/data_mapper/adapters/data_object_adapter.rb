@@ -350,6 +350,7 @@ module DataMapper
         sql = "SELECT #{select_columns.join(', ')} FROM #{table.to_sql} WHERE #{table.keys.map { |key| "#{key.to_sql} = ?" }.join(' AND ')}"
         
         connection do |db|
+          reader = nil
           begin
             reader = db.create_command(sql).execute_reader(*keys)
 
@@ -394,7 +395,7 @@ module DataMapper
               instance_type.callbacks.execute(:after_materialize, instance)        
             end # if reader.has_rows?
           ensure
-            reader.close if reader.open?
+            reader.close if reader && reader.open?
           end
         end # connection
         
