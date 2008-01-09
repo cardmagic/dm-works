@@ -445,7 +445,10 @@ module DataMapper
       self.save
     end
     
-    def dirty?
+    def dirty?(cleared = Set.new)
+      return false if cleared.include?(self)
+      cleared << self
+
       result = database_context.table(self).columns.any? do |column|
         if column.type == :object
           Marshal.dump(self.instance_variable_get(column.instance_variable_name)) != original_values[column.name]
@@ -457,7 +460,7 @@ module DataMapper
       return true if result
       
       loaded_associations.any? do |loaded_association|
-        loaded_association.dirty?
+        loaded_association.dirty?(cleared)
       end
     end
 

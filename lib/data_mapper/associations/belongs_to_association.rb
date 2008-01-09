@@ -65,7 +65,7 @@ module DataMapper
       
       class Instance < Associations::Reference
         
-        def dirty?
+        def dirty?(cleared = ::Set.new)
           @associated && @new_member
         end
         
@@ -73,14 +73,14 @@ module DataMapper
           @associated.nil? || cleared.include?(@associated) || @associated.validate_recursively(event, cleared)
         end
         
-        def save_without_validation(database_context)
+        def save_without_validation(database_context, cleared)
           @new_member = false
           unless @associated.nil?
             @instance.instance_variable_set(
               association.foreign_key_column.instance_variable_name,
               @associated.key
             )
-            @instance.database_context.adapter.save_without_validation(database_context, @instance)
+            @instance.database_context.adapter.save_without_validation(database_context, @instance, cleared)
           end
         end
         

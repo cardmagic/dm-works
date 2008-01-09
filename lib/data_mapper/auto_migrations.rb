@@ -3,9 +3,7 @@ module DataMapper
     def auto_migrate!
       if self::subclasses.empty?
         table = database.table(self)
-        table.associations.each do |association|
-          association.activate!
-        end
+        table.activate_associations!
         
         table.create!(true)
       else
@@ -20,9 +18,7 @@ module DataMapper
           table.add_column(column.name, column.type, column.options)
         end
         
-        table.associations.each do |association|
-          association.activate!
-        end
+        table.activate_associations!
         
         return table.create!(true)
       end

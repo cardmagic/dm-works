@@ -11,11 +11,11 @@ def fixtures(name)
   rescue
     nil
   end
-  
-  unless klass.nil?  
+
+  unless klass.nil?
     database.logger.debug { "AUTOMIGRATE: #{klass}" }
     klass.auto_migrate!
-  
+
     (entry.kind_of?(Array) ? entry : [entry]).each do |hash|
       if hash['type']
         Object::const_get(hash['type'])::create(hash)
@@ -24,13 +24,13 @@ def fixtures(name)
       end
     end
   else
-    # TODO: Get rid of the stupid AnimalsExhibit model...
     table = database.table(name.to_s)
     table.create! true
-    
-    pp database.schema
-    
-    (entry.kind_of?(Array) ? entry : [entry]).each do |hash|  
+    table.activate_associations!
+
+    #pp database.schema
+
+    (entry.kind_of?(Array) ? entry : [entry]).each do |hash|
       table.insert(hash)
     end
   end

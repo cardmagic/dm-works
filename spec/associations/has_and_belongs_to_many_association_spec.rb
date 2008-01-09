@@ -174,3 +174,45 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
   end
 
 end
+
+describe DataMapper::Associations::HasAndBelongsToManyAssociation, "self-referential relationship" do
+
+  before(:all) do
+    fixtures(:tasks)
+  end
+
+  before(:each) do
+    @task_relax = Task.first(:name => "task_relax")
+  end
+
+  it "should allow a self-referential habtm by creating a related_* column for the right foreign key" do
+    tasks_assocation = database(:mock).schema[Task].associations.find { |a| a.name == :tasks }
+
+    tasks_assocation.right_foreign_key.name.should == :related_task_id
+  end
+
+  it "should load the self-referential association" do
+    database do
+      task_relax = Task.first(:name => "task_relax")
+      task_relax.tasks.size.should == 1
+      task_relax.tasks.first.should == Task.first(:name => "task_drink_heartily")
+    end
+  end
+
+  it "should allow a mirrored relationship between two rows (no infinite recursion)" do
+    task_vacation = Task.first(:name => "task_vacation")
+
+    @task_relax.tasks << task_vacation
+    @task_relax.save
+
+    task_vacation.tasks << @task_relax
+    task_vacation.save
+
+    @task_relax.reload!
+    @task_relax.tasks.should include(task_vacation)
+
+    task_vacation.reload!
+    task_vacation.tasks.should include(@task_relax)
+  end
+
+end

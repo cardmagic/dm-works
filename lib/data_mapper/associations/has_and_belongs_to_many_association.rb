@@ -8,6 +8,7 @@ module DataMapper
       def initialize(klass, association_name, options)
         @adapter = database.adapter
         @key_table = adapter.table(klass)
+        @self_referential = (association_name.to_s == @key_table.name)
         @association_name = association_name.to_sym
         @options = options
         
@@ -24,6 +25,10 @@ module DataMapper
 
       def foreign_name
         @foreign_name || (@foreign_name = (@options[:foreign_name] || @key_table.name).to_sym)
+      end
+
+      def self_referential?
+        @self_referential
       end
       
       def constant
@@ -43,8 +48,9 @@ module DataMapper
         end
       end
       
-      def activate!
-        join_table.create!
+      def activate!(force = false)
+        join_columns.each {|column| column unless join_table.mapped_column_exists?(column.name)}
+        join_table.create!(force)
       end
 
       def associated_columns
@@ -72,15 +78,19 @@ module DataMapper
         @left_foreign_key || @left_foreign_key = begin
           join_table.add_column(
             (@options[:left_foreign_key] || @key_table.default_foreign_key),
-            :integer, :key => true)
+            :integer, :nullable => true, :key => true)
         end
       end
 
       def right_foreign_key
+        if self_referential?
+          @options[:right_foreign_key] ||= ["related_", associated_table.default_foreign_key].to_s
+        end
+
         @right_foreign_key || @right_foreign_key = begin
           join_table.add_column(
             (@options[:right_foreign_key] || associated_table.default_foreign_key),
-            :integer, :key => true)
+            :integer, :nullable => true, :key => true)
         end
       end
       
@@ -94,10 +104,17 @@ module DataMapper
       end
       
       def to_shallow_sql
+        if self_referential?
+          <<-EOS.compress_lines
+            JOIN #{join_table.to_sql} ON
+              #{right_foreign_key.to_sql(true)} = #{@key_table.key.to_sql(true)}
+          EOS
+        else
         <<-EOS.compress_lines
           JOIN #{join_table.to_sql} ON
             #{left_foreign_key.to_sql(true)} = #{@key_table.key.to_sql(true)}
         EOS
+        end
       end
       
       def to_insert_sql
@@ -172,19 +189,19 @@ module DataMapper
           entries.empty?
         end
         
-        def dirty?
+        def dirty?(cleared = ::Set.new)
           return false unless @entries
-          @entries.any? { |item| item.dirty? } || @associated_keys != @entries.map { |entry| entry.keys }
+          @entries.any? {|item| cleared.include?(item) || item.dirty?(cleared) } || @associated_keys != @entries.map { |entry| entry.keys }
         end
         
         def validate_recursively(event, cleared)
           @entries.blank? || @entries.all? { |item| cleared.include?(item) || item.validate_recursively(event, cleared) }
         end
         
-        def save_without_validation(database_context)
+        def save_without_validation(database_context, cleared)
           unless @entries.nil?
             
-            if dirty?
+            if dirty?(cleared)
               adapter = @instance.database_context.adapter
               
               adapter.connection do |db|
@@ -199,7 +216,7 @@ module DataMapper
                   keys = []
               
                   @entries.each do |member|
-                    adapter.save_without_validation(database_context, member)
+                    adapter.save_without_validation(database_context, member, cleared)
                     values << "(?, ?)"
                     keys << @instance.key << member.key
                   end
@@ -211,7 +228,7 @@ module DataMapper
               
                 else # adapter doesn't support batch inserts...
                   @entries.each do |member|
-                    adapter.save_without_validation(database_context, member)          
+                    adapter.save_without_validation(database_context, member, cleared)
                   end
               
                   # Just to keep the same flow as the batch-insert mode.

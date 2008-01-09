@@ -193,14 +193,17 @@ module DataMapper
         end
       end
       
-      def save(database_context, instance, validate = true)
+      def save(database_context, instance, validate = true, cleared = Set.new)
         case instance
-        when Class then table(instance).create!
+        when Class then
+          table(instance).create!
+          table(instance).activate_associations!
         when Mappings::Table then instance.create!
         when DataMapper::Persistence then          
           event = instance.new_record? ? :create : :update
           
-          return false if validate && !instance.validate_recursively(event, Set.new)
+          return false if (validate && !instance.validate_recursively(event, Set.new)) || cleared.include?(instance)
+          cleared << instance
           
           callback(instance, :before_save)
           
@@ -214,7 +217,7 @@ module DataMapper
           end
           
           instance.loaded_associations.each do |association|
-            association.save_without_validation(database_context) if association.dirty?
+            association.save_without_validation(database_context, cleared) if association.dirty?
           end
           
           callback(instance, :after_save)
@@ -225,8 +228,8 @@ module DataMapper
         raise error
       end
       
-      def save_without_validation(database_context, instance)
-        save(database_context, instance, false)
+      def save_without_validation(database_context, instance, cleared = Set.new)
+        save(database_context, instance, false, cleared)
       end
       
       def update(database_context, instance)

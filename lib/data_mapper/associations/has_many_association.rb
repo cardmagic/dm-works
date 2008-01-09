@@ -50,15 +50,15 @@ module DataMapper
           loaded_members.blank?
         end
         
-        def dirty?
-          loaded_members.any? { |member| member.dirty? }
+        def dirty?(cleared = ::Set.new)
+          loaded_members.any? { |member| cleared.include?(member) || member.dirty?(cleared) }
         end
         
         def validate_recursively(event, cleared)          
           loaded_members.all? { |member| cleared.include?(member) || member.validate_recursively(event, cleared) }
         end
         
-        def save_without_validation(database_context)
+        def save_without_validation(database_context, cleared)
           
           adapter = @instance.database_context.adapter
           
@@ -88,7 +88,7 @@ module DataMapper
             members.each do |member|
               member.original_values.delete(original_value_name)
               member.instance_variable_set(ivar_name, @instance.key)
-              @instance.database_context.adapter.save_without_validation(database_context, member)
+              @instance.database_context.adapter.save_without_validation(database_context, member, cleared)
             end
           end
         end

@@ -73,6 +73,12 @@ module DataMapper
             @associations
           end
           
+          def activate_associations!(force = false)
+            @associations.each do |association|
+              association.activate! force
+            end
+          end
+
           def reflect_columns
             @adapter.reflect_columns(self)
           end
@@ -84,6 +90,11 @@ module DataMapper
             end
             
             self.columns
+          end
+
+          def mapped_column_exists?(column_name)
+            @columns.each {|column| return true if column.name == column_name}
+            false
           end
           
           def exists?
@@ -420,9 +431,7 @@ module DataMapper
           
           def activate!
             @activated = true
-            @associations.each do |association|
-              association.activate!
-            end
+            activate_associations!
           end
           
           def activated?

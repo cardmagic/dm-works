@@ -132,7 +132,7 @@ module DataMapper
         "JOIN #{associated_table.to_sql} ON #{foreign_key_column.to_sql(true)} = #{primary_key_column.to_sql(true)}"
       end
       
-      def activate!
+      def activate!(force = false)
         foreign_key_column
       end
     end
