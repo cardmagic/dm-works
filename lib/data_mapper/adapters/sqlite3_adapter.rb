@@ -28,7 +28,7 @@ module DataMapper
       def create_connection
         conn = DataObject::Sqlite3::Connection.new("dbname=#{@configuration.database}")
         conn.logger = self.logger
-        conn.open
+        conn.open if conn.respond_to?(:open)
         return conn
       end
       
