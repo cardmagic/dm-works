@@ -155,8 +155,8 @@ module DataMapper
               end
             end
             results.flatten
-          elsif items.size == 1 && items.first.respond_to?(symbol)
-            items.first.send(symbol, *args, &block)
+          elsif items.size == 1 && items.entries.first.respond_to?(symbol)
+            items.entries.first.send(symbol, *args, &block)
           else
             super
           end
