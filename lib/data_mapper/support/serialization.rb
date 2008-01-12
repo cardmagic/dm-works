@@ -37,11 +37,16 @@ module DataMapper
         to_xml_document.to_s
       end
       
+      def xml_element_name ## overloadable
+        Inflector.underscore(self.class.name)
+      end
+      
       def to_xml_document
         doc = REXML::Document.new
         
         table = database_context.table(self.class)
-        root = doc.add_element(Inflector.underscore(self.class.name))
+        # root = doc.add_element(Inflector.underscore(self.class.name))
+        root = doc.add_element(xml_element_name)
         
         key_attribute = root.attributes << REXML::Attribute.new(table.key.to_s, key)
         
