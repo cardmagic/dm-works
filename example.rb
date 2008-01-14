@@ -4,24 +4,42 @@ ENV['LOG_NAME'] = 'example'
 require 'environment'
 
 # Define a fixtures helper method to load up our test data.
-def fixtures(name, force = false)
+def fixtures(name)
   entry = YAML::load_file(File.dirname(__FILE__) + "/spec/fixtures/#{name}.yaml")
-  klass = Kernel::const_get(Inflector.classify(Inflector.singularize(name)))
-  
-  klass.auto_migrate!
-  
-  (entry.kind_of?(Array) ? entry : [entry]).each do |hash|
-    if hash['type']
-      Object::const_get(hash['type'])::create(hash)
-    else
-      klass::create(hash)
+  klass = begin
+    Kernel::const_get(Inflector.classify(Inflector.singularize(name)))
+  rescue
+    nil
+  end
+
+  unless klass.nil?
+    database.logger.debug { "AUTOMIGRATE: #{klass}" }
+    klass.auto_migrate!
+
+    (entry.kind_of?(Array) ? entry : [entry]).each do |hash|
+      if hash['type']
+        Object::const_get(hash['type'])::create(hash)
+      else
+        klass::create(hash)
+      end
+    end
+  else
+    table = database.table(name.to_s)
+    table.create! true
+    table.activate_associations!
+
+    #pp database.schema
+
+    (entry.kind_of?(Array) ? entry : [entry]).each do |hash|
+      table.insert(hash)
     end
   end
 end
 
+
 # Pre-fill the database so non-destructive tests don't need to reload fixtures.
 Dir[File.dirname(__FILE__) + "/spec/fixtures/*.yaml"].each do |path|
-  fixtures(File::basename(path).sub(/\.yaml$/, ''), true)
+  fixtures(File::basename(path).sub(/\.yaml$/, ''))
 end
 
 require 'irb'
