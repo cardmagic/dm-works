@@ -209,13 +209,14 @@ describe "DataMapper::Persistence" do
     p1.should == p2
   end
 
-  it "should not be equal if attributes have changed" do
-    p1 = Person.create(:name => 'Sam')
-    p2 = Person[p1.id]
-    p2.name = "Paul"
-
-    p1.should_not == p2
-  end
+  # This is unnecessary. Use #dirty? to check for changes.
+  # it "should not be equal if attributes have changed" do
+  #   p1 = Person.create(:name => 'Sam')
+  #   p2 = Person[p1.id]
+  #   p2.name = "Paul"
+  # 
+  #   p1.should_not == p2
+  # end
 
 end
 
@@ -452,19 +453,20 @@ describe 'Properties' do
     x.should be_initialized
     x.save!
     x.name.should eql('Ugly')
+    x.should be_bruised
     
     x.name = 'Bob'
     x.save!
     
     x2 = Tomato.first(:name => 'Bob')
-    x2.should_not == x
+    x2.should_not be_bruised
     x2.heal!
     x2.should == x
     x2.name.should eql('Bob')
     x2.should_not be_initialized
     
     x3 = Tomato.get(x.key)
-    x3.should_not == x
+    x3.should_not be_bruised
     x3.heal!
     x3.should == x
     x3.name.should eql('Bob')

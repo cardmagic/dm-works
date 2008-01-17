@@ -32,7 +32,7 @@ describe "DataMapper::Attributes" do
   end
   
   it "should get attributes declared in ATTRIBUTES constant" do
-    Tomato.new.attributes.should == { :id => nil, :name => 'Ugly', :bruised => false }
+    Tomato.new.attributes.should == { :id => nil, :name => 'Ugly', :bruised => true }
   end
   
 end

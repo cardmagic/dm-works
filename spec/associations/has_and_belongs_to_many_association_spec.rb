@@ -47,9 +47,22 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
   end
   
   it 'should allow association of additional objects' do
-    @amazonia.animals << Animal.new(:name => "Buffalo")
+    buffalo = Animal.create(:name => "Buffalo")
+    @amazonia.animals << buffalo
     @amazonia.animals.size.should == 2
-    @amazonia.reload
+    @amazonia.save!
+    @amazonia.reload!
+    @amazonia.animals.should have(2).entries
+    
+    other = Exhibit[@amazonia.id]
+    other.animals.should have(2).entries
+    
+    @amazonia.animals.delete(buffalo).should_not be_nil
+    @amazonia.animals.should be_dirty
+    @amazonia.save!
+    
+    other = Exhibit[@amazonia.id]
+    other.animals.should have(1).entries
   end
   
   it "should allow association of additional objects (CLEAN)" do
@@ -215,4 +228,53 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation, "self-referen
     task_vacation.tasks.should include(@task_relax)
   end
 
+end
+
+describe DataMapper::Associations::HasAndBelongsToManyAssociation, "compatibility with belongs_to" do
+  before(:all) do
+    
+    class Candidate < DataMapper::Base
+      property :name, :string
+      
+      belongs_to :job
+      has_and_belongs_to_many :applications, :class => 'Job'
+    end
+    
+    class Job < DataMapper::Base
+      property :name, :string
+    end
+    
+    Candidate.auto_migrate!
+    Job.auto_migrate!
+  end
+  
+  after(:all) do
+    database.table(Candidate).drop!
+    database.table(Job).drop!
+  end
+  
+  it "should be able to save a job without interferring with applications" do
+    programmer = Job.create(:name => 'Programmer')
+    manager = Job.create(:name => 'Manager')
+    
+    bob = Candidate.create(:name => 'Bob')
+    
+    bob.applications << programmer << manager
+    
+    bob.applications.should have(2).entries
+    bob.job.should be_nil
+    
+    bob.job = programmer
+    
+    bob.should be_dirty
+    bob.applications.should be_dirty
+    bob.job.should_not be_dirty # Because no property is changed on the has_many side.
+    
+    bob.save!.should == true
+    
+    impostor = Candidate[bob.id]
+    
+    impostor.applications.should have(2).entries
+    impostor.job.should == programmer
+  end
 end

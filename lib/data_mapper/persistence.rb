@@ -546,13 +546,13 @@ module DataMapper
     end
 
     def eql?(other)
-      return false unless other.is_a?(self.class)
-      comparator = keys.empty? ? :object_id : :keys
+      return false unless other.is_a?(self.class) || self.is_a?(other.class)
+      comparator = keys.empty? ? :private_attributes : :keys
       send(comparator) == other.send(comparator)
     end
 
     def ==(other)
-      other.is_a?(self.class) && private_attributes == other.send(:private_attributes)
+      eql?(other)
     end
 
     # Returns the difference between two objects, in terms of their attributes.

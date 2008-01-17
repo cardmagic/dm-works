@@ -263,7 +263,8 @@ module DataMapper
         end
         
         def delete(member)
-          if entries.delete?(member)
+          if found_member = entries.detect { |entry| entry == member }
+            entries.delete?(found_member)
             @instance.database_context.adapter.connection do |db|
               command = db.create_command(association.to_delete_member_sql)
               command.execute_non_query(@instance.key, member.key)

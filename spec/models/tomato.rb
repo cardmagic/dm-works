@@ -8,7 +8,7 @@ class Tomato
     
     @name = 'Ugly'
     @init_run = true
-    @bruised = false
+    @bruised = true
   end
   
   def initialized?
