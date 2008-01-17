@@ -36,6 +36,12 @@ describe DataMapper::Associations::HasManyAssociation do
     dallas.exhibits.instance_variable_get('@items').should be_nil
   end
   
+  it "should use << for assignment" do
+    bob_land = Zoo.new(:name => 'Bob Land!')
+    bob_land.exhibits << Exhibit.new(:name => 'Cow')
+    bob_land.exhibits.should have(1).entries
+  end
+  
   it "should return an empty Enumerable for new objects" do
     project = Project.new
     project.sections.should be_a_kind_of(Enumerable)
