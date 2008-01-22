@@ -13,12 +13,12 @@ require File.dirname(__FILE__) + "/spec_helper"
 #     the :type column will tell you what type to instantiate    
 #
 #
-# So... the QueryBuilder class should basically take the options from step 1, give you the SQL in step 2,
+# So... the Query class should basically take the options from step 1, give you the SQL in step 2,
 # allow you to handle step 3, and expose types/result-set mappings to load objects by for step 4.
 # step 5 should be handled in the DataObjectAdapter
 describe DataMapper::Query do
   
-  it "should return the primary table for a simple query, along with the conditions" do
+  it "should generate the correct queries for the given options" do
     query = DataMapper::Query.new(database(:mock).adapter, Zoo, :name => 'bob')
     query.to_sql.should == "SELECT `id`, `name`, `updated_at` FROM `zoos` WHERE (`name` = ?)"
     query.parameters.should == ['bob']
@@ -30,6 +30,48 @@ describe DataMapper::Query do
     query = DataMapper::Query.new(database(:mock).adapter, Project)
     query.to_sql.should == "SELECT `id`, `title`, `description`, `deleted_at` FROM `projects` WHERE (`deleted_at` IS NULL OR `deleted_at` > NOW())"
     query.parameters.should be_empty
+  end
+  
+  it "should use the include option for lazily-loaded columns" do
+    query = DataMapper::Query.new(database(:mock).adapter, Zoo, :include => :notes)
+    query.to_sql.should == "SELECT `id`, `name`, `notes`, `updated_at` FROM `zoos`"
+    query.parameters.should be_empty
+  end
+  
+  it "should generate the correct join query" do
+    query = DataMapper::Query.new(database(:mock).adapter, Zoo, :include => [:exhibits])
+    query.to_sql.should == <<-EOS.compress_lines
+      SELECT `zoos`.`id`, `zoos`.`name`, `zoos`.`updated_at`, `exhibits`.`id`, `exhibits`.`name`, `exhibits`.`zoo_id`
+      FROM `zoos`
+      JOIN `exhibits` ON `exhibits`.`zoo_id` = `zoos`.`id`
+    EOS
+    
+    query = DataMapper::Query.new(database(:mock).adapter, Zoo, :include => [:exhibits], :name => ['bob', 'sam'])
+    query.to_sql.should == <<-EOS.compress_lines
+      SELECT `zoos`.`id`, `zoos`.`name`, `zoos`.`updated_at`, `exhibits`.`id`, `exhibits`.`name`, `exhibits`.`zoo_id`
+      FROM `zoos`
+      JOIN `exhibits` ON `exhibits`.`zoo_id` = `zoos`.`id`
+      WHERE (`zoos`.`name` IN ?)
+    EOS
+    query.parameters.should == [['bob', 'sam']]
+  end
+  
+  it "should be forgiving with options that require Arrays" do
+    
+    query = DataMapper::Query.new(database(:mock).adapter, Zoo, :conditions => ["`name` = ?", 'bob'])
+    query.to_sql.should == "SELECT `id`, `name`, `updated_at` FROM `zoos` WHERE (`name` = ?)"
+    query.parameters.should == ['bob']
+    
+    query = DataMapper::Query.new(database(:mock).adapter, Zoo, :conditions => "`name` = 'bob'")
+    query.to_sql.should == "SELECT `id`, `name`, `updated_at` FROM `zoos` WHERE (`name` = 'bob')"
+    query.parameters.should be_empty
+    
+    query = DataMapper::Query.new(database(:mock).adapter, Zoo, :include => :exhibits)
+    query.to_sql.should == <<-EOS.compress_lines
+      SELECT `zoos`.`id`, `zoos`.`name`, `zoos`.`updated_at`, `exhibits`.`id`, `exhibits`.`name`, `exhibits`.`zoo_id`
+      FROM `zoos`
+      JOIN `exhibits` ON `exhibits`.`zoo_id` = `zoos`.`id`
+    EOS
   end
   
 end

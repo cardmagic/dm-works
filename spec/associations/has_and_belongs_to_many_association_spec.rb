@@ -231,27 +231,6 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation, "self-referen
 end
 
 describe DataMapper::Associations::HasAndBelongsToManyAssociation, "compatibility with belongs_to" do
-  before(:all) do
-    
-    class Candidate < DataMapper::Base
-      property :name, :string
-      
-      belongs_to :job
-      has_and_belongs_to_many :applications, :class => 'Job'
-    end
-    
-    class Job < DataMapper::Base
-      property :name, :string
-    end
-    
-    Candidate.auto_migrate!
-    Job.auto_migrate!
-  end
-  
-  after(:all) do
-    database.table(Candidate).drop!
-    database.table(Job).drop!
-  end
   
   it "should be able to save a job without interferring with applications" do
     programmer = Job.create(:name => 'Programmer')
