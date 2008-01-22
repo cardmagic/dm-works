@@ -4,6 +4,7 @@ require 'data_mapper/adapters/sql/coersion'
 require 'data_mapper/adapters/sql/quoting'
 require 'data_mapper/adapters/sql/mappings/schema'
 require 'data_mapper/support/connection_pool'
+require 'data_mapper/query'
 
 module DataMapper
   
@@ -46,6 +47,10 @@ module DataMapper
       
       TABLE_QUOTING_CHARACTER = '`'.freeze
       COLUMN_QUOTING_CHARACTER = '`'.freeze
+      
+      SYNTAX = {
+        :now => 'NOW()'.freeze
+      }
       
       def initialize(configuration)
         super
@@ -442,6 +447,7 @@ module DataMapper
         
         base.const_set('TYPES', TYPES.dup)
         base.const_set('FIND_OPTIONS', FIND_OPTIONS.dup)
+        base.const_set('SYNTAX', SYNTAX.dup)
         
         super
       end

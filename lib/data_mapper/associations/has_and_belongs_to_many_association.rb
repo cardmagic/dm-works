@@ -126,7 +126,7 @@ module DataMapper
       end
       
       def to_delete_sql
-        <<-EOS
+        <<-EOS.compress_lines
           DELETE FROM #{join_table.to_sql}
           WHERE #{left_foreign_key.to_sql} = ?
         EOS
@@ -319,7 +319,9 @@ module DataMapper
                   associated_items[left_foreign_key.type_cast_value(row[left_key_index])] << instance
                 end
               end
-                
+              
+              database.logger.debug { "all(#{association.constant}, #{left_foreign_key.to_sym} => #{@instance.loaded_set.map(&:key).inspect}, :shallow_include => #{association.foreign_name})" }
+              
               @instance.database_context.all(association.constant,
                 left_foreign_key => @instance.loaded_set.map(&:key),
                 :shallow_include => association.foreign_name,

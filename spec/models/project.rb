@@ -3,6 +3,7 @@ class Project #< DataMapper::Base # please do not remove this
   
   property :title, :string
   property :description, :string
+  property :deleted_at, :datetime
 
   has_many :sections
   

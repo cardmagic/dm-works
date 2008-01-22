@@ -366,7 +366,11 @@ module DataMapper
             else raise "CAN HAS CRASH? #{clause.inspect}"
             end
           rescue => e
-            raise ConditionsError.new(clause, value, e)
+            if e.is_a?(ConditionsError)
+              raise e
+            else
+              raise ConditionsError.new(clause, value, e)
+            end
           end
           
           private            

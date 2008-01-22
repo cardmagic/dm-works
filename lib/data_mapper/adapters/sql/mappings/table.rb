@@ -92,6 +92,10 @@ module DataMapper
             self.columns
           end
 
+          def non_lazy_columns
+            @non_lazy_columns || @non_lazy_columns = columns.reject { |column| column.lazy? }
+          end
+          
           def mapped_column_exists?(column_name)
             @columns.each {|column| return true if column.name == column_name}
             false
@@ -419,6 +423,7 @@ module DataMapper
             @to_sql = nil
             @name = nil
             @columns_hash.clear
+            @non_lazy_columns = nil
             
             if flush_columns
               @columns.each do |column|
