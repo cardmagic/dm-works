@@ -1,4 +1,5 @@
 require File.dirname(__FILE__) + '/column'
+require File.dirname(__FILE__) + '/conditions'
 require File.dirname(__FILE__) + '/associations_set'
 
 module DataMapper
@@ -43,6 +44,10 @@ module DataMapper
           
           def schema
             @schema || @schema = @adapter.schema
+          end
+          
+          def conditions(args)
+            Conditions.new(self, @adapter, @associations.empty?, args)
           end
           
           def paranoid?
@@ -92,10 +97,6 @@ module DataMapper
             self.columns
           end
 
-          def non_lazy_columns
-            @non_lazy_columns || @non_lazy_columns = columns.reject { |column| column.lazy? }
-          end
-          
           def mapped_column_exists?(column_name)
             @columns.each {|column| return true if column.name == column_name}
             false
@@ -157,13 +158,16 @@ module DataMapper
             end
           end
           
-          def count(*args)
-            @adapter.connection do |db|
-              sql = "SELECT COUNT(*) AS row_count FROM #{to_sql}"
-              sql << "WHERE #{args}" unless args.empty?
-              
+          def count(args={})
+            sql = "SELECT COUNT(*) AS row_count FROM #{to_sql}"
+            parameters = []
+            
+            paramsql, *parameters = conditions(args).to_params_sql
+            sql << paramsql #gotta shift it in
+
+            @adapter.connection do |db|              
               command = db.create_command(sql)
-              command.execute_reader do |reader|
+              command.execute_reader(*parameters) do |reader|
                 if reader.has_rows?
                   reader.current_row.first.to_i
                 else
@@ -190,7 +194,7 @@ module DataMapper
             end
           end
           
-          def key            
+          def key
             @key || begin
               @key = @columns.find { |column| column.key? }
               
@@ -288,7 +292,7 @@ module DataMapper
             @custom_name = value
             self.name
           end
-      
+          
           def default_foreign_key
             @default_foreign_key ||= Inflector.foreign_key(@klass_or_name, key.name).freeze
           end
@@ -423,7 +427,6 @@ module DataMapper
             @to_sql = nil
             @name = nil
             @columns_hash.clear
-            @non_lazy_columns = nil
             
             if flush_columns
               @columns.each do |column|

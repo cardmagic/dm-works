@@ -22,6 +22,10 @@ module DataMapper
           def each
             @set.each { |name, association| yield(association) }
           end
+          
+          def empty?
+            @set.empty?
+          end
         end
         
       end # module Mappings
