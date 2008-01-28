@@ -72,4 +72,21 @@ describe Validatable::ValidatesUniquenessOf do
     bugaboo.valid?(:save).should == false
     bugaboo.errors.full_messages.first.should == 'You try to steal my name? I kill you!'
   end
+  
+  it "should not interfere with the destruction of an object" do
+    pending "see: http://wm.lighthouseapp.com/projects/4819-datamapper/tickets/139"
+    
+    ## creating two dups so that we have invalid records in the db
+    Project.create(:title => 'Dup')
+    Project.create(:title => 'Dup')
+    
+    class Project
+      validations.clear
+      validates_uniqueness_of :title, :message => 'You try to steal my title? I kill you!'
+    end
+    
+    project = Project.first(:title => 'Dup')
+    project.destroy!.should == true
+    
+  end
 end
