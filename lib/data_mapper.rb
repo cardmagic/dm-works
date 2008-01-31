@@ -35,6 +35,7 @@ require 'data_mapper/support/typed_set'
 require 'data_mapper/database'
 require 'data_mapper/persistence'
 require 'data_mapper/base'
+require 'data_mapper/types/string'
 
 
 begin

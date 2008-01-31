@@ -27,4 +27,5 @@ describe DataMapper::Adapters::DataObjectAdapter do
     lambda { Zoo.create(:name => [nil, 'bob']) }.should raise_error(ArgumentError)
   end
 
+  it "should accept a subclass as a valid type if the parent is a valid type"
 end
