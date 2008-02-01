@@ -7,7 +7,7 @@ module DataMapper
 # which map to (or generate) fields in a database.
 # 
 # Defining properties explicitly in a model has several advantages.
-# Doing the definitions in model centralizes information about the model
+# It centralizes information about the model
 # in a single location, rather than having to dig out migrations, xml,
 # or other config files.  It also provides the ability to use Ruby's
 # access control functions.  Finally, since Datamapper only cares about
@@ -44,8 +44,8 @@ module DataMapper
 #  end
 #
 # == Overriding Accessors
-# You can override any property in the same manner that Ruby accessors (attr_accessor) 
-# can be.  After the property is defined, add your own custom accessor:
+# The accessor for any property can be overridden in the same manner that Ruby class accessors 
+# can be.  After the property is defined, just add your custom accessor:
 # 
 #  class Post < DataMapper::Base
 #    property :title,  :string
@@ -123,8 +123,8 @@ module DataMapper
 #
 # For more information about validations, visit the Validatable documentation.
 # == Embedded Values
-# As an alternative to serializing non-mappable data out into a text column on your 
-# table, consider an EmbeddedValue.
+# As an alternative to extraneous has_one relationships, consider using an
+# EmbeddedValue.
 #
 # == Misc. Notes
 # * Properties declared as strings will default to a length of 50, rather than 255 

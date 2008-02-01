@@ -1,5 +1,51 @@
 module DataMapper
   
+# == EmbeddedValue
+# As an alternative to an extraneous has_one association, EmbeddedValue offers a means 
+# to serialize component objects to a table without having to define an entirely new model.
+#
+# Example:
+#
+#   class Person < DataMapper::Base 
+#     
+#     property :name, :string
+#     property :occupation, :string
+#     
+#     embed :address, :prefix => true do
+#       property :street, :string
+#       property :city, :string
+#       property :state, :string, :size => 2
+#       property :zip_code, :string, :size => 10
+#       
+#       def city_state_zip_code
+#         "#{city}, #{state} #{zip_code}"
+#       end
+#       
+#     end 
+#   end
+#
+# Columns for the Address model will appear in the Person table.  Passing 
+# <tt>:prefix => true</tt> will prefix the column name with the parent table's name.
+# The default behavior is to use the columns as they are defined.  Using the above
+# example, the database table structure will become:
+#
+#   Column                      Datatype, Options
+#   ===============================================================
+#   name                         :string
+#   occupation                   :string
+#   address_street               :string
+#   address_city                 :string
+#   address_state                :string, :size => 2
+#   address_zip_code             :string, :size => 10
+#
+# EmbeddedValue's become instance methods off of an instance of the parent 
+# class and return a sub-class of the parent class.
+#
+#   bob = Person.first(:name => 'Bob')
+#   bob.address                         # => #<Person::Address:0x1a492b8>
+#   bob.address.city                    # => "Pittsburgh"
+#   bob.address.city_state_zip_code     # => "Pitsburgh, PA 90210"
+  
   class EmbeddedValue
     EMBEDDED_PROPERTIES = []
     
@@ -12,7 +58,7 @@ module DataMapper
       base.const_set('EMBEDDED_PROPERTIES', [])
     end
     
-    # add an embedded property
+    # add an embedded property.  For more information about how to define properties, visit Property.
     def self.property(name, type, options = {})
       # set lazy option on the mapping if defined in the embed block
       options[:lazy] ||= @container_lazy
@@ -28,7 +74,7 @@ module DataMapper
     end
     
     # define embedded property getters
-    def self.define_property_getter(name, property)
+    def self.define_property_getter(name, property) # :nodoc:
 
       # add the method on the embedded class
       class_eval <<-EOS
@@ -46,7 +92,7 @@ module DataMapper
     end
     
     # define embedded property setters
-    def self.define_property_setter(name, property)
+    def self.define_property_setter(name, property)  # :nodoc:
 
       # add the method on the embedded class
       class_eval <<-EOS
@@ -57,6 +103,7 @@ module DataMapper
       EOS
     end
     
+    # returns the class in which the EmbeddedValue is declared
     def self.containing_class
       @containing_class || @containing_class = begin
         tree = name.split('::')

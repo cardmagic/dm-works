@@ -133,7 +133,7 @@ module DataMapper
         #   Widget.find_or_create(:title => 'Steak Knife', :length => 8)
         #
         #   Widget.find_or_create({:title => 'Butter Knife'}, {:length => 5})
-        # NOTE: If the attributes specified in to <tt>search_attributes</tt> and <tt>create_attributes</tt> by do not make up a valid object, creation will fail with a validation error.
+        # NOTE: If the attributes specified in to <tt>search_attributes</tt> and <tt>create_attributes</tt> do not make up a valid object, creation will fail with a validation error.
         def find_or_create(search_attributes, create_attributes = {})
           first(search_attributes) || create(search_attributes.merge(create_attributes))
         end
