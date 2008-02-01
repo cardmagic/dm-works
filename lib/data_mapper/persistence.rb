@@ -126,10 +126,44 @@ module DataMapper
       end
 
       module ClassMethods
+        
+        # Attempts to find an object using options passed in in search_attributes, and falls back to creating the object if it can't find it.
+        # Examples:
+        #
+        #   Widget.find_or_create(:title => 'Steak Knife', :length => 8)
+        #
+        #   Widget.find_or_create({:title => 'Butter Knife'}, {:length => 5})
+        # NOTE: If the attributes specified in to <tt>search_attributes</tt> and <tt>create_attributes</tt> by do not make up a valid object, creation will fail with a validation error.
         def find_or_create(search_attributes, create_attributes = {})
           first(search_attributes) || create(search_attributes.merge(create_attributes))
         end
 
+        # returns an array of objects matching <tt>options</tt>.  There are many ways to pass in <tt>options</tt>, so examples are in order.  Output on the right indicates how the passed-in <tt>options</tt> affects the resulting query.
+        #
+        # Basics:
+        #   Widget.all                                          # => no conditions
+        #   Widget.all :order => 'created_at desc'              # => ORDER BY created_at desc
+        #   Widget.all :limit => 10                             # => LIMIT 10
+        #   Widget.all :offset => 100                           # => OFFSET 100
+        #   Widget.all :include => [:parts]                     # => performs the JOIN according to
+        #                                                            its association with Parts
+        #
+        # Any non-standard options are assumed to be column names and are ANDed together: 
+        #   Widget.all :age => 10                               # => WHERE age = 10
+        #   Widget.all :age => 10, :title => 'Toy'              # => WHERE age = 10 AND title = 'Toy'
+        #
+        # Using Symbol Operators[link:classes/DataMapper/Support/Symbol/Operator.html]:
+        #   Widget.all :age.gt => 20                            # => WHERE age > 10
+        #   Widget.all :age.gte => 20, :name.like => '%Toy%'    # => WHERE age >= 10 and name like '%Toy%'
+        # 
+        # Variations of syntax include the :conditions => {} as well as interpolated arrays
+        #   Widget.all :conditions => {:age => 10}              # => WHERE age = 10
+        #   Widget.all :conditions => ["age = ?", 10]           # => WHERE age = 10
+        #
+        # Syntaxes can be mixed-and-matched as well
+        #   Widget.all :conditions => ["age = ?", 10], :title => 'Toy'
+        #   # => WHERE age = 10 AND title = 'Toy'
+        #
         def all(options = {})
           database.all(self, options)
         end
@@ -146,10 +180,13 @@ module DataMapper
           end
         end
 
+        # accepts the same arguments as all(), though instead of returning an array, it returns the first value
         def first(*args)
           database.first(self, *args)
         end
 
+        # returns the count of rows that match the given options hash.  See all() for a list of possible arguments.
+        # NOTE: discards <tt>:offset</tt>, <tt>:limit</tt>, <tt>:order</tt>
         def count(*args)
           database.count(self, *args)
         end
@@ -169,15 +206,27 @@ module DataMapper
             else first(type_or_id, options)
           end
         end
-
+        
+        # supply this method with the full SQL you wish to search on, and it will return an array of Structs with your results set in them.
+        #
+        # NOTE: this does NOT return objects of a specific type, but rather Struct objects with as many attributes as what you requested in your full SQL query. These structs are read-only.
+        #
+        # If you only indicate you want 1 specific column, Datamapper and DataObjects will do their best to type-cast the result as best they can, rather than supplying you with an array of length 1 containing Structs with 1 attribute.
         def find_by_sql(*args)
           DataMapper::database.query(*args)
         end
 
+        # finds a single row from the database by it's primary key.  If you declared a property with <tt>:key => true</tt>, it's safe to use here.
+        # Example:
+        #   Widget.get(100)                                        # => widget with the primary key of 100
+        #   Widget.get('Toy')                                      # => widget with the primary natural key of 'Toy'
         def get(*keys)
           database.get(self, keys)
         end
 
+        # synonym for get()
+        # Example:
+        #   Widget[100]                                            # => widget with the primary key of 100
         def [](*keys)
           # Eventually this ArgumentError should be removed. It's only here to help
           # migrate users away from the [options_hash] syntax, which is no longer supported.
@@ -187,6 +236,7 @@ module DataMapper
           return instance
         end
 
+        # creates (and saves) a new instance of the object.
         def create(attributes)
           instance = self.new
           instance.attributes = attributes
@@ -194,6 +244,7 @@ module DataMapper
           instance
         end
 
+        # the same as create(), though will raise an ObjectNotFoundError if the instance could not be saved
         def create!(attributes)
           instance = self.new
           instance.attributes = attributes
@@ -232,7 +283,7 @@ module DataMapper
 
       # Adds property accessors for a field that you'd like to be able to modify.  The DataMapper doesn't
       # use the table schema to infer accessors, you must explicity call #property to add field accessors
-      # to your model.
+      # to your model.  For more documentation, see Property
       #
       # EXAMPLE:
       #   class CellProvider
