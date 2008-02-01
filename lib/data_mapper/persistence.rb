@@ -65,6 +65,9 @@ module DataMapper
       end
     end
 
+    # Migrates the database schema based on the properties defined within models. This includes removing fields no longer listed in models and adding new ones.
+    #
+    # This is destructive. Any data stored in the database will be destroyed when this method is called.
     def self.auto_migrate!
       subclasses.each do |subclass|
         subclass.auto_migrate!
@@ -104,22 +107,29 @@ module DataMapper
 
     module ConvenienceMethods
       module InstanceMethods
+        
+        # Save updated properties to the database.
         def save
           database_context.save(self)
         end
 
+        # This behaves in the same way as #save, but raises a ValidationError if the model is invalid. Successful saves return true.
         def save!
           raise ValidationError.new(errors) unless save
           return true
         end
 
+        # Reloads a model's properties from the database. This also includes data for any associated models that have been loaded from the database.
+        #
+        # You can limit the properties being reloaded by passing in an array of symbols.
         def reload!(cols = nil)
           database_context.first(self.class, key, :select => ([self.class.table.key.to_sym] + (cols || original_values.keys)).uniq, :reload => true)
           self.loaded_associations.each { |association| association.reload! }
           self
         end
         alias reload reload!
-
+        
+        # Deletes the model fromt the database.
         def destroy!
           database_context.destroy(self)
         end
@@ -168,6 +178,9 @@ module DataMapper
           database.all(self, options)
         end
 
+        # Allows you to iterate over a collection of matching records. The first argument is the find options. The second is a block that will be called for every matching record.
+        #
+        # The valid options are the same as those documented in #all, except the <tt>:offset</tt> option, which is not allowed.
         def each(options = {}, &b)
           raise ArgumentError.new(":offset is not supported with the #each method") if options.has_key?(:offset)
 
@@ -191,6 +204,7 @@ module DataMapper
           database.count(self, *args)
         end
 
+        # Does what it says. Deletes all records in a model's table.
         def delete_all
           database.delete_all(self)
         end
@@ -198,7 +212,11 @@ module DataMapper
         def truncate!
           database.truncate(self)
         end
-
+        
+        # This method allows for ActiveRecord style queries. The first argument is a symbol indicating a search for a single record or a collection — <tt>:first</tt> and <tt>:all</tt> respectively. The second argument is the hash of options for your query. For a list of valid options, please refer to the #all method.
+        #
+        #   Widget.find(:all,   :active => true)    # => An array of active widgets
+        #   Widget.find(:first, :active => true)    # => The first active widget found
         def find(type_or_id, options = {})
           case type_or_id
             when :first then first(options)
@@ -270,6 +288,10 @@ module DataMapper
         yield
       end
 
+      # The foreign key for a model. It is based on the lowercased and underscored name of the class, suffixed with <tt>_id</tt>.
+      #
+      #   Widget.foreign_key    # => "widget_id"
+      #   NewsItem.foreign_key  # => "news_item_id"
       def foreign_key
         Inflector.underscore(self.name) + "_id"
       end
@@ -366,6 +388,7 @@ module DataMapper
       def set_table_name(value)
         database.table(self).name = value
       end
+      
       # An embedded value maps the values of an object to fields in the record of the object's owner.
       # #embed takes a symbol to define the embedded class, options, and an optional block. See
       # examples for use cases.
@@ -404,6 +427,7 @@ module DataMapper
         EmbeddedValue::define(self, name, options, &block)
       end
 
+      # Returns the hash of properties for this model.
       def properties
         @properties
       end
@@ -484,19 +508,23 @@ module DataMapper
       self.class.logger
     end
 
+    # Returns <tt>true</tt> if this model hasn't been saved to the database, <tt>false</tt> otherwise.
     def new_record?
       @new_record.nil? || @new_record
     end
 
+    # Returns a Set containing the properties that have had their <tt>:lazy</tt> option set to true, or are lazily loaded by default — i.e. text fields.
     def lazy_loaded_attributes
       @lazy_loaded_attributes || @lazy_loaded_attributes = Set.new
     end
 
+    # Accepts a hash of properties and values to be updated and then calls #save
     def update_attributes(update_hash)
       self.attributes = update_hash
       self.save
     end
 
+    # Returns <tt>true</tt> if the unsaved model has had properties changed since it was loaded from the database. Returns <tt>false</tt> otherwise.
     def dirty?(cleared = Set.new)
       return false if cleared.include?(self)
       cleared << self
@@ -516,6 +544,7 @@ module DataMapper
       end
     end
 
+    # For unsaved models, returns a hash of properties that have had their values changed since it was loaded from the database.
     def dirty_attributes
       pairs = {}
 
