@@ -36,13 +36,19 @@ unless defined?(INITIAL_CLASSES)
     Dir[File.dirname(__FILE__) + '/spec/models/*.rb'].sort.each { |path| load path }
   end
 
+  secondary_configuration_options = configuration_options.dup
+  secondary_configuration_options.merge!(:database => (adapter == 'sqlite3' ? 'data_mapper_2.db' : 'data_mapper_2'))
+  
   DataMapper::Database.setup(configuration_options)
+  DataMapper::Database.setup(:secondary, secondary_configuration_options)
   DataMapper::Database.setup(:mock, :adapter => MockAdapter)
 
-  [:default, :mock].each { |name| database(name) { load_models.call } }
+  [:default, :secondary, :mock].each { |name| database(name) { load_models.call } }
 
   # Reset the test database.
-  DataMapper::Persistence.auto_migrate! unless ENV['AUTO_MIGRATE'] == 'false'
+  unless ENV['AUTO_MIGRATE'] == 'false'
+    [:default, :secondary].each { |name| database(name) { DataMapper::Persistence.auto_migrate! } }
+  end
 
   # Save the initial database layout so we can put everything back together
   # after auto migrations testing
