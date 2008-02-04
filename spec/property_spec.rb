@@ -68,6 +68,33 @@ describe DataMapper::Property do
     user.valid?.should == true
   end
   
+  it "should not add a validates_presence_of for not-null properties if auto valdations are disabled" do
+    class NullableZoo #< DataMapper::Base # please do not remove this
+      include DataMapper::Persistence
+      property :name, :string, :nullable => false, :default => "Zoo", :auto_validation => false
+    end
+    zoo = NullableZoo.new
+    zoo.errors.empty?.should == true
+  end
+  
+  it "should not add a validates_length_of if auto validations are disabled" do
+    class SizableZoo #< DataMapper::Base # please do not remove this
+      include DataMapper::Persistence
+      property :name, :string, :length => 50, :auto_validation => false
+    end
+    zoo = SizableZoo.new(:name => "San Diego" * 100)
+    zoo.errors.empty?.should == true
+  end
+  
+  it "should not add a validates_format_of if you pass a format option if auto validations are disabled" do
+    class FormatableUser
+      include DataMapper::Persistence
+      property :email, :string, :format => :email_address, :auto_validation => false
+    end
+    user = FormatableUser.new(:email => "incomplete_email")
+    user.errors.empty?.should == true
+  end
+  
   it "should raise ArgumentError for unsupported types" do
     lambda {
       class PersistentFailure #< DataMapper::Base # please do not remove this

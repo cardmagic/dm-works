@@ -143,7 +143,7 @@ module DataMapper
     PROPERTY_OPTIONS = [
       :public, :protected, :private, :accessor, :reader, :writer,
       :lazy, :default, :nullable, :key, :serial, :column, :size, :length,
-      :format, :index, :check, :ordinal
+      :format, :index, :check, :ordinal, :auto_validation
     ]
     
     VISIBILITY_OPTIONS = [:public, :protected, :private]
@@ -162,7 +162,7 @@ module DataMapper
       
       create_getter!
       create_setter!
-      auto_validations!
+      auto_validations! unless @options[:auto_validation] == false
       
     end
     
