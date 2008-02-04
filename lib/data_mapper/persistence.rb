@@ -89,17 +89,21 @@ module DataMapper
     def self.dependencies
       @dependency_queue || (@dependency_queue = DependencyQueue.new)
     end
-
+    
     def initialize(details = nil)
       check_for_properties!
       if details
-        case details
-        when Hash then self.attributes = details
-        when details.respond_to?(:persistent?) then self.private_attributes = details.attributes
-        when Struct then self.private_attributes = details.attributes
-        end
+        initialize_with_attributes(details)
       end
     end
+    
+    def initialize_with_attributes(details)
+      case details
+      when Hash then self.attributes = details
+      when details.respond_to?(:persistent?) then self.private_attributes = details.attributes
+      when Struct then self.private_attributes = details.attributes
+      end
+    end    
 
     def check_for_properties!
       raise IncompleteModelDefinitionError.new("Models must have at least one property to be initialized.") if self.class.properties.empty?
@@ -256,17 +260,14 @@ module DataMapper
 
         # creates (and saves) a new instance of the object.
         def create(attributes)
-          instance = self.new
-          instance.attributes = attributes
+          instance = self.new_with_attributes(attributes)
           instance.save
           instance
         end
 
         # the same as create(), though will raise an ObjectNotFoundError if the instance could not be saved
         def create!(attributes)
-          instance = self.new
-          instance.attributes = attributes
-          instance.save
+          instance = create(attributes)
           raise ObjectNotFoundError.new(instance) if instance.new_record?
           instance
         end
@@ -275,6 +276,12 @@ module DataMapper
 
     module ClassMethods
 
+      def new_with_attributes(details)
+        instance = allocate
+        instance.initialize_with_attributes(details)
+        instance
+      end
+      
       # Track classes that include this module.
       def subclasses
         @subclasses || (@subclasses = [])

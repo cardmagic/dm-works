@@ -42,7 +42,9 @@ module DataMapper
       @includes.each do |association_name|
         association = @from.associations[association_name]
         @joins << association.to_sql
-        @columns += association.associated_table.non_lazy_columns
+        @columns += association.associated_table.columns.select do |column|
+          !column.lazy?
+        end
       end
       
       # Prepare conditions for parsing
