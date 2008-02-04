@@ -49,6 +49,18 @@ describe DataMapper::Associations::BelongsToAssociation do
     zoo.destroy!
   end
   
+  it "should not assign zoo_id when passed nil" do
+    pending "http://wm.lighthouseapp.com/projects/4819-datamapper/tickets/147"
+    exhibit = Exhibit.first
+    exhibit.zoo_id = nil
+    exhibit.zoo_id.should be_nil
+    exhibit.save.should == true
+    
+    exhibit.reload
+    exhibit.zoo_id.should be_nil
+    exhibit.zoo.should be_nil
+  end
+  
   it 'can build its zoo' do
     database do |db|
       e = Exhibit.new({:name => 'Super Extra Crazy Monkey Cage'})
