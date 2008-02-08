@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-ENV['LOG_NAME'] = 'example'
+ENV['LOG_NAME'] ||= 'example'
 require 'environment'
 
 # Define a fixtures helper method to load up our test data.

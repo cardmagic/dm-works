@@ -14,10 +14,16 @@ unless defined?(INITIAL_CLASSES)
   require 'fileutils'
 
   if ENV['LOG_NAME']
-    FileUtils::mkdir_p(File.dirname(__FILE__) + '/log')
-    log_path = File.dirname(__FILE__) + "/log/#{ENV['LOG_NAME']}.log"
-    FileUtils::rm log_path if File.exists?(log_path)
-
+    log_path = nil
+    
+    if ENV['LOG_NAME'] != 'STDOUT'
+      FileUtils::mkdir_p(File.dirname(__FILE__) + '/log')
+      log_path = File.dirname(__FILE__) + "/log/#{ENV['LOG_NAME']}.log"
+      FileUtils::rm log_path if File.exists?(log_path)
+    else
+      log_path = 'STDOUT'
+    end
+    
     configuration_options.merge!(:log_stream => log_path, :log_level => Logger::DEBUG)
   end
 
