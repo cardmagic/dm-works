@@ -186,6 +186,99 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
     
   end
 
+  it "should correctly handle dependent associations ~cascading destroy~ (:destroy)" do
+    class Chain
+      has_and_belongs_to_many :chains, :dependent => :destroy
+    end
+    Chain.auto_migrate!
+
+    chain = Chain.create(:name => "1")
+    chain.chains << Chain.create(:name => "2")
+    chain.chains << Chain.create(:name => "3")
+    chain.chains << Chain.create(:name => "4")
+    chain.save
+    chain4 = Chain.create(:name => "5")
+    chain.chains.first.chains << chain4
+    chain.chains.first.save
+    chain4.chains << Chain.first(:name => "3")
+    chain4.save
+
+    chain.destroy!
+    Chain.first(:name => "2").should be_nil
+    Chain.first(:name => "3").should be_nil
+    Chain.first(:name => "4").should be_nil
+    Chain.first(:name => "5").should be_nil
+
+    Chain.delete_all
+  end
+
+  it "should correctly handle dependent associations ~no cascade~ (:delete)" do
+    class Chain
+      has_and_belongs_to_many :chains, :dependent => :delete
+    end
+    Chain.auto_migrate!
+
+    chain = Chain.create(:name => "1")
+    chain.chains << Chain.create(:name => "2")
+    chain.chains << Chain.create(:name => "3")
+    chain.chains << Chain.create(:name => "4")
+    chain.save
+    chain5 = Chain.create(:name => "5")
+    chain.chains.first.chains << chain5
+    chain.chains.first.save
+
+    chain.destroy!
+    Chain.first(:name => "2").should be_nil
+    Chain.first(:name => "3").should be_nil
+    Chain.first(:name => "4").should be_nil
+    Chain.first(:name => "5").should_not be_nil
+
+    Chain.delete_all
+  end
+
+  it "should correctly handle dependent associations (:protect)" do
+    class Chain
+      has_and_belongs_to_many :chains, :dependent => :protect
+    end
+    Chain.auto_migrate!
+
+    chain = Chain.create(:name => "1")
+    chain.chains << Chain.create(:name => "2")
+    chain.chains << Chain.create(:name => "3")
+    chain.chains << Chain.create(:name => "4")
+    chain.save
+    chain4 = Chain.create(:name => "5")
+    chain.chains.first.chains << chain4
+    chain.chains.first.save
+
+    lambda { chain.destroy! }.should raise_error(DataMapper::AssociationProtectedError)
+
+    Chain.delete_all
+  end
+
+  it "should correctly handle dependent associations (:nullify)" do
+    class Chain
+      has_and_belongs_to_many :chains, :dependent => :nullify
+    end
+    Chain.auto_migrate!
+
+    chain = Chain.create(:name => "1")
+    chain.chains << Chain.create(:name => "2")
+    chain.chains << Chain.create(:name => "3")
+    chain.chains << Chain.create(:name => "4")
+    chain.save
+    chain4 = Chain.create(:name => "5")
+    chain.chains.first.chains << chain4
+    chain.chains.first.save
+
+    chain.destroy!
+    Chain.first(:name => "2").should_not be_nil
+    Chain.first(:name => "3").should_not be_nil
+    Chain.first(:name => "4").should_not be_nil
+
+    Chain.delete_all
+  end
+
 end
 
 describe DataMapper::Associations::HasAndBelongsToManyAssociation, "self-referential relationship" do

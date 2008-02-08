@@ -23,6 +23,10 @@ module DataMapper
         @association_name
       end
 
+      def dependency
+        @options[:dependent]
+      end
+
       def foreign_name
         @foreign_name || (@foreign_name = (@options[:foreign_name] || @key_table.name).to_sym)
       end
@@ -132,6 +136,21 @@ module DataMapper
         EOS
       end
       
+      def to_delete_set_sql
+        <<-EOS.compress_lines
+          DELETE FROM #{join_table.to_sql}
+          WHERE #{left_foreign_key.to_sql} IN ?
+            OR #{right_foreign_key.to_sql} IN ?
+        EOS
+      end
+
+      def to_delete_members_sql
+        <<-EOS.compress_lines
+          DELETE FROM #{associated_table.to_sql}
+          WHERE #{associated_table.key.to_sql} IN ?
+        EOS
+      end
+
       def to_delete_member_sql
         <<-EOS
           DELETE FROM #{join_table.to_sql}
@@ -140,6 +159,14 @@ module DataMapper
         EOS
       end
       
+      def to_disassociate_sql
+        <<-EOS
+          UPDATE #{join_table.to_sql}
+          SET #{left_foreign_key.to_sql} = NULL
+          WHERE #{left_foreign_key.to_sql} = ?
+        EOS
+      end
+
       # Define the association instance method (i.e. Project#tasks)
       def define_accessor(klass)
         klass.class_eval <<-EOS
@@ -320,8 +347,6 @@ module DataMapper
                 end
               end
               
-              database.logger.debug { "all(#{association.constant}, #{left_foreign_key.to_sym} => #{@instance.loaded_set.map(&:key).inspect}, :shallow_include => #{association.foreign_name})" }
-              
               @instance.database_context.all(association.constant,
                 left_foreign_key => @instance.loaded_set.map(&:key),
                 :shallow_include => association.foreign_name,
@@ -361,6 +386,51 @@ module DataMapper
         
         def last
           entries.entries.last
+        end
+
+        def deactivate
+          case association.dependency
+          when :destroy
+            entries.each do |member|
+              member.destroy! unless member.new_record?
+            end
+          when :delete
+            delete_association
+          when :protect
+            unless entries.empty?
+              raise AssociationProtectedError.new("You cannot delete this model while it has items associated with it.")
+            end
+          when :nullify
+            nullify_association
+          else
+            nullify_association
+          end
+        end
+
+        def delete_association
+          @instance.database_context.adapter.connection do |db|
+            associated_keys = entries.collect do |item|
+              item.key unless item.new_record?
+            end.compact
+            database.logger.error(associated_keys.inspect)
+            parameters = [@instance.key] + associated_keys
+            database.logger.error(associated_keys.inspect)
+
+            sql = association.to_delete_set_sql
+            db.create_command(sql).execute_non_query(*[parameters, parameters])
+            database.logger.error(associated_keys.inspect)
+
+            sql = association.to_delete_members_sql
+            db.create_command(sql).execute_non_query(associated_keys)
+          end
+        end
+
+        def nullify_association
+          @instance.database_context.adapter.connection do |db|
+            sql = association.to_delete_sql
+            parameters = [@instance.key]
+            db.create_command(sql).execute_non_query(*parameters)
+          end
         end
       end
     

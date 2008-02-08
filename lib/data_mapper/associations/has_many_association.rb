@@ -5,6 +5,10 @@ module DataMapper
     
     class HasManyAssociation < HasNAssociation
       
+      def dependency
+        @options[:dependent]
+      end
+
       # Define the association instance method (i.e. Project#tasks)
       def define_accessor(klass)
         klass.class_eval <<-EOS
@@ -33,6 +37,10 @@ module DataMapper
         "UPDATE #{associated_table.to_sql} SET #{foreign_key_column.to_sql} = NULL WHERE #{foreign_key_column.to_sql} = ?"
       end
       
+      def to_delete_sql
+        "DELETE FROM #{associated_table.to_sql} WHERE #{foreign_key_column.to_sql} = ?"
+      end
+
       def instance_variable_name
         class << self
           attr_reader :instance_variable_name
@@ -214,6 +222,38 @@ module DataMapper
           (items.size == 1 ? first : items) == other
         end
         
+        def deactivate
+          case association.dependency
+          when :destroy
+            loaded_members.each do |member|
+              status = member.destroy! unless member.new_record?
+              return false unless status
+            end
+          when :delete
+            @instance.database_context.adapter.connection do |db|
+              sql = association.to_delete_sql
+              parameters = [@instance.key]
+              db.create_command(sql).execute_non_query(*parameters)
+            end
+          when :protect
+            unless loaded_members.empty?
+              raise AssociationProtectedError.new("You cannot delete this model while it has items associated with it.")
+            end
+          when :nullify
+            nullify_association
+          else
+            nullify_association
+          end
+        end
+
+        def nullify_association
+          @instance.database_context.adapter.connection do |db|
+            sql = association.to_disassociate_sql
+            parameters = [@instance.key]
+            db.create_command(sql).execute_non_query(*parameters)
+          end
+        end
+
         private
         def loaded_members
           pending_members + @items

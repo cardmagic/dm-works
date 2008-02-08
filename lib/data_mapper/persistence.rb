@@ -133,7 +133,7 @@ module DataMapper
         end
         alias reload reload!
         
-        # Deletes the model fromt the database.
+        # Deletes the model from the database and de-activates associations
         def destroy!
           database_context.destroy(self)
         end

@@ -1,6 +1,7 @@
 module DataMapper                        
   
   class ForeignKeyNotFoundError < StandardError; end
+  class AssociationProtectedError < StandardError; end
     
   module Associations
     
@@ -11,7 +12,8 @@ module DataMapper
       OPTIONS = [
         :class,
         :class_name,
-        :foreign_key
+        :foreign_key,
+        :dependent
       ]
       
       def initialize(klass, association_name, options)

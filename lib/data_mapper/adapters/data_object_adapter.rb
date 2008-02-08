@@ -180,6 +180,8 @@ module DataMapper
         else
           callback(instance, :before_destroy)
           
+          instance.loaded_associations.each { |association| association.deactivate }
+
           if table.paranoid?
             instance.instance_variable_set(table.paranoid_column.instance_variable_name, Time::now)
             instance.save

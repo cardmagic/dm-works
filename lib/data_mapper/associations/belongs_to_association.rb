@@ -141,6 +141,9 @@ module DataMapper
           return self
         end
         
+        def deactivate
+        end
+
         private
         
         def ensure_foreign_key!

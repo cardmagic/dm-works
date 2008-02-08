@@ -226,4 +226,92 @@ describe DataMapper::Associations::HasManyAssociation do
       dunes.destroy!
     end
   end
+
+  it "should correctly handle dependent associations (:destroy)" do
+    class Fence
+      has_many :chains, :dependent => :destroy
+    end
+    #Chain.should_receive(:destroy!).and_return(true)
+
+    fence = Fence.create(:name => "Great Wall of China")
+    fence.chains << Chain.create(:name => "1")
+    fence.chains << Chain.create(:name => "2")
+    fence.chains << Chain.create(:name => "3")
+    fence.save
+    chain = Chain.create(:name => "4")
+
+    fence.destroy!
+    Chain.first(:name => "1").should be_nil
+    Chain.first(:name => "2").should be_nil
+    Chain.first(:name => "3").should be_nil
+    Chain.first(:name => "4").should_not be_nil
+
+    Chain.delete_all
+    Fence.delete_all
+  end
+
+  it "should correctly handle dependent associations (:delete)" do
+    class Fence
+      has_many :chains, :dependent => :delete
+    end
+
+    fence = Fence.create(:name => "Great Wall of China")
+    fence.chains << Chain.create(:name => "1")
+    fence.chains << Chain.create(:name => "2")
+    fence.chains << Chain.create(:name => "3")
+    fence.save
+    chain = Chain.create(:name => "4")
+
+    fence.destroy!
+    Chain.first(:name => "1").should be_nil
+    Chain.first(:name => "2").should be_nil
+    Chain.first(:name => "3").should be_nil
+    Chain.first(:name => "4").should_not be_nil
+
+    Chain.delete_all
+    Fence.delete_all
+  end
+
+  it "should correctly handle dependent associations (:protect)" do
+    class Fence
+      has_many :chains, :dependent => :protect
+    end
+
+    fence = Fence.create(:name => "Great Wall of China")
+    fence.chains << Chain.create(:name => "1")
+    fence.chains << Chain.create(:name => "2")
+    fence.chains << Chain.create(:name => "3")
+    fence.save
+    chain = Chain.create(:name => "4")
+
+    lambda { fence.destroy! }.should raise_error(DataMapper::AssociationProtectedError)
+
+    Chain.delete_all
+    Fence.delete_all
+  end
+
+  it "should correctly handle dependent associations (:nullify)" do
+    class Fence
+      has_many :chains, :dependent => :nullify
+    end
+
+    fence = Fence.create(:name => "Great Wall of China")
+    fence.chains << Chain.create(:name => "1")
+    fence.chains << Chain.create(:name => "2")
+    fence.chains << Chain.create(:name => "3")
+    fence.save
+    chain = Chain.create(:name => "4")
+
+    fence.destroy!
+    Chain.first(:name => "1").should_not be_nil
+    Chain.first(:name => "1").fence_id.should be_nil
+    Chain.first(:name => "2").should_not be_nil
+    Chain.first(:name => "2").fence_id.should be_nil
+    Chain.first(:name => "3").should_not be_nil
+    Chain.first(:name => "3").fence_id.should be_nil
+
+    Chain.delete_all
+    Fence.delete_all
+  end
+
 end

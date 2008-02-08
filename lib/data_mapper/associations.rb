@@ -28,9 +28,16 @@ module DataMapper
       #   this with <tt>:class_name</tt>, for AR compability.
       # * <tt>:foreign_key</tt> - specify the foreign key used for the association. By default
       #   this is guessed to be the name of this class in lower-case and _id suffixed.
+      # * <tt>:dependent</tt> - if set to :destroy, the associated objects have their destroy! methods
+      #   called in a chain meaning all callbacks are also called for each object.
+      #   if set to :delete, the associated objects are deleted from the database
+      #   without their callbacks being triggered.
+      #   if set to :protect and the collection is not empty an AssociatedProtectedError will be raised.
+      #   if set to :nullify, the associated objects foreign key is set to NULL.
+      #   default is :nullify
       #
       # Option examples:
-      #   has_many :favourite_fruits, :class => 'Fruit'
+      #   has_many :favourite_fruits, :class => 'Fruit', :dependent => :destroy
       def has_many(association_name, options = {})
         database.schema[self].associations << HasManyAssociation.new(self, association_name, options)
       end
@@ -52,6 +59,8 @@ module DataMapper
       #   this with <tt>:class_name</tt>, for AR compability.
       # * <tt>:foreign_key</tt> - specify the foreign key used for the association. By default
       #   this is guessed to be the name of this class in lower-case and _id suffixed.
+      # * <tt>:dependent</tt> - has_one is secretly a has_many so this option performs the same
+      #   as the has_many
       #
       # Option examples:
       #   has_one :favourite_fruit, :class => 'Fruit', :foreign_key => 'devourer_id'
@@ -73,6 +82,20 @@ module DataMapper
       end
       
       # Associates two classes via an intermediate join table.
+      #
+      # Options are:
+      # * <tt>:dependent</tt> - if set to :destroy, the associated objects have their destroy! methods
+      #   called in a chain meaning all callbacks are also called for each object.  Beware that this
+      #   is a cascading delete and will affect all records that have a remote relationship with the
+      #   record being destroyed!
+      #   if set to :delete, the associated objects are deleted from the database without their
+      #   callbacks being triggered.  This does NOT cascade the deletes.  All associated objects will
+      #   have their relationships removed from other records before being deleted.  The record calling
+      #   destroy will only delete those records directly associated to it.
+      #   if set to :protect and the collection is not empty an AssociatedProtectedError will be raised.
+      #   if set to :nullify, the join table will have the relationship records removed which is
+      #   effectively nullifying the foreign key.
+      #   default is :nullify
       def has_and_belongs_to_many(association_name, options = {})
         database.schema[self].associations << HasAndBelongsToManyAssociation.new(self, association_name, options)
       end
