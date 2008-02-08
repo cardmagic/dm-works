@@ -240,8 +240,13 @@ module DataMapper
             end
           end
           
+          # size is still required, as length in postgres behaves slightly differently
           def size
-            nil
+            case self.type
+            #strings in postgres can be unlimited length
+            when :string then return (@options.has_key?(:length) || @options.has_key?(:size) ? @size : nil)
+            else nil
+            end
           end
         end # class Column
       end # module Mappings

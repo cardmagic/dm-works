@@ -5,12 +5,50 @@ require File.dirname(__FILE__) + "/spec_helper"
 if ENV['ADAPTER'] == 'postgresql'
 
   describe DataMapper::Adapters::PostgresqlAdapter::Mappings::Column do
+    before(:all) do
+      @mappings = DataMapper::Adapters::PostgresqlAdapter::Mappings
+      @table    = @mappings::Table.new(database(:mock).adapter, "Zebu")      
+    end
+    
     it "should be able to set check-constraints on columns" do
-      mappings = DataMapper::Adapters::PostgresqlAdapter::Mappings
-      table    = mappings::Table.new(database(:mock).adapter, "Zebu")
-      column   = mappings::Column.new(database(:mock).adapter, table, :age,
+      column   = @mappings::Column.new(database(:mock).adapter, @table, :age,
                    :integer, 1, { :check => "age > 18"})
       column.to_long_form.should match(/CHECK \(age > 18\)/)
+    end
+    
+    it "should not set varchar length if none is specified" do
+      column   = @mappings::Column.new(database(:mock).adapter, @table,
+                   :varchar_len_test, :string, 1, { })
+      column.size.should == nil
+      column.to_long_form.should match(/.varchar_len_test. varchar/)
+    end
+    
+    it "should set varchar length when it is specified" do
+      column   = @mappings::Column.new(database(:mock).adapter, @table,
+                   :varchar_len_test, :string, 1, { :length => 100 })
+      column.size.should == 100
+      column.to_long_form.should match(/.varchar_len_test. varchar\(100\)/)
+    end
+    
+    it "should accept :size as alternative to :length" do
+      column   = @mappings::Column.new(database(:mock).adapter, @table,
+                   :varchar_len_test, :string, 1, { :size => 100 })
+      column.size.should == 100
+      column.to_long_form.should match(/.varchar_len_test. varchar\(100\)/)
+    end
+    
+    it "should have size of nil when length of integer is specified" do
+      column   = @mappings::Column.new(database(:mock).adapter, @table,
+                   :integer_len_test, :integer, 1, { :length => 1 })
+      column.size.should == nil
+      column.to_long_form.should match(/.integer_len_test./)
+    end
+    
+    it "should have size of nil when length of integer is not specified, overriding the default" do
+      column   = @mappings::Column.new(database(:mock).adapter, @table,
+                   :integer_len_test, :integer, 1)
+      column.size.should == nil
+      column.to_long_form.should match(/.integer_len_test./)
     end
   end
 
