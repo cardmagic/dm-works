@@ -35,4 +35,18 @@ describe "DataMapper::Attributes" do
     Tomato.new.attributes.should == { :id => nil, :name => 'Ugly', :bruised => true }
   end
   
+  it "should get proper values for mass-created attributes with array" do
+    person = Person.new(:name => 'Steve Jobs', :occupation => 'Apple CEO')
+    
+    person.name.should eql('Steve Jobs')
+    person.occupation.should eql('Apple CEO')
+  end
+  
+  it "should get proper values for mass-created attributes without array" do
+    job = Job.new(:name => 'Banker')
+    job.save! and job.reload
+    
+    job.hours.should eql(0)
+    job.days.should eql(0)
+  end
 end

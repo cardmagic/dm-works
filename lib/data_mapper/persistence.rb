@@ -312,12 +312,18 @@ module DataMapper
 
       # Adds property accessors for a field that you'd like to be able to modify.  The DataMapper doesn't
       # use the table schema to infer accessors, you must explicity call #property to add field accessors
-      # to your model.  For more documentation, see Property
+      # to your model. 
+      #
+      # Can accept an unlimited amount of property names. Optionally, you may pass the property names as an 
+      # array.
+      #
+      # For more documentation, see Property.
       #
       # EXAMPLE:
       #   class CellProvider
       #     property :name, :string
-      #     property :rating, :integer
+      #     property :rating_number, :rating_percent, :integer # will create two properties with same type and text
+      #     property [:bill_to, :ship_to, :mail_to], :text, :lazy => false # will create three properties all with same type and text
       #   end
       #
       #   att = CellProvider.new(:name => 'AT&T')
@@ -336,14 +342,25 @@ module DataMapper
       #   * <tt>writer</tt>: Like the accessor option but affects only the property writer.
       #   * <tt>protected</tt>: Alias for :reader => :public, :writer => :protected
       #   * <tt>private</tt>: Alias for :reader => :public, :writer => :private
-
-      def property(name, type, options = {})
-        property = DataMapper::Property.new(self, name, type, options)
+      
+      def property(*columns_and_options)        
+        columns, options = columns_and_options.partition {|item| not item.is_a?(Hash)}
+        options = (options.empty? ? {} : options[0])
+        type = columns.pop
+      
         @properties ||= []
-        @properties << property
-        property
+        new_properties = []
+      
+        columns.flatten.each do |name|
+          puts options if name == :dots
+          property = DataMapper::Property.new(self, name, type, options)
+          new_properties << property
+          @properties << property
+        end
+              
+        return (new_properties.length == 1 ? new_properties[0] : new_properties)
       end
-
+      
       # TODO: Figure out how to make EmbeddedValue work with new property code. EV relies on these next two methods.
       def property_getter(mapping, visibility = :public)
         if mapping.lazy?

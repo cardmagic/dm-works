@@ -1,9 +1,8 @@
 class Person #< DataMapper::Base # please do not remove this
   include DataMapper::Persistence
   
-  property :name, :string
+  property [:name, :occupation], :string
   property :age, :integer
-  property :occupation, :string
   property :type, :class
   property :notes, :text
   property :date_of_birth, :date
