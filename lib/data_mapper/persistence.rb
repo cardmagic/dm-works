@@ -352,7 +352,6 @@ module DataMapper
         new_properties = []
       
         columns.flatten.each do |name|
-          puts options if name == :dots
           property = DataMapper::Property.new(self, name, type, options)
           new_properties << property
           @properties << property
@@ -450,7 +449,7 @@ module DataMapper
       def embed(name, options = {}, &block)
         EmbeddedValue::define(self, name, options, &block)
       end
-
+      
       # Returns the hash of properties for this model.
       def properties
         @properties
