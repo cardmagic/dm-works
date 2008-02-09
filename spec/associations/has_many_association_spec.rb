@@ -148,6 +148,16 @@ describe DataMapper::Associations::HasManyAssociation do
     @zoo.id.should == snake.zoo_id
   end
 
+  it "should update the foreign_key of already saved exhibits with a new zoo on zoo creation" do
+    zoo = Zoo.new(:name => "My Zoo")
+    snake = Exhibit.create(:name => "Snake")
+    tiger = Exhibit.create(:name => "Tiger")
+    zoo.exhibits << snake << tiger
+    zoo.save
+    snake.zoo_id.should == zoo.key
+    tiger.zoo_id.should == zoo.key
+  end
+
   it "should set the id of an already saved exibit if it's added to a different zoo" do
     beaver = Exhibit.new(:name => "Beaver")
     beaver.save
