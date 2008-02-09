@@ -59,7 +59,7 @@ module DataMapper
         end
       end
 
-      def to_sql
+      def to_sql # :nodoc:
         "JOIN #{key_table.to_sql} ON #{foreign_key_column.to_sql(true)} = #{primary_key_column.to_sql(true)}"
       end
 

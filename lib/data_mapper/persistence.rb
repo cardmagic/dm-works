@@ -65,16 +65,32 @@ module DataMapper
       end
     end
 
-    # Migrates the database schema based on the properties defined within models. This includes removing fields no longer listed in models and adding new ones.
+    #  Migrates the database schema based on the properties defined within
+    #  models. This includes removing fields no longer listed in models and
+    #  adding new ones.
     #
-    # This is destructive. Any data stored in the database will be destroyed when this method is called.
+    # This is destructive. Any data stored in the database will be destroyed
+    # when this method is called.
+    #
+    # ==== Returns
+    #  True:: successfully automigrated database
+    #  False:: an error occured when automigrating the database
+    #
+    # @public
     def self.auto_migrate!
       subclasses.each do |subclass|
         subclass.auto_migrate!
       end
     end
 
+
     # Drops all tables known by the schema
+    #
+    # ==== Returns
+    #  True:: successfully automigrated database
+    #  False:: an error occured when automigrating the database
+    #
+    # @public
     def self.drop_all_tables!
       database.adapter.schema.each do |table|
         table.drop!
@@ -82,10 +98,21 @@ module DataMapper
     end
 
     # Track classes that include this module.
+    # ==== Returns
+    #  Support::TypedSet::
+    #    contains classes that include or inherit from this module
+    #
+    # @semipublic
     def self.subclasses
       @subclasses || (@subclasses = Support::TypedSet.new(Class))
     end
 
+    # Track classes that include this module.
+    # ==== Returns
+    #  Support::TypedSet::
+    #    contains classes that include or inherit from this module
+    #
+    # @semipublic
     def self.dependencies
       @dependency_queue || (@dependency_queue = DependencyQueue.new)
     end
@@ -113,19 +140,39 @@ module DataMapper
       module InstanceMethods
         
         # Save updated properties to the database.
+        #
+        # ==== Returns
+        #  True::  successfully saved the object to the database
+        #  False:: an error occured when saving the object to the database.
+        #          check valid? to see if validation error occured
+        #
+        # @public
         def save
           database_context.save(self)
         end
 
-        # This behaves in the same way as #save, but raises a ValidationError if the model is invalid. Successful saves return true.
+        # This behaves in the same way as save, but raises a ValidationError
+        # if the model is invalid. Successful saves return true. 
+        # 
+        # ==== Returns
+        #  True:: successfully saved the object to the database
+        #
+        # ==== Raises
+        #  ValidationError::
+        #     The object could not be saved to the database due to validation
+        #     errors
+        # @public
         def save!
           raise ValidationError.new(errors) unless save
           return true
         end
 
-        # Reloads a model's properties from the database. This also includes data for any associated models that have been loaded from the database.
+        # Reloads a model's properties from the database. This also includes
+        # data for any associated models that have been loaded from the
+        # database.
         #
-        # You can limit the properties being reloaded by passing in an array of symbols.
+        # You can limit the properties being reloaded by passing in an array
+        # of symbols.
         def reload!(cols = nil)
           database_context.first(self.class, key, :select => ([self.class.table.key.to_sym] + (cols || original_values.keys)).uniq, :reload => true)
           self.loaded_associations.each { |association| association.reload! }
@@ -141,26 +188,51 @@ module DataMapper
 
       module ClassMethods
         
-        # Attempts to find an object using options passed in in search_attributes, and falls back to creating the object if it can't find it.
-        # Examples:
+        # Attempts to find an object using options passed as
+        # search_attributes, and falls back to creating the object if it
+        # can't find it.
         #
-        #   Widget.find_or_create(:title => 'Steak Knife', :length => 8)
+        # ==== Parameters
+        # search_attributes <hash>::
+        #   attributes used to perform the search, and which can be later
+        #   merged with create_attributes when creating a record
+        # create_attributes <hash>::
+        #   attributes which are merged into the search_attributes when a
+        #   record is unfound and needs to be created
         #
-        #   Widget.find_or_create({:title => 'Butter Knife'}, {:length => 5})
-        # NOTE: If the attributes specified in to <tt>search_attributes</tt> and <tt>create_attributes</tt> do not make up a valid object, creation will fail with a validation error.
+        # ==== Returns
+        # Object:: the found or created object from the database
+        #
+        # ==== Raises
+        # ValidationError::
+        #   An object was not found, and could not be created due to errors 
+        #   in validation.
+        #  DataObject::QueryError::
+        #    The database threw an error
+        # -
+        # @public
         def find_or_create(search_attributes, create_attributes = {})
           first(search_attributes) || create(search_attributes.merge(create_attributes))
         end
 
-        # returns an array of objects matching <tt>options</tt>.  There are many ways to pass in <tt>options</tt>, so examples are in order.  Output on the right indicates how the passed-in <tt>options</tt> affects the resulting query.
+        # returns an array of objects matching <tt>options</tt>.
         #
+        # ==== Parameters
+        #  options <hash>::
+        #    hash of parameters to search by
+        #
+        # ==== Returns
+        #  Array:: contains all matched objects from the database, or an 
+        #          empty set
+        #
+        # ==== Options
         # Basics:
         #   Widget.all                                          # => no conditions
         #   Widget.all :order => 'created_at desc'              # => ORDER BY created_at desc
         #   Widget.all :limit => 10                             # => LIMIT 10
         #   Widget.all :offset => 100                           # => OFFSET 100
-        #   Widget.all :include => [:parts]                     # => performs the JOIN according to
-        #                                                            its association with Parts
+        #   Widget.all :include => [:gadgets]                   # => performs the JOIN according to
+        #                                                            its association with Gadgets
         #
         # Any non-standard options are assumed to be column names and are ANDed together: 
         #   Widget.all :age => 10                               # => WHERE age = 10
@@ -178,13 +250,24 @@ module DataMapper
         #   Widget.all :conditions => ["age = ?", 10], :title => 'Toy'
         #   # => WHERE age = 10 AND title = 'Toy'
         #
+        # ==== Raises
+        # DataMapper::Adapters::Sql::Commands::LoadCommand::ConditionsError::
+        #  A query could not be constructed from the hash passed in as
+        #  <tt>options</tt>
+        #  DataObject::QueryError::
+        #    The database threw an error
+        # - 
+        # @public
         def all(options = {})
           database.all(self, options)
         end
 
-        # Allows you to iterate over a collection of matching records. The first argument is the find options. The second is a block that will be called for every matching record.
+        # Allows you to iterate over a collection of matching records. The
+        # first argument is the find options. The second is a block that will
+        # be called for every matching record.
         #
-        # The valid options are the same as those documented in #all, except the <tt>:offset</tt> option, which is not allowed.
+        # The valid options are the same as those documented in #all, 
+        # except the <tt>:offset</tt> option, which is not allowed.
         def each(options = {}, &b)
           raise ArgumentError.new(":offset is not supported with the #each method") if options.has_key?(:offset)
 
@@ -197,18 +280,59 @@ module DataMapper
           end
         end
 
-        # accepts the same arguments as all(), though instead of returning an array, it returns the first value
+        # Returns the first object which matches the query generated from the arguments
+        #
+        # ==== Parameters
+        #  see all()
+        #
+        # ==== Returns
+        #  Object:: first object from the database which matches the query
+        #  nil::  no object could be found which matches the query
+        #
+        # ==== Raises
+        #  DataMapper::Adapters::Sql::Commands::LoadCommand::ConditionsError::
+        #    A query could not be generated from the arguments passed in
+        #  DataObject::QueryError::
+        #    The database threw an error
+        # - 
+        # @public
         def first(*args)
           database.first(self, *args)
         end
 
-        # returns the count of rows that match the given options hash.  See all() for a list of possible arguments.
+        # returns the count of rows that match the given options hash.  See
+        # all() for a list of possible arguments.
         # NOTE: discards <tt>:offset</tt>, <tt>:limit</tt>, <tt>:order</tt>
+        #
+        # ==== Parameters
+        #  see all().
+        #
+        # ==== Returns
+        #  Integer:: number of rows matching query
+        #
+        # ==== Raises
+        #  DataMapper::Adapters::Sql::Commands::LoadCommand::ConditionsError::
+        #    A query could not be generated from the arguments passed in
+        #  DataObject::QueryError::
+        #    The database threw an error
+        # - 
+        # @public
         def count(*args)
           database.count(self, *args)
         end
 
-        # Does what it says. Deletes all records in a model's table.
+        # Does what it says. Deletes all records in a model's table. 
+        # before_destroy and after_destroy callbacks are called and
+        # paranoia is respected.
+        #
+        # ==== Returns
+        #  nil:: successfully deleted all rows
+        #
+        # ==== Raises
+        #  DataObject::QueryError::
+        #    The database threw an error
+        # - 
+        # @public
         def delete_all
           database.delete_all(self)
         end
@@ -217,7 +341,11 @@ module DataMapper
           database.truncate(self)
         end
         
-        # This method allows for ActiveRecord style queries. The first argument is a symbol indicating a search for a single record or a collection — <tt>:first</tt> and <tt>:all</tt> respectively. The second argument is the hash of options for your query. For a list of valid options, please refer to the #all method.
+        # This method allows for ActiveRecord style queries. The first
+        # argument is a symbol indicating a search for a single record or a
+        # collection — <tt>:first</tt> and <tt>:all</tt> respectively. The
+        # second argument is the hash of options for your query. For a list 
+        # of valid options, please refer to the #all method.
         #
         #   Widget.find(:all,   :active => true)    # => An array of active widgets
         #   Widget.find(:first, :active => true)    # => The first active widget found
@@ -229,16 +357,24 @@ module DataMapper
           end
         end
         
-        # supply this method with the full SQL you wish to search on, and it will return an array of Structs with your results set in them.
+        # supply this method with the full SQL you wish to search on, and it
+        # will return an array of Structs with your results set in them.
         #
-        # NOTE: this does NOT return objects of a specific type, but rather Struct objects with as many attributes as what you requested in your full SQL query. These structs are read-only.
+        # NOTE: this does NOT return objects of a specific type, but rather
+        # Struct objects with as many attributes as what you requested in 
+        # your full SQL query. These structs are read-only.
         #
-        # If you only indicate you want 1 specific column, Datamapper and DataObjects will do their best to type-cast the result as best they can, rather than supplying you with an array of length 1 containing Structs with 1 attribute.
+        # If you only indicate you want 1 specific column, Datamapper and
+        # DataObjects will do their best to type-cast the result as best they
+        # can, rather than supplying you with an array of length 1 containing
+        # Structs with 1 attribute.
         def find_by_sql(*args)
           DataMapper::database.query(*args)
         end
 
-        # finds a single row from the database by it's primary key.  If you declared a property with <tt>:key => true</tt>, it's safe to use here.
+        # finds a single row from the database by it's primary key. 
+        # If you declared a property with <tt>:key => true</tt>, it's safe to 
+        # use here.
         # Example:
         #   Widget.get(100)                                        # => widget with the primary key of 100
         #   Widget.get('Toy')                                      # => widget with the primary natural key of 'Toy'
@@ -246,12 +382,24 @@ module DataMapper
           database.get(self, keys)
         end
 
+
         # synonym for get()
-        # Example:
-        #   Widget[100]                                            # => widget with the primary key of 100
+        # ==== Parameters
+        #  keys <any>:: keys which which to look up objects in the table.  
+        #
+        # ==== Returns
+        #  object :: object matching the request
+        #
+        # ==== Raises
+        #  DataMapper::ObjectNotFoundError
+        #    could not find the object requested
+        # - 
+        # @public
         def [](*keys)
-          # Eventually this ArgumentError should be removed. It's only here to help
-          # migrate users away from the [options_hash] syntax, which is no longer supported.
+          # Eventually this ArgumentError should be removed. It's only here 
+          # to help
+          # migrate users away from the [options_hash] syntax, which is no
+          # longer supported.
           raise ArgumentError.new('Hash is not a valid key') if keys.size == 1 && keys.first.is_a?(Hash)
           instance = database.get(self, keys)
           raise ObjectNotFoundError.new() unless instance
@@ -265,7 +413,8 @@ module DataMapper
           instance
         end
 
-        # the same as create(), though will raise an ObjectNotFoundError if the instance could not be saved
+        # the same as create(), though will raise an ObjectNotFoundError if
+        # the instance could not be saved
         def create!(attributes)
           instance = create(attributes)
           raise ObjectNotFoundError.new(instance) if instance.new_record?
@@ -295,7 +444,8 @@ module DataMapper
         yield
       end
 
-      # The foreign key for a model. It is based on the lowercased and underscored name of the class, suffixed with <tt>_id</tt>.
+      # The foreign key for a model. It is based on the lowercased and
+      # underscored name of the class, suffixed with <tt>_id</tt>.
       #
       #   Widget.foreign_key    # => "widget_id"
       #   NewsItem.foreign_key  # => "news_item_id"
@@ -310,11 +460,14 @@ module DataMapper
         database.table(self)
       end
 
-      # Adds property accessors for a field that you'd like to be able to modify.  The DataMapper doesn't
-      # use the table schema to infer accessors, you must explicity call #property to add field accessors
+      # Adds property accessors for a field that you'd like to be able to
+      # modify.  The DataMapper doesn't
+      # use the table schema to infer accessors, you must explicity call
+      # #property to add field accessors
       # to your model. 
       #
-      # Can accept an unlimited amount of property names. Optionally, you may pass the property names as an 
+      # Can accept an unlimited amount of property names. Optionally, you may
+      # pass the property names as an 
       # array.
       #
       # For more documentation, see Property.
@@ -360,7 +513,8 @@ module DataMapper
         return (new_properties.length == 1 ? new_properties[0] : new_properties)
       end
       
-      # TODO: Figure out how to make EmbeddedValue work with new property code. EV relies on these next two methods.
+      # TODO: Figure out how to make EmbeddedValue work with new property
+      # code. EV relies on these next two methods.
       def property_getter(mapping, visibility = :public)
         if mapping.lazy?
           class_eval <<-EOS
@@ -412,8 +566,10 @@ module DataMapper
         database.table(self).name = value
       end
       
-      # An embedded value maps the values of an object to fields in the record of the object's owner.
-      # #embed takes a symbol to define the embedded class, options, and an optional block. See
+      # An embedded value maps the values of an object to fields in the 
+      # record of the object's owner.
+      # #embed takes a symbol to define the embedded class, options, and 
+      # an optional block. See
       # examples for use cases.
       #
       # EXAMPLE:
@@ -433,18 +589,28 @@ module DataMapper
       #   => Nick
       #
       # OPTIONS:
-      #   * <tt>prefix</tt>: define a column prefix, so instead of mapping :address to an 'address'
-      #   column, it would map to 'owner_address' in the example above. If :prefix => true is
-      #   specified, the prefix will be the name of the symbol given as the first parameter. If the
-      #   prefix is a string the specified string will be used for the prefix.
-      #   * <tt>lazy</tt>: lazy-load all embedded values at the same time. :lazy => true to enable.
-      #   Disabled (false) by default.
-      #   * <tt>accessor</tt>: Set method visibility for all embedded properties. Affects both
-      #   reader and writer. Allowable values are :public, :protected, :private. Defaults to :public
-      #   * <tt>reader</tt>: Like the accessor option but affects only embedded property readers.
-      #   * <tt>writer</tt>: Like the accessor option but affects only embedded property writers.
-      #   * <tt>protected</tt>: Alias for :reader => :public, :writer => :protected
-      #   * <tt>private</tt>: Alias for :reader => :public, :writer => :private
+      # * <tt>prefix</tt>:   define a column prefix, so instead of mapping
+      #                      :address to an 'address' column, it would map to
+      #                      'owner_address' in the example above. If 
+      #                      :prefix => true is specified, the prefix will
+      #                      be the name of the symbol given as the first 
+      #                      parameter. If the prefix is a string the 
+      #                      specified 
+      #                      string will be used for the prefix.
+      # * <tt>lazy</tt>:     lazy-load all embedded values at the same time. 
+      #                      :lazy => true to enable. Disabled (false) by
+      #                      default.
+      # * <tt>accessor</tt>: Set method visibility for all embedded
+      #                      properties. Affects both reader and writer.
+      #                      Allowable values are :public, :protected,
+      #                      :private. Defaults to :public
+      # * <tt>reader</tt>:   Like the accessor option but affects only
+      #                      embedded property readers.
+      # * <tt>writer</tt>:   Like the accessor option but affects only 
+      #                      embedded property writers.
+      # * <tt>protected</tt>: Alias for :reader => :public, 
+      #                       :writer => :protected
+      # * <tt>private</tt>: Alias for :reader => :public, :writer => :private
       #
       def embed(name, options = {}, &block)
         EmbeddedValue::define(self, name, options, &block)
@@ -455,8 +621,9 @@ module DataMapper
         @properties
       end
 
-      # Creates a composite index for an arbitrary number of database columns. Note that
-      # it also is possible to specify single indexes directly for each property.
+      # Creates a composite index for an arbitrary number of database columns.
+      # Note that it also is possible to specify single indexes directly for
+      # each property.
       #
       # === EXAMPLE WITH COMPOSITE INDEX:
       #   class Person < DataMapper::Base
@@ -487,8 +654,10 @@ module DataMapper
 
     end
 
-    # Lazy-loads the attributes for a loaded_set, then overwrites the accessors
-    # for the named methods so that the lazy_loading is skipped the second time.
+    # Lazy-loads the attributes for a loaded_set, then overwrites the
+    # accessors
+    # for the named methods so that the lazy_loading is skipped the second
+    # time.
     def lazy_load!(*names)
 
       names = names.map { |name| name.to_sym }.reject { |name| lazy_loaded_attributes.include?(name) }
@@ -531,12 +700,15 @@ module DataMapper
       self.class.logger
     end
 
-    # Returns <tt>true</tt> if this model hasn't been saved to the database, <tt>false</tt> otherwise.
+    # Returns <tt>true</tt> if this model hasn't been saved to the 
+    # database, <tt>false</tt> otherwise.
     def new_record?
       @new_record.nil? || @new_record
     end
 
-    # Returns a Set containing the properties that have had their <tt>:lazy</tt> option set to true, or are lazily loaded by default — i.e. text fields.
+    # Returns a Set containing the properties that have had their
+    # <tt>:lazy</tt> option set to true, or are lazily loaded by 
+    # default — i.e. text fields.
     def lazy_loaded_attributes
       @lazy_loaded_attributes || @lazy_loaded_attributes = Set.new
     end
@@ -547,7 +719,8 @@ module DataMapper
       self.save
     end
 
-    # Returns <tt>true</tt> if the unsaved model has had properties changed since it was loaded from the database. Returns <tt>false</tt> otherwise.
+    # Returns <tt>true</tt> if the unsaved model has had properties changed
+    # since it was loaded from the database. Returns <tt>false</tt> otherwise.
     def dirty?(cleared = Set.new)
       return false if cleared.include?(self)
       cleared << self
@@ -567,7 +740,8 @@ module DataMapper
       end
     end
 
-    # For unsaved models, returns a hash of properties that have had their values changed since it was loaded from the database.
+    # For unsaved models, returns a hash of properties that have had their
+    # values changed since it was loaded from the database.
     def dirty_attributes
       pairs = {}
 
@@ -658,7 +832,8 @@ module DataMapper
       eql?(other)
     end
 
-    # Returns the difference between two objects, in terms of their attributes.
+    # Returns the difference between two objects, in terms of their
+    # attributes.
     def ^(other)
       results = {}
 

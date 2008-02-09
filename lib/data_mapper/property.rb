@@ -242,7 +242,7 @@ module DataMapper
       raise SyntaxError.new(column)
     end
     
-    # :NOTE: :length may also be used in place of :size
+    # NOTE: :length may also be used in place of :size
     AUTO_VALIDATIONS = {
       :nullable => lambda { |k,v| "validates_presence_of :#{k}" if v == false },
       :size => lambda { |k,v| "validates_length_of :#{k}, " + (v.is_a?(Range) ? ":minimum => #{v.first}, :maximum => #{v.last}" : ":maximum => #{v}") },
