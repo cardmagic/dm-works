@@ -1,6 +1,8 @@
 
 module DataMapper
-  
+
+# :include:/QUICKLINKS
+#
 # = Properties
 # A model's properties are not derived from database structure.
 # Instead, properties are declared inside it's model's class definition,

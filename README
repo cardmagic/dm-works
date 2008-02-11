@@ -1,203 +1,105 @@
-= DataMapper
 
-DataMapper is an Object Relational Mapper written in Ruby. The goal is to create an ORM which is fast, thread-safe and feature rich.
+:include:QUICKLINKS
 
-== Why you should use DataMapper
+= Why DataMapper?
 
-=== Speed
+== Open Development
 
-DataMapper combines tried and true principles from Martin Fowler's design patterns with a pure ruby implementation,
-creating not only beautiful syntax, but a huge speed up from other popular ORMs. 
+Datamapper sports a very accessible code-base and a welcoming community. Outside contributions and feedback are welcome and encouraged, especially constructive criticism. Make your voice heard! Submit a ticket[http://wm.lighthouseapp.com/projects/4819-datamapper/overview] or patch[http://wm.lighthouseapp.com/projects/4819-datamapper/overview], speak up on our mailing-list[http://groups.google.com/group/datamapper/], chat with us on irc[irc://irc.freenode.net/#datamapper], write a spec, get it reviewed, ask for commit rights. It's as easy as that to become a contributor.
 
-Where other ORMs have failed you before, DataMapper strives to make up for this gap.
+== Identity Map
 
-If this has piqued your interest, look below and learn how to get started. 
-
-If you're looking for cold hard numbers, take a gander at the PERFORMANCE file. 
-You'll find the latest performance stats under "Current Performance".
+One row in the database should equal one object reference. Pretty simple idea. Pretty profound impact. If you run the following code in ActiveRecord you'll see all <tt>false</tt> results. Do the same in DataMapper and it's <tt>true</tt> all the way down.
 
 
-    Most tests are run on a 2.16Ghz Core2Duo iMac.
-    Asterisk (*) indicates test run on 2.0Ghz Core2Duo MacBook.
+  @parent = Tree.find(:first, :conditions => ['name = ?', 'bob'])
 
-=== Open Development
+  @parent.children.each do |child|
+    puts @parent.object_id == child.parent.object_id
+  end
 
-Found a bug or want a feature? Tired of dealing with the bureaucracy that other ORM maintainers force upon you? 
+This makes DataMapper faster and allocate less resources to get things done.
 
-The community surrounding DataMapper is open and friendly. Contributions of any kind are welcome, 
-and the founder and maintainer of the project can be easily reached by using the fairly active 
-mailing list (http://groups.google.com/group/datamapper) or by jumping in to the <tt>datamapper</tt>
-channel on irc.freenode.net.
+== Don't Do What You Don't Have To
 
-=== Thread-Safe
+ActiveRecord updates every column in a row during a save whether that column changed or not. So it performs work it doesn't really need to making it much slower, and more likely to eat data during concurrent access if you don't go around adding locking support to everything. 
 
-Thread safety is a critical topic in any production software, and especially so with the DataMapper. 
-The maintainers have dedicated much of their time to ensuring that the DataMapper is thread safe thus far, 
-and will continue to do as much to ensure it stays that way.
+DataMapper only does what it needs to. So it plays well with others. You can use it in an Integration Database without worrying that your application will be a bad actor causing trouble for all of your other processes.
 
-=== Hacker Friendly
+== Eager Loading
 
-One of the most frustrating problems with other ORMs is the painstaking time it takes
-to understand and traverse the code-base. 
+Ready for something amazing? The following example executes only two queries.
 
-DataMapper aims to be as lightweight as possible, keeping
-the code-base clean and uncluttered. Never be afraid to crack open the subversion trunk again!
+  zoos = Zoo.all
+  first = zoos.first
+  first.exhibits # Loads the exhibits for all the Zoo objects in the zoos variable.
 
+Pretty impressive huh? The idea is that you aren't going to load a set of objects and use only an association in just one of them. This should hold up pretty well against a 99% rule. When you don't want it to work like this, just load the item you want in it's own set. So the DataMapper thinks ahead. We like to call it "performant by default". This feature single-handedly wipes out the "N+1 Query Problem". No need to specify an <tt>include</tt> option in your finders.
 
-== Getting Started
+== Laziness Can Be A Virtue
 
-=== Install DataMapper
-There are two simple options for getting started with DataMapper.
+Text columns are expensive in databases. They're generally stored in a different place than the rest of your data. So instead of a fast sequential read from your hard-drive, your database server has to hop around all over the place to get what it needs. Since ActiveRecord returns everything by default, adding a text column to a table slows everything down drastically, across the board.
 
-If you'd like to use SVN and check out the bleeding edge version of the project, 
-execute the following command in your terminal:
+Not so with the DataMapper. Text fields are treated like in-row associations by default, meaning they only load when you need them. If you want more control you can enable or disable this feature for any column (not just text-fields) by passing a @lazy@ option to your column mapping with a value of <tt>true</tt> or <tt>false</tt>.
 
 
-  svn co http://datamapper.rubyforge.org/svn/trunk/ data_mapper
-
-After checking out the trunk, point your application to the trunk/lib folder and require it.
-
-If you'd like to just <i>use</i> datamapper and don't plan on looking at the source code or want bleeding edge features, 
-execute this instead:
-
-  gem install datamapper
-
-==== QuickStart
-If you want to find out how to use DataMapper in your existing application, jump to "Require it in your application".
-
-If you'd like to get started right away and play with the syntax of DataMapper, and you're using MySQL as your database,
-create a new database called:
-  data_mapper_1
-
-Then drop into the trunk directory, and execute:
-  rake
-  
-That will setup your database. From there, execute:
-  ruby example.rb
-  
-This will drop you into an IRB session, where you can further play with the syntax. Try out the intuitive finders:
-  Animal[0]
-  Animal.all
-  Zoo.first(:name => 'Galveston')
-  Zoo.find(:first, :conditions => ['name = ?', 'Galveston'])
-
-=== Require it in your application
-
-  require 'rubygems'
-  require 'data_mapper'
-  
-=== Specify a Database Connection
-
-Datamapper has Merb and Rails users in mind when setting up. If you've already setup a Merb or 
-Ruby on Rails project, and have a database.yml, DataMapper should pick it up automatically.
-
-If you'd like to set the database connection manually before using it, do something like this:
-  DataMapper::Database.setup({
-    :adapter  => 'mysql',
-    :host     => 'localhost',
-    :username => 'root',
-    :password => 'R00tPaswooooord',
-    :database => 'selecta_development'
-  })
-  
-The currently supported databases are:
-PostgreSQL:: (postgresql adaptor)
-MySQL:: (mysql adaptor)
-SQLite3:: (sqlite3 adaptor)
-  
-=== Define Your Models
-
-Defining your models requires a few steps.
-
-* Include the module DataMapper::Persistence in your class
-* Define your properties you wish to access from the database
-* Define any relationships (optional)
-
-Unlike many other ORMs, DataMapper requires that you define which fields in the database
-you'd like to make available to your models as properties. There are a few reasons for this, 
-which are too numerous to go into here.
-
-Your models might end up looking something like this:
-
-  class Animal
-    include DataMapper::Persistence
-
+  class Animal < DataMapper::Base
     property :name, :string
-    property :notes, :text, :lazy => true
-
-    has_one :favourite_fruit, :class => 'Fruit', :foreign_key => 'devourer_id'
-    has_and_belongs_to_many :exhibits
-  end
-  
-==== Lazy Attributes
-
-Lazy attributes are one of the many speed enhancing features in DataMapper.
-
-Properties that are given the lazy attribute will not be loaded until they are accessed by your code.
-
-So if you were to load a set of database records from your database, and only used the lazy property
-of those records occasionally, your memory signature will essentially stay much smaller, while still
-easily allowing you to gain access to those attributes when you need them.
-
-For example, if you were to load all of the Animals using the class above, and were to inspect the set 
-of returned data, you'd notice that all of the notes fields were <b>nil</b>. If you were to do something 
-like the following:
-  
-  animals = Animals.all
-  animals.inspect
-
-You'd notice the <b>nil</b> fields immediately.
-
-If you were to do something like the following:
-  animals.first.notes
-  animals.inspect
-
-You'd notice that ALL of the notes fields in your set were loaded into memory. 
-
-The astute rubyist will immediately wonder if this is possible on associations, and indeed it is!
-This inevitably avoids the 1+N query problems that have so plagued us in the past. It allows us to 
-develop in an intuitive manner, so that if we executed a loop:
-
-  animals.each do |animal|
-    #The next line crafts a query to fetch ALL of this
-    #set's favorite_fruit attributes
-    puts animal.favorite_fruit
+    property :notes, :text, :lazy => false
   end
 
-Only two queries hit our database. All with the automagical power of DataMapper!
+ 
+Plus, lazy-loading of text fields happens automatically and intelligently when working with associations.  The following only issues 2 queries to load up all of the notes fields on each animal:
 
-=== Associations
+  animals = Animal.all
+  animals.each do |pet|
+    pet.notes
+  end
 
-DataMapper's associations are exactly like the other ORMs out there. Some association examples are found below:
+== Plays Well With Others
 
-* belongs_to :model
-* has_one :model
-* has_many :model
-* has_and_belongs_to_many :model
+In ActiveRecord, all your columns are mapped, whether you want them or not. This slows things down. In the DataMapper you define your mappings in your model. So instead of an _ALTER TABLE ADD COLUMN_ in your Database, you simply add a <tt>property :name, :string</tt> to your model. DRY. No schema.rb. No migration files to conflict or die without reverting changes. Your model drives the database, not the other way around. 
 
-You can also set the class and foreign_keys for each association if you need to override the default naming scheme.
+Unless of course you want to map to a legacy database. Raise your hand if you like seeing a method called <tt>col2Name</tt> on your model just because that's what it's called in an old database you can't afford to change right now? In DataMapper you control the mappings:
 
-== AutoMigrations
 
-With DataMapper, there's no need to constantly create migration after monotonous migration during your initial development.
+  class Fruit < DataMapper::Base
+    set_table_name 'frt'
+    property :name, :string, :column => 'col2'
+  end
 
-Once you've got your models to a point where you'd like a table associated with them, simply execute the following:
 
-  database.save(ModelName)
-  
-This will generate the table structure for your model automatically. 
+== All Ruby, All The Time
 
-You can also execute the following to generate ALL of your models' tables:
+It's great that ActiveRecord allows you to write SQL when you need to, but should we have to so often? 
 
-  DataMapper::Persistence.auto_migrate!
+DataMapper supports issuing your own SQL, but it also provides more helpers and a unique hash-based condition syntax to cover more of the use-cases where issuing your own SQL would have been the only way to go. For example, any finder option that's non-standard is considered a condition. So you can write <tt>Zoo.all(:name => 'Dallas')</tt> and DataMapper will look for zoos with the name of 'Dallas'. 
 
-=== NOTE
-Both of these methods are DESTRUCTIVE. If you are working in anything other than a pre-production environment, 
-stay far away from these methods!
+It's just a little thing, but it's so much nicer than writing <tt>Zoo.find(:all, :conditions => ['name = ?', 'Dallas'])</tt>. What if you need other comparisons though? Try these:
 
-== Conventions
 
-Merb's coding conventions are a fantastic start: (http://merb.devjavu.com/#ContributingtoMerb)
+  Zoo.first(:name => 'Galveston')
 
-DataMapper could use some documentation help. If you'd like to contribute, the example you'll
-find on the above link is top-notch.
+  # 'gt' means greater-than. We also do 'lt'.
+  Person.all(:age.gt => 30)
+
+  # 'gte' means greather-than-or-equal-to. We also do 'lte'.
+  Person.all(:age.gte => 30)
+
+  Person.all(:name.not => 'bob')
+
+  # If the value of a pair is an Array, we do an IN-clause for you.
+  Person.all(:name.like => 'S%', :id => [1, 2, 3, 4, 5])
+
+  # An alias for Zoo.find(11)
+  Zoo[11]
+
+  # Does a NOT IN () clause for you.
+  Person.all(:name.not => ['bob','rick','steve'])
+
+
+See? Fewer SQL fragments dirtying your Ruby code. And that's just a few of the nice syntax tweaks DataMapper delivers out of the box...
+
+== Better Is Great, But Familiar Is Nice
+
+The DataMapper also supports a lot of old-fashioned ActiveRecord syntax. We want to make it easy for you to get started, so aside from mapping your columns and changing the base-class your models inherit from, much of AR syntax for finders are supported as well, making your transition easy.

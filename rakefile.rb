@@ -80,6 +80,8 @@ PACKAGE_VERSION = '0.3.0'
 
 PACKAGE_FILES = FileList[
   'README',
+  'FAQ',
+  'QUICKLINKS',
   'CHANGELOG',
   'MIT-LICENSE',
   '*.rb',
