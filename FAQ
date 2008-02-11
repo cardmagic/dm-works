@@ -15,7 +15,7 @@ You should now be able to do <tt>Class['name_string']</tt> as well. Remember: th
 
   property :deleted_at, :datetime
 
-If you've got deleted_at, your model is paranoid auto-magically. All of your calls to <tt>##all()</tt>, <tt>##first()</tt>, and <tt>##count()</tt> will be scoped with where deleted_at is null. Plus, you won't see deleted objects in your associations.
+If you've got deleted_at, your model is paranoid auto-magically. All of your calls to <tt>##all()</tt>, <tt>##first()</tt>, and <tt>##count()</tt> will be scoped with <tt>where deleted_at is null</tt>. Plus, you won't see deleted objects in your associations.
 
 === Does DataMapper support Has Many Through?
 
