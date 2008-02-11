@@ -2,6 +2,7 @@
 
 * Finders and CRUD - DataMapper::Persistence::ConvenienceMethods::ClassMethods
 * Properties - DataMapper::Property
+* Validations - Validatable
 * Migrations
 * FAQ[link:/files/FAQ.html]
 * Contact Us

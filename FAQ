@@ -73,3 +73,24 @@ With ActiveRecord, doing a <tt>User.find(:all).each{}</tt> would execute the fin
 Datamapper's <tt>#each</tt> works in sets of 500 so the amount of objects instantiated at a time won't make your computer think it's a victim in a Saw movie. Once it's done executing your block on the first set of 500, it moves on to the next.
 
 What's more is <tt>#each</tt> is secretly a finder too. You can pass it an options hash and it'll only iterate on 500-item sets matching your query. Don't send it <tt>:offset</tt> though, because that's how it pages. You can overload the page size by sending it <tt>:limit</tt>
+
+=== Can I get an SQL log of what queries DataMapper is issuing?
+
+Yup, when you issue <tt>Database.setup</tt>, tack on the <tt>log_stream</tt> and <tt>log_level</tt>:
+
+  DataMapper::Database.setup({
+   :adapter    => 'mysql',
+   :host       => 'localhost',
+   :username   => 'root',
+   :password   => 'R00tPaswooooord',
+   :database   => 'myspiffyblog_development',
+   :log_stream => 'log/sql.log',
+   :log_level  => 0
+  })
+
+By supplying the <tt>log_stream</tt> you're telling DataMapper what file you want to see your sql logs in. <tt>log_level</tt> is the Logger[http://www.ruby-doc.org/stdlib/libdoc/logger/rdoc/] level of output you want to see there. 0, in this case, says that you want to see all DEBUG level messages (and higher) sent to the logger. For more information on how to work with Logger[http://www.ruby-doc.org/stdlib/libdoc/logger/rdoc/], hit up http://www.ruby-doc.org/stdlib/libdoc/logger/rdoc/.
+
+Incidentally, if you'd like to send a message into the Datamapper logger, do:
+
+  database.adapter.logger.info "your message here"
+
