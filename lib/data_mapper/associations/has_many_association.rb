@@ -225,7 +225,7 @@ module DataMapper
         def deactivate
           case association.dependency
           when :destroy
-            loaded_members.each do |member|
+            items.each do |member|
               status = member.destroy! unless member.new_record?
               return false unless status
             end
