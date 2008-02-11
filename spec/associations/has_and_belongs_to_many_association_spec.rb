@@ -202,6 +202,7 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
     chain.chains.first.save
     chain4.chains << Chain.first(:name => "3")
     chain4.save
+    chain = Chain[chain.key]
 
     chain.destroy!
     Chain.first(:name => "2").should be_nil
@@ -226,6 +227,7 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
     chain5 = Chain.create(:name => "5")
     chain.chains.first.chains << chain5
     chain.chains.first.save
+    chain = Chain[chain.key]
 
     chain.destroy!
     Chain.first(:name => "2").should be_nil
@@ -250,6 +252,7 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
     chain4 = Chain.create(:name => "5")
     chain.chains.first.chains << chain4
     chain.chains.first.save
+    chain = Chain[chain.key]
 
     lambda { chain.destroy! }.should raise_error(DataMapper::AssociationProtectedError)
 
@@ -270,8 +273,7 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
     chain4 = Chain.create(:name => "5")
     chain.chains.first.chains << chain4
     chain.chains.first.save
-    chain.chains.entries
-    chain.reload!
+    chain = Chain[chain.key]
 
     lambda { chain.destroy! }.should raise_error(DataMapper::AssociationProtectedError)
 
@@ -292,6 +294,7 @@ describe DataMapper::Associations::HasAndBelongsToManyAssociation do
     chain4 = Chain.create(:name => "5")
     chain.chains.first.chains << chain4
     chain.chains.first.save
+    chain = Chain[chain.key]
 
     chain.destroy!
     Chain.first(:name => "2").should_not be_nil

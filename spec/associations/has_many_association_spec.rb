@@ -251,6 +251,7 @@ describe DataMapper::Associations::HasManyAssociation do
     fence.chains << Chain.create(:name => "3")
     fence.save
     chain = Chain.create(:name => "4")
+    fence = Fence[fence.key]
 
     fence.destroy!
     Chain.first(:name => "1").should be_nil
@@ -270,6 +271,7 @@ describe DataMapper::Associations::HasManyAssociation do
     fence.chains << Chain.create(:name => "3")
     fence.save
     chain = Chain.create(:name => "4")
+    fence = Fence[fence.key]
 
     fence.destroy!
     Chain.first(:name => "1").should be_nil
@@ -289,6 +291,7 @@ describe DataMapper::Associations::HasManyAssociation do
     fence.chains << Chain.create(:name => "3")
     fence.save
     chain = Chain.create(:name => "4")
+    fence = Fence[fence.key]
 
     lambda { fence.destroy! }.should raise_error(DataMapper::AssociationProtectedError)
   end
@@ -303,9 +306,8 @@ describe DataMapper::Associations::HasManyAssociation do
     fence.chains << Chain.create(:name => "2")
     fence.chains << Chain.create(:name => "3")
     fence.save
-    fence.chains.items
-    fence.reload!
     chain = Chain.create(:name => "4")
+    fence = Fence[fence.key]
 
     lambda { fence.destroy! }.should raise_error(DataMapper::AssociationProtectedError)
   end
@@ -321,6 +323,7 @@ describe DataMapper::Associations::HasManyAssociation do
     fence.chains << Chain.create(:name => "3")
     fence.save
     chain = Chain.create(:name => "4")
+    fence = Fence[fence.key]
 
     fence.destroy!
     Chain.first(:name => "1").should_not be_nil

@@ -180,7 +180,9 @@ module DataMapper
         else
           callback(instance, :before_destroy)
 
-          instance.loaded_associations.each { |association| association.deactivate }
+          table.associations.each do |association|
+            instance.send(association.name).deactivate unless association.is_a?(::DataMapper::Associations::BelongsToAssociation)
+          end
 
           if table.paranoid?
             instance.instance_variable_set(table.paranoid_column.instance_variable_name, Time::now)
