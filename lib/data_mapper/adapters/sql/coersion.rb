@@ -23,7 +23,7 @@ module DataMapper
         end
         
         def type_cast_boolean(raw_value)
-          return nil if raw_value.nil? || (raw_value.respond_to(:empty?) && raw_value.empty?)
+          return nil if raw_value.nil? || (raw_value.respond_to?(:empty?) && raw_value.empty?)
           case raw_value
             when TrueClass, FalseClass then raw_value
             when *self::class::TRUE_ALIASES then true
