@@ -24,6 +24,8 @@ module DataMapper
 
       TABLE_QUOTING_CHARACTER = '"'.freeze
       COLUMN_QUOTING_CHARACTER = '"'.freeze
+      TRUE_ALIASES << 't'.freeze
+      FALSE_ALIASES << 'f'.freeze
       
       def create_connection
         conn = DataObject::Sqlite3::Connection.new("dbname=#{@configuration.database}")
