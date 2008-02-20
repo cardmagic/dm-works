@@ -23,11 +23,12 @@ module DataMapper
         end
         
         def type_cast_boolean(raw_value)
+          return nil if raw_value.nil? || (raw_value.respond_to(:empty?) && raw_value.empty?)
           case raw_value
             when TrueClass, FalseClass then raw_value
             when *self::class::TRUE_ALIASES then true
             when *self::class::FALSE_ALIASES then false
-            else "Can't type-cast #{raw_value.inspect} to a boolean"
+            else raise CoersionError.new("Can't type-cast #{raw_value.inspect} to a boolean")
           end
         end
         
