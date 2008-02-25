@@ -94,18 +94,19 @@ module DataMapper
       end
 
       # Close any open connections.
-      def flush_connections!
-        begin
-          @connection_pool.available_connections.each do |active_connection|
+      def flush_connections!          
+        @connection_pool.available_connections.each do |active_connection|
+          begin
             active_connection.close
+          rescue => close_connection_error
+            # An error on closing the connection is almost expected
+            # if the socket is broken.
+            logger.warn { close_connection_error }
           end
-        rescue => close_connection_error
-          # An error on closing the connection is almost expected
-          # if the socket is broken.
-          logger.warn { close_connection_error }
         end
 
         # Reopen fresh connections.
+        @connection_pool.instance_variable_set('@created_count', 0)
         @connection_pool.available_connections.clear
       end
 
