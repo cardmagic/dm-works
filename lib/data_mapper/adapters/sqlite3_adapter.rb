@@ -1,5 +1,6 @@
 require 'data_mapper/adapters/data_object_adapter'
 begin
+  gem 'do_sqlite3', '<= 0.2.5'
   require 'do_sqlite3'
 rescue LoadError
   STDERR.puts <<-EOS

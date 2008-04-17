@@ -1,5 +1,6 @@
 require 'data_mapper/adapters/data_object_adapter'
 begin
+  gem 'do_mysql', '<=0.2.4'
   require 'do_mysql'
 rescue LoadError
   STDERR.puts <<-EOS

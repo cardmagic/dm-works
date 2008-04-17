@@ -1,5 +1,6 @@
 require 'data_mapper/adapters/data_object_adapter'
 begin
+  gem 'do_postgres', '<=0.2.4'
   require 'do_postgres'
 rescue LoadError
   STDERR.puts <<-EOS
