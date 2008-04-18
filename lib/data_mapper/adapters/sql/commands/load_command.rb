@@ -126,7 +126,7 @@ module DataMapper
 
           end
           
-          attr_reader :conditions, :database_context, :options
+          attr_reader :conditions, :database_context, :options, :select, :from, :joins
           
           def initialize(adapter, database_context, primary_class, options = {})
             @adapter, @database_context, @primary_class = adapter, database_context, primary_class
@@ -146,8 +146,12 @@ module DataMapper
             end
             # END
             
+            @select = @options[:select] if @options[:select].is_a?(String)
+            @from = @options[:from]
+            @group = @options[:group]
             @order = @options[:order]
             @limit = @options[:limit]
+            @joins = @options[:joins]
             @offset = @options[:offset]
             @reload = @options[:reload]
             @instance_id = conditions_hash[:id]
@@ -161,6 +165,9 @@ module DataMapper
               #<#{self.class.name}:0x%x
                 @database=#{@adapter.name}
                 @reload=#{@reload.inspect}
+                @from=#{@from.inspect}
+                @select=#{@select.inspect}
+                @joins=#{@joins.inspect}
                 @order=#{@order.inspect}
                 @limit=#{@limit.inspect}
                 @offset=#{@offset.inspect}
@@ -261,8 +268,19 @@ module DataMapper
           def to_parameterized_sql
             parameters = []
             
-            sql = 'SELECT ' << columns_for_select.join(', ')
-            sql << ' FROM ' << from_table_name            
+            cfs = columns_for_select
+
+            if @select.nil?
+              sql = 'SELECT ' << cfs.join(', ')
+            else
+              sql = 'SELECT ' << @select.to_s
+            end
+
+            if @from.nil?
+              sql << ' FROM ' << from_table_name
+            else
+              sql << ' FROM ' << @from.to_s
+            end
             
             included_associations.each do |association|
               sql << ' ' << association.to_sql
@@ -270,6 +288,10 @@ module DataMapper
             
             shallow_included_associations.each do |association|
               sql << ' ' << association.to_shallow_sql
+            end
+
+            unless @joins.nil?
+              sql << @joins.to_s
             end
             
             unless conditions_empty?
@@ -295,6 +317,10 @@ module DataMapper
                 end
               end
             end # unless conditions_empty?
+            
+            unless @group.nil?
+              sql << 'GROUP BY ' << @group.to_s
+            end
             
             unless @order.nil?
               sql << ' ORDER BY ' << @order.to_s
@@ -421,6 +447,8 @@ module DataMapper
                   case x = @options[:select]
                   when Array then x
                   when Symbol then [x]
+                  when String
+                    primary_class_table.columns.reject { |column| column.lazy? }
                   else raise ':select option must be a Symbol, or an Array of Symbols'
                   end.map { |name| primary_class_table[name] }
                 else

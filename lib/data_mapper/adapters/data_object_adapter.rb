@@ -42,7 +42,7 @@ module DataMapper
       $LOAD_PATH << (DM_PLUGINS_ROOT + '/dataobjects')
 
       FIND_OPTIONS = [
-        :select, :offset, :limit, :class, :include, :shallow_include, :reload, :conditions, :order, :intercept_load
+        :select, :offset, :limit, :class, :include, :shallow_include, :reload, :conditions, :order, :intercept_load, :from, :joins, :group
       ]
 
       TABLE_QUOTING_CHARACTER = '`'.freeze
