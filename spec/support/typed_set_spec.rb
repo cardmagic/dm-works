@@ -37,8 +37,8 @@ describe DataMapper::Support::TypedSet do
     s << 5
     s << 3
 
-    s.entries.first.should eql(0)
-    s.entries.last.should eql(30)
+    s.entries.first.should eql(8)
+    s.entries.last.should eql(3)
   end
 
   it "should respond to blank?" do

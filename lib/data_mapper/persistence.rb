@@ -774,7 +774,7 @@ module DataMapper
     end
 
     def loaded_set=(value)
-      value << self
+      value << self unless value.include?(self)
       @loaded_set = value
     end
 

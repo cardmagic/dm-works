@@ -8,12 +8,12 @@ module DataMapper
       
       def initialize(*types)
         @types = types
-        @set = SortedSet.new
+        @set = Array.new
       end
       
       def <<(item)
         raise ArgumentError.new("#{item.inspect} must be a kind of: #{@types.inspect}") unless @types.any? { |type| type === item }
-        @set << item
+        @set << item unless @set.include?(item)
         return self
       end
       
