@@ -101,7 +101,7 @@ module DataMapper
 
               set = @instance.loaded_set.group_by { |instance| instance.send(fk) }
 
-              @instance.database_context.all(association.constant, association.associated_table.key.to_sym => set.keys).each do |assoc|
+              @instance.database_context.all(association.constant, association.key_table.key.to_sym => set.keys).each do |assoc|
                 set[assoc.key].each do |primary_instance|
                   primary_instance.send("#{@association_name}_association").shallow_append(assoc)
                 end
