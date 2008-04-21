@@ -88,6 +88,10 @@ module DataMapper
   #   end # :second_database
   class Database
     
+    def self.databases
+      @databases.map{|d|d[1]}
+    end
+    
     @databases = {}
     
     # Allows you to access any of the named databases you have already setup.

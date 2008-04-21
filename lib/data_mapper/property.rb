@@ -159,7 +159,7 @@ module DataMapper
       validate_options!
       determine_visibility!
       
-      database.schema[klass].add_column(@symbolized_name, @type, @options)
+      Database.databases.each{|database| database.adapter.table(klass).add_column(@symbolized_name, @type, @options)}
       klass::ATTRIBUTES << @symbolized_name
       
       create_getter!
