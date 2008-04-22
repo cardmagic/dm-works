@@ -220,15 +220,24 @@ module DataMapper
             results = []
             
             # Execute the statement and load the objects.
-            @adapter.connection do |db|
-              sql, *parameters = to_parameterized_sql
-              command = db.create_command(sql)
-              command.execute_reader(*parameters) do |reader|
-                if @options.has_key?(:intercept_load)
-                  load(reader, &@options[:intercept_load])
-                else
-                  load(reader)
+            begin
+              @adapter.connection do |db|
+                sql, *parameters = to_parameterized_sql
+                command = db.create_command(sql)
+                command.execute_reader(*parameters) do |reader|
+                  if @options.has_key?(:intercept_load)
+                    load(reader, &@options[:intercept_load])
+                  else
+                    load(reader)
+                  end
                 end
+              end
+            rescue DataObject::QueryError => exception
+              if exception.message =~ /(Lost connection to MySQL server during query|MySQL server has gone away)/
+                @adapter.create_connection
+                retry
+              else
+                raise
               end
             end
             
