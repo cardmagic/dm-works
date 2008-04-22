@@ -352,7 +352,7 @@ module DataMapper
           # Note: After the first call, the calculations are avoided by overwriting this
           # method with a simple getter.
           def qualify_columns?
-            @qualify_columns = !(included_associations.empty? && shallow_included_associations.empty?)
+            @qualify_columns = !(included_associations.empty? && shallow_included_associations.empty?) || !@joins.nil?
             def self.qualify_columns?
               @qualify_columns
             end
@@ -419,7 +419,7 @@ module DataMapper
                 columns.each do |column|
                   class_for_loader = column.table.klass
                   @loaders[class_for_loader].add_column(column, i) if class_for_loader
-                  @columns_for_select << column.table.to_sql + "." + column.to_sql(qualify_columns)
+                  @columns_for_select << column.to_sql(qualify_columns)
                   i += 1
                 end
                 
