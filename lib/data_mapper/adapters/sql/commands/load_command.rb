@@ -419,7 +419,7 @@ module DataMapper
                 columns.each do |column|
                   class_for_loader = column.table.klass
                   @loaders[class_for_loader].add_column(column, i) if class_for_loader
-                  @columns_for_select << column.to_sql(qualify_columns)
+                  @columns_for_select << column.table.to_sql + "." + column.to_sql(qualify_columns)
                   i += 1
                 end
                 
