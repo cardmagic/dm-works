@@ -362,55 +362,64 @@ module DataMapper
 
         sql = "SELECT #{select_columns.join(', ')} FROM #{table.to_sql} WHERE #{table.keys.map { |key| "#{key.to_sql} = ?" }.join(' AND ')}"
 
-        connection do |db|
-          reader = nil
-          begin
-            reader = db.create_command(sql).execute_reader(*keys)
+        begin
+          connection do |db|
+            reader = nil
+            begin
+              reader = db.create_command(sql).execute_reader(*keys)
 
-            if reader.has_rows?
+              if reader.has_rows?
 
-              instance_type = klass
+                instance_type = klass
 
-              if table.multi_class? && table.type_column
-                value = reader.item(column_indexes[table.type_column])
-                instance_type = table.type_column.type_cast_value(value) unless value.blank?
-              end
-
-              if instance.nil?
-                instance = instance_type.allocate()
-                instance.instance_variable_set(:@__key, instance_id)
-                instance.instance_variable_set(:@new_record, false)
-                database_context.identity_map.set(instance)
-              elsif instance.new_record?
-                instance.instance_variable_set(:@__key, instance_id)
-                instance.instance_variable_set(:@new_record, false)
-                database_context.identity_map.set(instance)
-              end
-
-              instance.database_context = database_context
-
-              instance_type.callbacks.execute(:before_materialize, instance)
-
-              originals = instance.original_values
-
-              column_indexes.each_pair do |column, i|
-                value = column.type_cast_value(reader.item(i))
-                instance.instance_variable_set(column.instance_variable_name, value)
-
-                case value
-                  when String, Date, Time then originals[column.name] = value.dup
-                  else originals[column.name] = value
+                if table.multi_class? && table.type_column
+                  value = reader.item(column_indexes[table.type_column])
+                  instance_type = table.type_column.type_cast_value(value) unless value.blank?
                 end
-              end
 
-              instance.loaded_set = [instance]
+                if instance.nil?
+                  instance = instance_type.allocate()
+                  instance.instance_variable_set(:@__key, instance_id)
+                  instance.instance_variable_set(:@new_record, false)
+                  database_context.identity_map.set(instance)
+                elsif instance.new_record?
+                  instance.instance_variable_set(:@__key, instance_id)
+                  instance.instance_variable_set(:@new_record, false)
+                  database_context.identity_map.set(instance)
+                end
 
-              instance_type.callbacks.execute(:after_materialize, instance)
-            end # if reader.has_rows?
-          ensure
-            reader.close if reader && reader.open?
+                instance.database_context = database_context
+
+                instance_type.callbacks.execute(:before_materialize, instance)
+
+                originals = instance.original_values
+
+                column_indexes.each_pair do |column, i|
+                  value = column.type_cast_value(reader.item(i))
+                  instance.instance_variable_set(column.instance_variable_name, value)
+
+                  case value
+                    when String, Date, Time then originals[column.name] = value.dup
+                    else originals[column.name] = value
+                  end
+                end
+
+                instance.loaded_set = [instance]
+
+                instance_type.callbacks.execute(:after_materialize, instance)
+              end # if reader.has_rows?
+            ensure
+              reader.close if reader && reader.open?
+            end
+          end # connection
+        rescue DataObject::QueryError => exception
+          if exception.message =~ /(Lost connection to MySQL server during query|MySQL server has gone away)/
+            create_connection
+            retry
+          else
+            raise
           end
-        end # connection
+        end
 
         return instance
       end
